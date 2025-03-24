@@ -86,8 +86,9 @@ function createUser(req, res) {
 }
 
 // User login 
-function doLogin(req, res) {
+function doLogin(req, res){
     const { Username, Password, Role } = req.body; // extract data from req.body
+
     const hashedPassword = md5(Password); // hash password
 
     const query = 'SELECT UserID, Email, Role FROM user WHERE Username = ? AND Password = ? AND Role = ?';
@@ -99,15 +100,21 @@ function doLogin(req, res) {
             });
         }
 
-        if (results.length === 0) { // if no user found
+        if (results.length === 0) {
             return res.status(401).render('dashboard/login', {
-                error: "Invalid credentials"
+              error: 'Invalid username or password'
             });
-        }
-
+          }
+          
+          if (!isPasswordValid) {
+            return res.status(401).render('dashboard/login', {
+              error: 'Invalid username or password'
+            });
+          }
+          
         const user = results[0]; // get the first user
-        req.session.loggedIn = true; // this varible is used in Index.js for AUthorized routing
-        req.session.user = user; // store user data in session' 
+        req.session.loggedIn = true; // this variable is used in Index.js for Authorized routing
+        req.session.user = user; // store user data in session
         req.session.lastActivity = Date.now(); // store last activity time
 
         // Update last login timestamp
@@ -128,36 +135,40 @@ function doLogin(req, res) {
                 res.redirect('/index');
         }
     });
-}
+};
 
 // Reset Password Route
-function reserPass(req, res){
-    const { Username, newPassword, confirmPassword } = req.body;
-    
-    if (newPassword !== confirmPassword) { // if password is not same
+async function resetPass (req, res) {
+    try {
+      const { Username, newPassword, confirmPassword } = req.body;
+  
+      if (newPassword !== confirmPassword) { // if password is not same
         return res.status(400).render('resetPass', {
-            error: 'Passwords do not match'
+          error: 'Passwords do not match'
         });
+      }
+  
+      const hashedPassword = md5(newPassword); // new hash pw to check with old hashed pw
+  
+      const query = 'UPDATE user SET Password = ? WHERE Username = ?';
+  
+      const [result] = await conPool.query(query, [hashedPassword, Username]);
+  
+      if (result.affectedRows > 0) {
+        res.redirect('/login');
+      } else {
+        res.status(404).render('resetPass', {
+          error: 'User not found'
+        });
+      }
+    } catch (err) {
+      console.error(err);
+      res.status(500).render('resetPass', {
+        error: 'Error in resetting password'
+      });
     }
-
-    const hashedPassword = md5(newPassword); // new hash pw to check with old hashed pw
-
-    const query = 'UPDATE user SET Password = ? WHERE Username = ?';
-
-    conPool.query(query, [hashedPassword, Username],(err, result) => {
-        if(err){
-            console.log(err);
-            return sendResponse(res,"Error in resetting password",{message: err.message},true,500);
-            }  
-        
-        //if pw is updated successfully
-        if(result.affectedRows > 0){
-            res.redirect('/login');
-        } else{
-            sendResponse(res,"User not found",{},true,404);
-        }    
-    });
-};
+  };
+  
 
 function logout(req, res){
     req.session.destroy((err) => {
@@ -171,6 +182,6 @@ function logout(req, res){
 module.exports = {
     createUser,
     doLogin,
-    reserPass,
+    resetPass,
     logout
 };

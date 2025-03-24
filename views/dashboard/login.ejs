@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - DoctorSync</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/javascripts/loginHelp.js"></script>
 </head>
-
 <body class="bg-gray-50 min-h-screen flex items-center justify-center">
     <div class="max-w-md w-full mx-4">
         <div class="bg-white rounded-xl shadow-lg p-8">
@@ -106,6 +104,37 @@
             </div>
         </div>
     </div>
-   
+
+    <script>
+        function toggleAdminCode() {
+    const roleSelect = document.getElementById('role');
+    const adminCodeSection = document.getElementById('adminCodeSection');
+    const adminCodeInput = document.getElementById('adminCode');
+    
+    if (roleSelect.value === 'ADMIN') {
+        adminCodeSection.classList.remove('hidden');
+        adminCodeInput.required = true;
+    } else {
+        adminCodeSection.classList.add('hidden');
+        adminCodeInput.required = false;
+        adminCodeInput.value = ''; // Clear the input when hidden
+    }
+}
+
+// Add form validation for admin code
+document.querySelector('form').addEventListener('submit', function(e) {
+    const roleSelect = document.getElementById('role');
+    const adminCodeInput = document.getElementById('adminCode');
+
+    if (roleSelect.value === 'ADMIN') {
+        if (adminCodeInput.value !== '007') {
+            e.preventDefault();
+            alert('Invalid admin code');
+            adminCodeInput.value = '';
+            adminCodeInput.focus();
+        }
+    }
+});
+    </script>
 </body>
 </html>
