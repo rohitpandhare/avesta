@@ -1,0 +1,5 @@
+1) Create Express App - by npm init and npm install express
+2) Create index.js
+3) npm install express-session mysql2 path cors ejs
+4) creating folders - views ,routes, controllers,middleware 
+5) npm install faker @faker-js/faker mysql2

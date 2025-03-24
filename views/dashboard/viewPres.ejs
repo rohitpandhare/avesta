@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>View Prescription - DoctorSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-12">
+        <div class="text-center mb-12 space-y-4">
+            <div class="flex justify-center items-center space-x-3">
+                <h1 class="text-4xl font-bold text-gray-800">View Prescription</h1>
+            </div>
+            <p class="text-gray-600 text-lg">Enter your prescription reference ID (Format: RXxxxxxx)</p>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12">
+            <div class="grid md:grid-cols-2 gap-10 items-center">
+                <div class="hidden md:block">
+                    <img src="https://cdn-icons-png.flaticon.com/512/5996/5996831.png" 
+                         alt="Medical prescription" 
+                         class="w-full h-64 object-contain"
+                         style="filter: hue-rotate(15deg)">
+                </div>
+
+                <!-- Form -->
+                <div>
+                    <form action="/viewPres" method="POST" class="space-y-6">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-semibold mb-2">
+                                Prescription Reference ID
+                            </label>
+                            <input type="text" 
+                                   name="refId" 
+                                   placeholder="Enter RX followed by 6 digits"
+                                   required
+                                   pattern="RX[0-9]{6}"
+                                   title="Please enter valid format: RX followed by 6 digits"
+                                   class="w-full px-4 py-3 rounded-lg border-2 border-blue-100 
+                                          focus:border-blue-500 focus:ring-2 focus:ring-blue-200
+                                          placeholder-gray-400 transition-all duration-200">
+                        </div>
+
+                        <button type="submit" 
+                                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold
+                                       py-3 px-6 rounded-lg transition-all duration-200
+                                       transform hover:scale-[1.02] shadow-lg hover:shadow-xl">
+                            View Prescription
+                        </button>
+                    </form>
+
+                    <% if (typeof error !== 'undefined') { %>
+                        <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
+                            <%= error %>
+                        </div>
+                    <% } %>
+
+                    <% if (typeof prescription !== 'undefined' && prescription) { %>
+                        <div class="mt-6 p-4 border-2 border-blue-100 rounded-lg">
+                            <h3 class="font-semibold text-gray-800 mb-4">Prescription Details</h3>
+                            <div class="space-y-2">
+                                <p class="text-gray-700"><span class="font-medium">Date:</span> <%= new Date(prescription.DateIssued).toLocaleDateString() %></p>
+                                <p class="text-gray-700"><span class="font-medium">Diagnosis:</span> <%= prescription.DiagnosisNotes %></p>
+                                <p class="text-gray-700"><span class="font-medium">Medicines:</span> <%= prescription.Medicines %></p>
+                                <p class="text-gray-700"><span class="font-medium">Status:</span> 
+                                    <span class="px-2 py-1 rounded-full text-sm
+                                        <%= prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 
+                                           prescription.Status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' : 
+                                           'bg-red-100 text-red-800' %>">
+                                        <%= prescription.Status %>
+                                    </span>
+                                </p>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <a href="/" class="block mt-6 text-gray-500 hover:text-gray-700 text-sm">
+                        ← Return to homepage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</body>
+</html>
