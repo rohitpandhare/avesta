@@ -38,9 +38,18 @@ function generateReferenceId() {
 // Task 1 - view patients under doc
 async function getPatients(req, res) {
     try {
-        const DoctorID = 'SELECT DoctorID FROM doctor WHERE UserID = ?';
+        const UserID = req.session.user.UserID; // Get the UserID from the session
 
-        // Updated query to match exact schema
+        // Fetch DoctorID using UserID
+        const [doctorResult] = await conPool.query('SELECT DoctorID FROM doctor WHERE UserID = ?', [UserID]);
+
+        if (!doctorResult || doctorResult.length === 0) {
+            return sendResponse(res, "Doctor not found", {}, true, 404);
+        }
+
+        const DoctorID = doctorResult[0].DoctorID;
+
+        // Fetch patients based on DoctorID
         const [patients] = await conPool.query(
             `SELECT 
                 p.PatientID,
@@ -55,7 +64,7 @@ async function getPatients(req, res) {
                 dp.TreatmentNotes
             FROM patient p 
             INNER JOIN doctor_patient dp ON p.PatientID = dp.PatientID 
-            WHERE dp.DoctorID = ?`, 
+            WHERE dp.DoctorID = ?`,
             [DoctorID]
         );
 

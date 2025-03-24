@@ -2,7 +2,6 @@ const express = require('express');
 const session = require('express-session');
 const mysql = require('mysql2/promise');
 const path = require('path');
-const cors = require('cors');
 
 //Intialize the Express App
 const app = express();
@@ -48,6 +47,8 @@ app.use('/auth', authLinks);
 
 const docLinks = require('./routes/doctorRoutes');
 app.use('/doctor',docLinks)
+
+const doctorAuth = require('./controllers/doctorAuth');
 
 //Render The created EJS file - via get or post
 app.get('/',(req,res)=>{
@@ -220,9 +221,15 @@ app.post('/admin/delete-patient/:id', checkRole(['admin']), async (req, res) => 
   }
 });
 
-app.get('/doctor',checkRole(['doctor']), async (req,res)=>{
-  res.render('users/doctor')
-})
+app.get('/doctor', checkRole(['doctor']), async (req, res) => {
+  try {
+      // Call the getPatients function from doctorAuth.js
+      await doctorAuth.getPatients(req, res);
+  } catch (err) {
+      console.error("Error fetching patients: ", err);
+      res.render('users/doctor', { patients: [], user: req.session.user }); // Pass user data and empty patients array
+  }
+});
 
 app.get('/patient',checkRole(['patient']), async (req,res)=>{
   res.render('users/patient')

@@ -17,18 +17,18 @@ const {
 
 // Update route handlers to use the imported controller functions
 
-router.get('/doctor/list', getPatients);
-router.post('/doctor/create',createPrescription)
-router.post('/doctor/update',updatePrescription)
+router.get('/list', getPatients); // Modified route to '/list' (or keep '/patients' if you prefer)
+router.post('/create', createPrescription); // Modified route to '/create'
+router.post('/update', updatePrescription); // Modified route to '/update'
 
-router.get('/doctor/delete',deletePrescription)
-router.put('/doctor/removePatient',removePatient)
-router.get('/doctor/getPresHistory', getPrescriptionHistory)
+router.get('/delete', deletePrescription); // Modified route to '/delete'
+router.put('/removePatient', removePatient); // Modified route to '/removePatient'
+router.get('/getPresHistory', getPrescriptionHistory); // Modified route to '/getPresHistory'
 
-router.post('/doctor/createMRecord',createMedicalRecord)
-router.get('/doctor/getMedHistory', getPatientMedicalHistory)
-router.post('/doctor/addPatient', addPatient)
+router.post('/createMRecord', createMedicalRecord); // Modified route to '/createMRecord'
+router.get('/getMedHistory', getPatientMedicalHistory); // Modified route to '/getMedHistory'
+router.post('/addPatient', addPatient); // Modified route to '/addPatient'
 
-router.post('/doctor/createGlobalPres', generateReferenceId)
+router.post('/createGlobalPres', generateReferenceId); // Modified route to '/createGlobalPres'
 
 module.exports = router;
