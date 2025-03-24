@@ -26,6 +26,9 @@ app.use(express.urlencoded({extended:true}));
 app.set('view engine','ejs');
 app.set('views',path.join(__dirname,'views'));
 
+// Static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Session middleware
 app.use(
     session({
