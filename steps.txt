@@ -3,3 +3,710 @@
 3) npm install express-session mysql2 path cors ejs
 4) creating folders - views ,routes, controllers,middleware 
 5) npm install faker @faker-js/faker mysql2
+
+
+-- doctor.ejs : (backup)
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doctor Dashboard - DoctorSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        .loading-spinner {
+            display: inline-block;
+            width: 1.5rem;
+            height: 1.5rem;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-radius: 50%;
+            border-top-color: #3b82f6;
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex">
+    <!-- Sidebar Navigation -->
+    <div class="w-64 bg-white shadow-md">
+        <div class="p-6 border-b">
+            <h2 class="text-2xl font-bold text-gray-800">Doctor Portal</h2>
+            <p class="text-sm text-gray-600">Dr. <span id="doctor-name"><%= user.Username %></span></p>
+        </div>
+        <nav class="p-4">
+            <ul class="space-y-2">
+                <!-- <li>
+                    <button onclick="loadDashboard()" class="w-full flex items-center text-gray-700 hover:bg-blue-50 p-2 rounded">
+                        <i data-feather="home" class="mr-3"></i>
+                        Dashboard
+                    </button>
+                </li> -->
+                <li>
+                    <button onclick="loadPatients()" class="w-full flex items-center text-gray-700 hover:bg-blue-50 p-2 rounded">
+                        <i data-feather="users" class="mr-3"></i>
+                        My Patients
+                    </button>
+                <!-- </li>
+                <li>
+                    <button onclick="loadPrescriptions()" class="w-full flex items-center text-gray-700 hover:bg-blue-50 p-2 rounded">
+                        <i data-feather="file-text" class="mr-3"></i>
+                        Prescriptions
+                    </button>
+                </li>
+                <li>
+                    <button onclick="loadMedicalRecords()" class="w-full flex items-center text-gray-700 hover:bg-blue-50 p-2 rounded">
+                        <i data-feather="clipboard" class="mr-3"></i>
+                        Medical Records
+                    </button>
+                </li> -->
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Main Content Area -->
+    <!-- <div class="flex-1 p-8 overflow-auto"> -->
+        <!-- <header class="flex justify-between items-center mb-8">
+            <h1 id="section-title" class="text-3xl font-bold text-gray-800">Dashboard Overview</h1>
+            <div class="flex items-center space-x-4">
+                <span class="text-gray-600">Last login: <span id="last-login"><%= new Date().toLocaleString() %></span></span>
+                <a href="/auth/logout" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors">
+                    Logout
+                </a>
+            </div>
+        </header> -->
+
+        <!-- Dashboard Overview -->
+        <!-- <section id="dashboard-section" class="mb-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">Total Patients</h3>
+                        <i data-feather="users" class="text-blue-500"></i>
+                    </div>
+                    <p id="total-patients" class="text-3xl font-bold text-blue-600 mt-2">-</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">Active Prescriptions</h3>
+                        <i data-feather="file-text" class="text-green-500"></i>
+                    </div>
+                    <p id="active-prescriptions" class="text-3xl font-bold text-green-600 mt-2">-</p>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow hover:shadow-lg transition-shadow">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold">Upcoming Appointments</h3>
+                        <i data-feather="calendar" class="text-yellow-500"></i>
+                    </div>
+                    <p id="upcoming-appointments" class="text-3xl font-bold text-yellow-600 mt-2">-</p>
+                </div>
+            </div>
+        </section> -->
+
+        <!-- Patients Section -->
+        <!-- <section id="patients-section" class="hidden mb-8">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">My Patients</h2>
+                <button onclick="showAddPatientModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Add Patient
+                </button>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div id="patients-loading" class="p-8 text-center">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Loading patients...</p>
+                </div>
+                <table id="patients-table" class="min-w-full divide-y divide-gray-200 hidden">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Last Visit</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patients-list" class="bg-white divide-y divide-gray-200">
+                        
+                    </tbody>
+                </table>
+                <div id="patients-error" class="hidden p-4 text-center text-red-500"></div>
+            </div>
+        </section> -->
+
+        <!-- Prescriptions Section -->
+        <!-- <section id="prescriptions-section" class="hidden mb-8"> -->
+            <!-- <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Prescription Management</h2>
+                <button onclick="showCreatePrescriptionModal()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Create New
+                </button>
+            </div> -->
+
+            <!-- <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div id="prescriptions-loading" class="p-8 text-center">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Loading prescriptions...</p>
+                </div>
+                <table id="prescriptions-table" class="min-w-full divide-y divide-gray-200 hidden">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference ID</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Patient</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="prescriptions-list" class="bg-white divide-y divide-gray-200">
+                      
+                    </tbody>
+                </table>
+                <div id="prescriptions-error" class="hidden p-4 text-center text-red-500"></div>
+            </div> -->
+        <!-- </section> -->
+
+        <!-- Medical Records Section -->
+        <!-- <section id="medical-records-section" class="hidden mb-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Medical Records</h2>
+            
+            <div class="bg-white rounded-xl shadow overflow-hidden">
+                <div id="records-loading" class="p-8 text-center">
+                    <div class="loading-spinner mx-auto"></div>
+                    <p class="mt-2 text-gray-600">Loading medical records...</p>
+                </div>
+                <div id="records-content" class="hidden p-6">
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold mb-4">Patient Selection</h3>
+                        <select id="patient-selector" class="w-full p-3 border border-gray-300 rounded-lg" onchange="loadPatientMedicalHistory()">
+                            <option value="">Select a patient</option>
+                        
+                        </select>
+                    </div>
+                    
+                    <div id="medical-history-container" class="space-y-6">
+                        
+                    </div>
+                </div>
+                <div id="records-error" class="hidden p-4 text-center text-red-500"></div>
+            </div>
+        </section> -->
+    <!-- </div> -->
+
+    <!-- Add Patient Modal -->
+    <div id="add-patient-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Add Patient</h3>
+                <button onclick="hideModal('add-patient-modal')" class="text-gray-500 hover:text-gray-700">
+                    ✕
+                </button>
+            </div>
+            <form id="add-patient-form">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
+                        <input type="number" id="add-patient-id" required 
+                            class="w-full p-3 border border-gray-300 rounded-lg">
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideModal('add-patient-modal')" 
+                            class="px-4 py-2 border border-gray-300 rounded-lg">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                        <span id="add-patient-btn-text">Add Patient</span>
+                        <span id="add-patient-spinner" class="loading-spinner ml-2 hidden"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Prescription Modal -->
+    <!-- <div id="prescription-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Create New Prescription</h3>
+                <button onclick="hideModal('prescription-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <form id="prescription-form" onsubmit="event.preventDefault(); createPrescription();">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient</label>
+                        <select id="prescription-patient-id" required class="w-full p-3 border border-gray-300 rounded-lg">
+                            <option value="">Select patient</option>
+                            
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                        <input type="date" id="prescription-date" value="<%= new Date().toISOString().split('T')[0] %>" class="w-full p-3 border border-gray-300 rounded-lg" readonly>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis Notes</label>
+                        <textarea id="prescription-diagnosis" rows="3" required class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Medicines</label>
+                        <textarea id="prescription-medicines" rows="4" required class="w-full p-3 border border-gray-300 rounded-lg"></textarea>
+                    </div>
+                </div>
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button type="button" onclick="hideModal('prescription-modal')" class="px-4 py-2 border border-gray-300 rounded-lg">
+                        Cancel
+                    </button>
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center">
+                        <span id="create-prescription-btn-text">Create Prescription</span>
+                        <span id="create-prescription-spinner" class="loading-spinner ml-2 hidden"></span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div> -->
+
+    <!-- View Prescription Modal -->
+    <!-- <div id="view-prescription-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-xl p-6 w-full max-w-2xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold">Prescription Details</h3>
+                <button onclick="hideModal('view-prescription-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <div id="prescription-details" class="space-y-4">
+            </div>
+            <div class="mt-6 flex justify-end">
+                <button onclick="hideModal('view-prescription-modal')" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div> -->
+
+    <!-- JavaScript Section -->
+    <script>
+        // Initialize Feather Icons
+        feather.replace();
+        
+        // Global variables
+        let currentDoctorId = null;
+        let currentPatientId = null;
+        
+        // DOM Ready
+        document.addEventListener('DOMContentLoaded', async () => {
+    try {
+        const response = await fetch('/doctor/get-doctor-id');
+        if (!response.ok) throw new Error('Network response was not ok');
+        
+        const data = await response.json();
+        if (data.error) throw new Error(data.message);
+        
+        currentDoctorId = data.doctorId;
+        document.getElementById('doctor-name').textContent = data.doctorName || '<%= user.Username %>';
+        loadDashboard();
+    } catch (error) {
+        console.error('Initialization error:', error);
+        document.getElementById('section-title').textContent = 'Error Loading Dashboard';
+        document.getElementById('dashboard-section').innerHTML = `
+            <div class="bg-red-100 border border-red-400 text-red-700 p-4 rounded">
+                <p>Failed to initialize dashboard: ${error.message}</p>
+                <button onclick="location.reload()" class="mt-2 text-blue-600">Try Again</button>
+            </div>
+        `;
+    }
+});
+        
+// Section Navigation
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+
+        async function addPatient(req, res) {
+    try {
+        const { patient_id } = req.body;
+        const UserID = req.session.user.UserID;
+
+        // 1. Get connection from pool
+        const connection = await conPool.getConnection();
+        
+        try {
+            // 2. Get DoctorID from UserID
+            const [doctorResult] = await connection.query(
+                'SELECT DoctorID FROM doctor WHERE UserID = ?', 
+                [UserID]
+            );
+
+            if (!doctorResult.length) {
+                connection.release();
+                return sendResponse(res, "Doctor profile not found", {}, true, 404);
+            }
+
+            const DoctorID = doctorResult[0].DoctorID;
+
+            // 3. Verify Patient exists
+            const [patient] = await connection.query(
+                'SELECT PatientID FROM patient WHERE PatientID = ?',
+                [patient_id]
+            );
+
+            if (!patient.length) {
+                connection.release();
+                return sendResponse(res, "Patient not found", {}, true, 404);
+            }
+
+            // 4. Check if relationship exists
+            const [existing] = await connection.query(
+                `SELECT * FROM doctor_patient 
+                 WHERE DoctorID = ? AND PatientID = ?`,
+                [DoctorID, patient_id]
+            );
+
+            if (existing.length > 0) {
+                connection.release();
+                return sendResponse(res, "Patient already linked to this doctor", {}, true, 400);
+            }
+
+            // 5. Create relationship
+            await connection.query(
+                `INSERT INTO doctor_patient 
+                 (DoctorID, PatientID, FirstConsultation, ConsultationType) 
+                 VALUES (?, ?, CURDATE(), 'REGULAR')`,
+                [DoctorID, patient_id]
+            );
+
+            connection.release();
+            return sendResponse(res, "Patient added successfully", { 
+                DoctorID, 
+                PatientID: patient_id 
+            });
+
+        } catch (error) {
+            connection.release();
+            throw error;
+        }
+
+    } catch (error) {
+        console.error('Add patient error:', error);
+        return sendResponse(res, "Database error occurred", {}, true, 500);
+    }
+}
+
+        // Attach form submit handler
+        document.getElementById('add-patient-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            addPatient();
+        });
+
+//         function loadDashboard() {
+//             showSection('dashboard-section');
+//             document.getElementById('section-title').textContent = 'Dashboard Overview';
+//             loadDashboardStats();
+//         }
+        
+//         function loadPatients() {
+//             showSection('patients-section');
+//             document.getElementById('section-title').textContent = 'Patient Management';
+//             fetchPatients();
+//         }
+        
+//         function loadPrescriptions() {
+//             showSection('prescriptions-section');
+//             document.getElementById('section-title').textContent = 'Prescription Management';
+//             fetchPrescriptions();
+//         }
+        
+//         function loadMedicalRecords() {
+//             showSection('medical-records-section');
+//             document.getElementById('section-title').textContent = 'Medical Records';
+//             populatePatientSelector();
+//         }
+        
+//         // UI Helpers
+//         function showSection(sectionId) {
+//             document.querySelectorAll('section').forEach(section => {
+//                 section.classList.add('hidden');
+//             });
+//             document.getElementById(sectionId).classList.remove('hidden');
+//         }
+        
+//         function showModal(modalId) {
+//             document.getElementById(modalId).classList.remove('hidden');
+//         }
+        
+       
+        
+//         function showAddPatientModal() {
+//             showModal('add-patient-modal');
+//         }
+        
+//         function showCreatePrescriptionModal() {
+//             populatePrescriptionPatientSelector();
+//             showModal('prescription-modal');
+//         }
+        
+//         function showLoading(elementId) {
+//             document.getElementById(elementId).classList.remove('hidden');
+//         }
+        
+//         function hideLoading(elementId) {
+//             document.getElementById(elementId).classList.add('hidden');
+//         }
+        
+//         // Data Loading Functions
+//         async function loadDashboardStats() {
+//             try {
+//                 // Show loading states
+//                 showLoading('dashboard-section');
+
+//                 // Fetch stats from the server
+//                 const [patientsRes, prescriptionsRes] = await Promise.all([
+//                     fetch(`/doctor/${currentDoctorId}/patients/stats`),
+//                     fetch(`/doctor/${currentDoctorId}/prescriptions/stats`)
+//                 ]);
+
+//                 const patientsData = await patientsRes.json();
+//                 const prescriptionsData = await prescriptionsRes.json();
+
+//                 // Update dashboard metrics
+//                 document.getElementById('total-patients').textContent = patientsData.totalPatients;
+//                 document.getElementById('active-prescriptions').textContent = prescriptionsData.activePrescriptions;
+//                 document.getElementById('upcoming-appointments').textContent = patientsData.upcomingAppointments;
+
+//             } catch (error) {
+//                 console.error('Error loading dashboard stats:', error);
+//                 // Optionally show error message
+//             } finally {
+//                 hideLoading('dashboard-section');
+//             }
+//         }
+
+//         async function fetchPatients() {
+//             try {
+//                 showLoading('patients-loading');
+//                 document.getElementById('patients-table').classList.add('hidden');
+//                 document.getElementById('patients-error').classList.add('hidden');
+
+//                 const response = await fetch(`/doctor/${currentDoctorId}/patients`);
+//                 const patients = await response.json();
+
+//                 const tbody = document.getElementById('patients-list');
+//                 tbody.innerHTML = patients.map(patient => `
+//                     <tr>
+//                         <td class="px-6 py-4">${patient.PatientID}</td>
+//                         <td class="px-6 py-4">${patient.Name}</td>
+//                         <td class="px-6 py-4">${patient.Phone}</td>
+//                         <td class="px-6 py-4">${new Date(patient.LastVisit).toLocaleDateString()}</td>
+//                         <td class="px-6 py-4">
+//                             <button onclick="viewPatientMedicalHistory(${patient.PatientID})" 
+//                                     class="text-blue-500 hover:text-blue-700 mr-2"
+//                                     title="View medical history">
+//                                 <i data-feather="file-text"></i>
+//                             </button>
+//                             <button onclick="deletePatient(${patient.PatientID})" 
+//                                     class="text-red-500 hover:text-red-700"
+//                                     title="Remove patient">
+//                                 <i data-feather="trash-2"></i>
+//                             </button>
+//                         </td>
+//                     </tr>
+//                 `).join('');
+
+//                 feather.replace();
+//                 document.getElementById('patients-table').classList.remove('hidden');
+                
+//             } catch (error) {
+//                 console.error('Error fetching patients:', error);
+//                 document.getElementById('patients-error').textContent = 'Failed to load patients';
+//                 document.getElementById('patients-error').classList.remove('hidden');
+//             } finally {
+//                 hideLoading('patients-loading');
+//             }
+//         }
+
+//         async function fetchPrescriptions() {
+//             try {
+//                 showLoading('prescriptions-loading');
+//                 document.getElementById('prescriptions-table').classList.add('hidden');
+//                 document.getElementById('prescriptions-error').classList.add('hidden');
+
+//                 const response = await fetch(`/doctor/${currentDoctorId}/prescriptions`);
+//                 const prescriptions = await response.json();
+
+//                 const tbody = document.getElementById('prescriptions-list');
+//                 tbody.innerHTML = prescriptions.map(prescription => `
+//                     <tr>
+//                         <td class="px-6 py-4">${prescription.GlobalReferenceID}</td>
+//                         <td class="px-6 py-4">${prescription.PatientName}</td>
+//                         <td class="px-6 py-4">${new Date(prescription.DateIssued).toLocaleDateString()}</td>
+//                         <td class="px-6 py-4">
+//                            // Update in fetchPrescriptions()
+//                             <span class="px-3 py-1 rounded-full text-xs ${
+//                                 prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+//                                 prescription.Status === 'COMPLETED' ? 'bg-blue-100 text-blue-800' :
+//                                 'bg-gray-100 text-gray-800'
+//                             }">
+//                                 ${prescription.Status}
+//                             </span>
+//                         </td>
+//                         <td class="px-6 py-4">
+//                             <button onclick="viewPrescription('${prescription.GlobalReferenceID}')" 
+//                                     class="text-blue-500 hover:text-blue-700"
+//                                     title="View prescription">
+//                                 <i data-feather="eye"></i>
+//                             </button>
+//                         </td>
+//                     </tr>
+//                 `).join('');
+
+//                 feather.replace();
+//                 document.getElementById('prescriptions-table').classList.remove('hidden');
+                
+//             } catch (error) {
+//                 console.error('Error fetching prescriptions:', error);
+//                 document.getElementById('prescriptions-error').textContent = 'Failed to load prescriptions';
+//                 document.getElementById('prescriptions-error').classList.remove('hidden');
+//             } finally {
+//                 hideLoading('prescriptions-loading');
+//             }
+//         }
+
+//         async function populatePatientSelector() {
+//             try {
+//                 const response = await fetch(`/doctor/${currentDoctorId}/patients`);
+//                 const patients = await response.json();
+                
+//                 const selector = document.getElementById('patient-selector');
+//                 selector.innerHTML = '<option value="">Select a patient</option>' + 
+//                     patients.map(patient => `
+//                         <option value="${patient.PatientID}">${patient.Name} (ID: ${patient.PatientID})</option>
+//                     `).join('');
+                
+//             } catch (error) {
+//                 console.error('Error populating patient selector:', error);
+//             }
+//         }
+
+      
+
+// // Prescription Management Functions
+//         async function createPrescription() {
+//             const form = document.getElementById('prescription-form');
+//             const submitBtn = document.getElementById('create-prescription-btn-text');
+//             const spinner = document.getElementById('create-prescription-spinner');
+
+//             try {
+//                 submitBtn.textContent = 'Saving...';
+//                 spinner.classList.remove('hidden');
+
+//                 const response = await fetch(`/doctor/${currentDoctorId}/prescriptions`, {
+//                     method: 'POST',
+//                     headers: { 'Content-Type': 'application/json' },
+//                     body: JSON.stringify({
+//                         patientId: document.getElementById('prescription-patient-id').value,
+//                         diagnosis: document.getElementById('prescription-diagnosis').value,
+//                         medicines: document.getElementById('prescription-medicines').value
+//                     })
+//                 });
+
+//                 if (!response.ok) throw new Error('Failed to create prescription');
+                
+//                 form.reset();
+//                 hideModal('prescription-modal');
+//                 fetchPrescriptions(); // Refresh list
+                
+//             } catch (error) {
+//                 console.error('Error creating prescription:', error);
+//                 alert('Failed to create prescription: ' + error.message);
+//             } finally {
+//                 submitBtn.textContent = 'Create Prescription';
+//                 spinner.classList.add('hidden');
+//             }
+//         }
+
+//         async function viewPrescription(prescriptionId) {
+//             try {
+//                 const response = await fetch(`/doctor/prescriptions/${prescriptionId}`);
+//                 const prescription = await response.json();
+
+//                 const detailsDiv = document.getElementById('prescription-details');
+//                 detailsDiv.innerHTML = `
+//                     <div class="grid grid-cols-2 gap-4">
+//                         <div>
+//                             <p class="text-sm text-gray-500">Patient Name</p>
+//                             <p class="font-medium">${prescription.PatientName}</p>
+//                         </div>
+//                         <div>
+//                             <p class="text-sm text-gray-500">Date Issued</p>
+//                             <p class="font-medium">${new Date(prescription.DateIssued).toLocaleDateString()}</p>
+//                         </div>
+//                         <div class="col-span-2">
+//                             <p class="text-sm text-gray-500">Diagnosis Notes</p>
+//                             <p class="whitespace-pre-wrap">${prescription.DiagnosisNotes}</p>
+//                         </div>
+//                         <div class="col-span-2">
+//                             <p class="text-sm text-gray-500">Medications</p>
+//                             <div class="whitespace-pre-wrap">${prescription.Medicines}</div>
+//                         </div>
+//                     </div>
+//                 `;
+
+//                 showModal('view-prescription-modal');
+//             } catch (error) {
+//                 console.error('Error viewing prescription:', error);
+//                 alert('Failed to load prescription details');
+//             }
+//         }
+
+//         // Delete Patient Function
+//         async function deletePatient(patientId) {
+//             if (!confirm('Are you sure you want to remove this patient?')) return;
+            
+//             try {
+//                 const response = await fetch(`/doctor/${currentDoctorId}/patients/${patientId}`, {
+//                     method: 'DELETE'
+//                 });
+
+//                 if (!response.ok) throw new Error('Failed to delete patient');
+                
+//                 fetchPatients(); // Refresh list
+//             } catch (error) {
+//                 console.error('Error deleting patient:', error);
+//                 alert('Failed to delete patient: ' + error.message);
+//             }
+//         }
+
+//         // Medical History Functions
+//         async function loadPatientMedicalHistory() {
+//     const patientId = document.getElementById('patient-selector').value;
+//     if (!patientId) return;
+
+//     const container = document.getElementById('medical-history-container');
+//     container.innerHTML = '<div class="loading-spinner mx-auto my-8"></div>';
+
+//     try {
+//         const response = await fetch(`/doctor/${currentDoctorId}/patients/${patientId}/history`);
+//         if (!response.ok) throw new Error('Network response was not ok');
+        
+//         const history = await response.json();
+//         // ... rest of your code ...
+//     } catch (error) {
+//         container.innerHTML = `
+//             <div class="text-red-500 text-center p-4">
+//                 Failed to load history: ${error.message}
+//             </div>
+//         `;
+//     }
+// }
+
+    </script>
+</body>
+</html>

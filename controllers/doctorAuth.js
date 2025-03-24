@@ -348,40 +348,77 @@ async function getPatientMedicalHistory(req, res) {
 
 // 9. Add Patient to Doctor
 async function addPatient(req, res) {
+    let connection;
     try {
-        const doctorId = req.user.UserID;
         const { patient_id } = req.body;
+        const UserID = req.session.user.UserID;
 
-        // Check if link already exists
-        const [existing] = await pool.query(`
-            SELECT * FROM DOCTOR_PATIENT 
-            WHERE DoctorID = ? AND PatientID = ?
-        `, [doctorId, patient_id]);
-
-        if (existing.length > 0) {
-            return res.status(400).json({
-                success: false,
-                message: 'Patient already linked to doctor'
-            });
+        // Validate input
+        if (!Number.isInteger(Number(patient_id))) {
+            return sendResponse(res, "Invalid patient ID format", {}, true, 400);
         }
 
-        await pool.query(`
-            INSERT INTO DOCTOR_PATIENT (DoctorID, PatientID)
-            VALUES (?, ?)
-        `, [doctorId, patient_id]);
+        connection = await conPool.getConnection();
 
-        res.json({
-            success: true,
-            message: 'Patient added successfully'
+        // 1. Get DoctorID with connection release safeguard
+        const [doctorResult] = await connection.query(
+            'SELECT DoctorID FROM doctor WHERE UserID = ?', 
+            [UserID]
+        );
+
+        if (!doctorResult.length) {
+            return sendResponse(res, "Doctor profile not found", {}, true, 404);
+        }
+        const DoctorID = doctorResult[0].DoctorID;
+
+        // 2. Verify Patient exists with name
+        const [patient] = await connection.query(
+            'SELECT PatientID, Name FROM patient WHERE PatientID = ?',
+            [patient_id]
+        );
+
+        if (!patient.length) {
+            return sendResponse(res, "Patient not found", {}, true, 404);
+        }
+
+        // 3. Check existing relationship
+        const [existing] = await connection.query(
+            `SELECT * FROM doctor_patient 
+             WHERE DoctorID = ? AND PatientID = ?`,
+            [DoctorID, patient_id]
+        );
+
+        if (existing.length > 0) {
+            return sendResponse(res, 
+                `Patient ${patient[0].Name} already linked to your account`,
+                {patientName: patient[0].Name}, 
+                true, 
+                400
+            );
+        }
+
+        // 4. Create relationship
+        await connection.query(
+            `INSERT INTO doctor_patient 
+             (DoctorID, PatientID, FirstConsultation, ConsultationType) 
+             VALUES (?, ?, CURDATE(), 'REGULAR')`,
+            [DoctorID, patient_id]
+        );
+
+        return sendResponse(res, "Patient added successfully", { 
+            doctorId: DoctorID,
+            patientId: patient_id,
+            patientName: patient[0].Name  // Include patient name in response
         });
+
     } catch (error) {
-        console.error('Error adding patient:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error adding patient'
-        });
+        console.error('Add patient error:', error);
+        return sendResponse(res, "Database operation failed", {}, true, 500);
+    } finally {
+        if (connection) connection.release();
     }
 }
+
 
 module.exports = {
     getPatients,

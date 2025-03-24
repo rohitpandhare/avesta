@@ -1,7 +1,7 @@
 var myDB = require('mysql2/promise'); //importing mysql 
 
 const conPool = myDB.createPool({ //creating conpool connection - so all the func can acess them
-    connectionLimit: 1000,
+    connectionLimit: 100,
     host: 'localhost',
     user: 'root',
     password: 'root',

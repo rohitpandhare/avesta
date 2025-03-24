@@ -86,56 +86,57 @@ function createUser(req, res) {
 }
 
 // User login 
-function doLogin(req, res){
-    const { Username, Password, Role } = req.body; // extract data from req.body
-
-    const hashedPassword = md5(Password); // hash password
-
-    const query = 'SELECT UserID, Email, Role FROM user WHERE Username = ? AND Password = ? AND Role = ?';
-
-    conPool.query(query, [Username, hashedPassword, Role], (err, results) => {
+async function doLogin(req, res) {
+    try {
+      const { Username, Password, Role } = req.body;
+      const hashedPassword = md5(Password);
+  
+      const [results] = await conPool.query(
+        'SELECT UserID, Username, Email, Role, Password FROM user WHERE Username = ? AND Role = ?',
+        [Username, Role]
+      );
+  
+      if (results.length === 0 || results[0].Password !== hashedPassword) {
+        return res.status(401).render('dashboard/login', {
+          error: 'Invalid username or password'
+        });
+      }
+  
+      // Set session properly
+      req.session.loggedIn = true;
+      req.session.user = {
+        UserID: results[0].UserID,
+        Username: results[0].Username,
+        Role: results[0].Role
+      };
+  
+      // Force session save
+      req.session.save(err => {
         if (err) {
-            return res.status(500).render('dashboard/login', {
-                error: "Database error occurred"
-            });
+          console.error('Session save error:', err);
+          return res.status(500).render('error', { message: 'Session error' });
         }
-
-        if (results.length === 0) {
-            return res.status(401).render('dashboard/login', {
-              error: 'Invalid username or password'
-            });
-          }
-          
-          if (!isPasswordValid) {
-            return res.status(401).render('dashboard/login', {
-              error: 'Invalid username or password'
-            });
-          }
-          
-        const user = results[0]; // get the first user
-        req.session.loggedIn = true; // this variable is used in Index.js for Authorized routing
-        req.session.user = user; // store user data in session
-        req.session.lastActivity = Date.now(); // store last activity time
-
-        // Update last login timestamp
-        conPool.query('UPDATE user SET LastLogin = CURRENT_TIMESTAMP WHERE UserID = ?', [user.UserID]);
-
-        // Redirect based on user role
-        switch (user.Role.toLowerCase()) {
-            case 'admin':
-                res.redirect('/admin');
-                break;
-            case 'doctor':
-                res.redirect('/doctor');
-                break;
-            case 'patient':
-                res.redirect('/patient');
-                break;
-            default:
-                res.redirect('/index');
+        
+        // Redirect after successful session save
+        switch (results[0].Role.toLowerCase()) {
+          case 'admin':
+            return res.redirect('/admin');
+          case 'doctor':
+            return res.redirect('/doctor');
+          case 'patient':
+            return res.redirect('/patient');
+          default:
+            return res.redirect('/');
         }
-    });
-};
+      });
+  
+    } catch (err) {
+      console.error('Login error:', err);
+      res.status(500).render('dashboard/login', {
+        error: 'Internal server error'
+      });
+    }
+  }
 
 // Reset Password Route
 async function resetPass (req, res) {

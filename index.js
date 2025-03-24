@@ -2,6 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const mysql = require('mysql2/promise');
 const path = require('path');
+const flash = require('express-flash');
 
 //Intialize the Express App
 const app = express();
@@ -45,10 +46,16 @@ app.use(
 const authLinks = require('./routes/auth');
 app.use('/auth', authLinks);
 
-const docLinks = require('./routes/doctorRoutes');
-app.use('/doctor',docLinks)
 
-const doctorAuth = require('./controllers/doctorAuth');
+// Add these middlewares
+app.use(session({ secret: 'your-secret', resave: false, saveUninitialized: false }));
+
+app.use(flash());
+// const doctorLinks = require('./routes/doctorRoutes');
+// app.use('/doctor', doctorLinks);
+
+const doctorRoutes = require('./routes/doctorRoutes');
+app.use('/doctor', doctorRoutes); // This makes routes available at /doctor and /doctor/patients/add
 
 //Render The created EJS file - via get or post
 app.get('/',(req,res)=>{
@@ -221,13 +228,28 @@ app.post('/admin/delete-patient/:id', checkRole(['admin']), async (req, res) => 
   }
 });
 
+// Update the doctor route in index.js
 app.get('/doctor', checkRole(['doctor']), async (req, res) => {
   try {
-      // Call the getPatients function from doctorAuth.js
-      await doctorAuth.getPatients(req, res);
+    // Add debug log
+    console.log('Doctor session:', req.session.user);
+    
+    // Render the dashboard first
+    res.render('users/doctor', { 
+      user: req.session.user,
+      stats: { 
+        totalPatients: 0, // Temporary placeholder
+        upcomingAppointments: 0 
+      } 
+    });
+    
+    // Optional: Call getPatients separately via AJAX later
   } catch (err) {
-      console.error("Error fetching patients: ", err);
-      res.render('users/doctor', { patients: [], user: req.session.user }); // Pass user data and empty patients array
+    console.error("Doctor dashboard error: ", err);
+    res.render('users/doctor', { 
+      user: req.session.user,
+      error: "Failed to load dashboard" 
+    });
   }
 });
 
@@ -235,12 +257,19 @@ app.get('/patient',checkRole(['patient']), async (req,res)=>{
   res.render('users/patient')
 })
 
-// Error handling middleware
+// Error handling middleware (add at the end)
 app.use((err, req, res, next) => {
-  console.error('Unhandled Error:', err);
-  res.render('error', {
-    message: 'Internal Server Error'
-  });
+  console.error('Global error:', err);
+  
+  if (req.accepts('json')) {
+      res.status(500).json({
+          success: false,
+          message: 'Internal server error',
+          error: err.message
+      });
+  } else {
+      res.status(500).send('Internal Server Error');
+  }
 });
 
 //Port mapping
