@@ -4,139 +4,105 @@ const md5 = require('md5'); // for hashing passwords
 const { sendResponse } = require('./helperAuth'); // helper func
 
 // FROM Crud - Creating User
-function createUser(req, res) {
-    const { Username, Email, Password, Role } = req.body; // extract data from req.body
+const createUser = async (req, res) => {
+  const { Username, Email, Password, Role } = req.body;
 
-    if (!Username || !Email || !Password || !Role) { // err when any field is blank 
-        return res.status(400).render('signup', {
-            error: "Missing required fields"
-        });
-    }
+  // Validation
+  if (!Username || !Email || !Password || !Role) {
+      return res.status(400).render('dashboard/signup', {
+          error: "All fields are required"
+      });
+  }
 
-    const validUserTypes = ['patient', 'doctor', 'admin']; // valid user array
-    const normalizedUserType = Role.toLowerCase(); // lowercase to avoid case sensitivity
+  if (!['PATIENT', 'DOCTOR', 'ADMIN'].includes(Role)) {
+      return res.status(400).render('dashboard/signup', {
+          error: "Invalid user role"
+      });
+  }
 
-    // err handling 
-    if (!validUserTypes.includes(normalizedUserType)) { // if not from valid user array - err
-        return res.status(400).render('signup', {
-                    error: `Invalid user type. Must be one of: ${validUserTypes.join(', ')}`
-                    }
-                );
-        }
+  try {
+      // Create user in database
+      const hashedPassword = md5(Password);
+      const [result] = await conPool.query(
+          `INSERT INTO USER (Username, Email, Password, Role)
+           VALUES (?, ?, ?, ?)`,
+          [Username, Email, hashedPassword, Role]
+      );
 
-    const hashedPassword = md5(Password);
-    
-    // Two-step transaction for user creation ( getConnection and beginTransaction)
-    conPool.getConnection((err, connection) => {
-        if (err) { // err handling
-            return res.status(500).render('signup', {
-                error: "Database connection error"
-            });
-        }
+      // Set session with incomplete profile flag
+      req.session.user = {
+          UserID: result.insertId,
+          Username,
+          Role,
+          profileComplete: false
+      };
 
-        connection.beginTransaction(err => {
-            if (err) {
-                connection.release(); // release connection 
-                return res.status(500).render('signup', {
-                    error: "Transaction error"
-                    });
-            }
-            // Create user query
-            const query = `
-                INSERT INTO user
-                (Username, Email, Password, Role) 
-                VALUES (?, ?, ?, ?)
-            `;
-            
-            //core logic here
-            connection.query(query, [Username, Email, hashedPassword, normalizedUserType], (err) => {
-                if (err) {
-                    // Rollback transaction on error
-                    connection.rollback(() => {
-                        connection.release();
-                        if (err.code === 'ER_DUP_ENTRY') {
-                            return res.status(400).render('signup', {
-                                error: "Username or email already exists"
-                            });
-                        }
-                        return res.status(500).render('signup', {
-                            error: "Error creating user: " + err.message
-                        });
-                    });
-                    return; //exit
-                }
+      // Redirect to profile completion
+      if (Role === 'DOCTOR') {
+          res.redirect('/doctor/profile');
+      } else if (Role === 'PATIENT') {
+          res.redirect('/patient/profile');
+      } else {
+          req.session.user.profileComplete = true;
+          res.redirect('/admin');
+      }
 
-                connection.commit(err => {
-                    if (err) {
-                        connection.rollback(() => {
-                            connection.release();
-                            return res.status(500).render('signup', {
-                                error: "Error finalizing user creation"
-                            });
-                        });
-                        return;
-                    }
-                    
-                    connection.release();
-                    res.redirect('/login');
-                });
-            });
-        });
-    });
-}
+  } catch (err) {
+      console.error("Signup error:", err);
+      const errorMessage = err.code === 'ER_DUP_ENTRY' 
+          ? "Username or email already exists" 
+          : "Registration failed";
+      
+      res.status(400).render('dashboard/signup', { error: errorMessage });
+  }
+};
 
 // User login 
 async function doLogin(req, res) {
-    try {
+  try {
       const { Username, Password, Role } = req.body;
-      const hashedPassword = md5(Password);
-  
-      const [results] = await conPool.query(
-        'SELECT UserID, Username, Email, Role, Password FROM user WHERE Username = ? AND Role = ?',
-        [Username, Role]
-      );
-  
-      if (results.length === 0 || results[0].Password !== hashedPassword) {
-        return res.status(401).render('dashboard/login', {
-          error: 'Invalid username or password'
-        });
+
+      if (!Username || !Password || !Role) {
+          return res.status(400).render('dashboard/login', {
+              error: 'All fields are required',
+              username: Username,
+              role: Role,
+          });
       }
-  
-      // Set session properly
-      req.session.loggedIn = true;
+
+      const hashedPassword = md5(Password);
+      const [users] = await conPool.query(
+          'SELECT UserID, Username, Role FROM user WHERE Username = ? AND Password = ? AND Role = ?',
+          [Username, hashedPassword, Role]
+      );
+
+      if (!users || users.length === 0) {
+          return res.status(401).render('dashboard/login', { error: 'Invalid credentials' });
+      }
+
+      // Session Setup
       req.session.user = {
-        UserID: results[0].UserID,
-        Username: results[0].Username,
-        Role: results[0].Role
+          UserID: users[0].UserID,
+          Username: users[0].Username,
+          Role: users[0].Role,
+          profileComplete: false,
       };
-  
-      // Force session save
-      req.session.save(err => {
-        if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).render('error', { message: 'Session error' });
-        }
-        
-        // Redirect after successful session save
-        switch (results[0].Role.toLowerCase()) {
-          case 'admin':
-            return res.redirect('/admin');
-          case 'doctor':
-            return res.redirect('/doctor');
-          case 'patient':
-            return res.redirect('/patient');
-          default:
-            return res.redirect('/');
-        }
-      });
-  
-    } catch (err) {
+
+      // Role-based redirection
+      if (Role === 'DOCTOR') {
+          return res.redirect('/doctor');
+      } else if (Role === 'PATIENT') {
+          return res.redirect('/patient');
+      } else if (Role === 'ADMIN') {
+          req.session.user.profileComplete = true;
+          return res.redirect('/admin');
+      }
+
+  } catch (err) {
       console.error('Login error:', err);
-      res.status(500).render('dashboard/login', {
-        error: 'Internal server error'
-      });
-    }
+      return res.status(500).render('dashboard/login', { error: 'Server error during login' });
   }
+}
 
 // Reset Password Route
 async function resetPass (req, res) {

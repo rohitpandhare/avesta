@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Doctor Profile</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-xl shadow-lg w-96">
+        <h1 class="text-2xl font-bold mb-6">Complete Doctor Profile</h1>
+        <% if (user) { %>
+            <h1>Welcome, Dr. <%= user.Username %></h1>
+            <p>Your specialty: <%= user.specialty || 'Not Set' %></p>
+        <% } %>
+        <form action="/doctor/profile" method="post">
+            <div class="space-y-4">
+                <!-- Add this Name field -->
+                <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Full Name</label>
+                    <input type="text" name="Name" required 
+                        class="w-full p-3 border rounded-lg"
+                        value="<%= user.Username %>">
+                </div>
+
+                   <!-- Phone Number Field -->
+                   <div class="space-y-2">
+                    <label class="block text-sm font-medium text-gray-700">Phone Number</label>
+                    <input type="tel" 
+                           name="Phone" 
+                           required
+                           placeholder="9876543210"
+                           pattern="[0-9]{10}"
+                           inputmode="numeric"
+                           title="Enter 10-digit number without country code or symbols"
+                           class="w-full p-3 border rounded-lg">
+                </div>
+                
+
+                <input type="text" name="LicenseNumber" placeholder="License Number" required
+                       class="w-full p-3 border rounded-lg">
+                <select name="Specialty" required class="w-full p-3 border rounded-lg">
+                    <option value="">Select Specialty</option>
+                    <option value="Cardiology">Cardiology</option>
+                    <option value="Dermatology">Dermatology
+                    </option>
+                    <option value="Pediatrics">Pediatrics
+                    </option>
+                    <option value="Orthopedics">Orthopedics
+                    </option>
+                </select>
+                <input type="text" name="Qualifications" placeholder="Qualifications" required
+                       class="w-full p-3 border rounded-lg">
+            </div>
+            
+            <button type="submit" 
+                    class="w-full bg-blue-500 text-white py-3 rounded-lg mt-6 hover:bg-blue-600">
+                Complete Profile
+            </button>
+        </form>
+    </div>
+</body>
+</html>

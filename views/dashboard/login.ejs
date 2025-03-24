@@ -15,6 +15,13 @@
                 <p class="text-gray-600 mt-2">Login to your account</p>
             </div>
 
+                <!-- Add this after the header div in login.ejs -->
+<% if (locals.error) { %>
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+        <span class="block sm:inline"><%= error %></span>
+    </div>
+<% } %>
+
             <!-- Login Form -->
             <form action="/auth/login" method="post" class="space-y-6">
                 <!-- Role section with Patient as default -->

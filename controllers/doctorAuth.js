@@ -419,6 +419,13 @@ async function addPatient(req, res) {
     }
 }
 
+const verifyDoctor = async (req, res, next) => {
+    if (!req.session.user || req.session.user.Role !== 'DOCTOR') {
+        console.log('Blocked access for non-doctor:', req.session.user);
+        return res.status(403).redirect('/login');
+    }
+    next();
+};
 
 module.exports = {
     getPatients,
@@ -430,5 +437,6 @@ module.exports = {
     createMedicalRecord,
     getPatientMedicalHistory,
     addPatient,
-    generateReferenceId
+    generateReferenceId,
+    verifyDoctor
 };

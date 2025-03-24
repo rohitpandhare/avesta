@@ -1,3 +1,4 @@
+// public/javascripts/loginHelp.js
 function toggleAdminCode() {
     const roleSelect = document.getElementById('role');
     const adminCodeSection = document.getElementById('adminCodeSection');
@@ -9,9 +10,9 @@ function toggleAdminCode() {
     } else {
         adminCodeSection.classList.add('hidden');
         adminCodeInput.required = false;
-        adminCodeInput.value = ''; // Clear the input when hidden
     }
 }
+
 
 // Add form validation for admin code
 document.querySelector('form').addEventListener('submit', function(e) {
@@ -27,3 +28,14 @@ document.querySelector('form').addEventListener('submit', function(e) {
         }
     }
 });
+
+document.getElementById('loginForm').onsubmit = function (e) {
+    const usernameField = document.getElementById('username');
+    const roleField = document.getElementById('role');
+
+    // Add Client-side Validations (optional)
+    if (!usernameField.value || !roleField.value) {
+        e.preventDefault();
+        alert('Please fill in all fields.');
+    }
+};
