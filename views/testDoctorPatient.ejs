@@ -1,0 +1,65 @@
+<!-- views/testDoctorPatient.ejs -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Doctor-Patient Relationship</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8">
+    <div class="max-w-md mx-auto bg-white p-6 rounded-lg shadow">
+        <h1 class="text-2xl font-bold mb-6">Add Doctor-Patient Relationship</h1>
+
+        <% if (locals.error) { %>
+            <div class="mb-4 text-red-600"><%= error %></div>
+        <% } %>
+        <% if (locals.success) { %>
+            <div class="mb-4 text-green-600"><%= success %></div>
+        <% } %>
+
+        <form action="/test-doctor-patient" method="POST">
+            <div class="space-y-4">
+                <div>
+                    <label class="block mb-1">Doctor ID</label>
+                    <input type="number" name="DoctorID" required 
+                           class="w-full border p-2 rounded">
+                </div>
+
+                <div>
+                    <label class="block mb-1">Patient ID</label>
+                    <input type="number" name="PatientID" required 
+                           class="w-full border p-2 rounded">
+                </div>
+
+                <div>
+                    <label class="block mb-1">First Consultation Date</label>
+                    <input type="date" name="FirstConsultation" required 
+                           class="w-full border p-2 rounded">
+                </div>
+
+                <div>
+                    <label class="block mb-1">Consultation Type</label>
+                    <select name="ConsultationType" required 
+                            class="w-full border p-2 rounded">
+                        <option value="REGULAR">REGULAR</option>
+                        <option value="EMERGENCY">EMERGENCY</option>
+                        <option value="FOLLOWUP">FOLLOWUP</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block mb-1">Treatment Notes</label>
+                    <textarea name="TreatmentNotes" required 
+                              class="w-full border p-2 rounded"></textarea>
+                </div>
+
+                <button type="submit" 
+                        class="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600">
+                    Submit
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

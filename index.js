@@ -356,42 +356,31 @@ app.delete('/admin/delete-patient/:id', async (req, res) => {
 // User routes
 app.get('/doctor', checkRole(['doctor']), async (req, res) => {
     try {
-        const stats = {
-            totalPatients: 0,
-            upcomingAppointments: 0,
-            recentAppointments: []
-        };
-
         if (req.session.user && req.session.user.Role === 'doctor') {
-            const [patientCount] = await conPool.promise().query(
-                'SELECT COUNT(*) as count FROM user WHERE Role = "patient"'
-            );
-            const [appointmentCount] = await conPool.promise().query(
-                'SELECT COUNT(*) as count FROM appointments WHERE doctor_id = ? AND appointment_date > NOW()',
+            // Get doctorID from doctor table
+            const [realDocID] = await conPool.query(
+                'SELECT DoctorID FROM doctor WHERE UserID = ?',
                 [req.session.user.UserID]
             );
+            
+            // Add doctorID to user object
+            req.session.user.doctorID = realDocID[0].DoctorID;
+            
+            console.log("Updated user object:", req.session.user); // For debugging
 
-            stats.totalPatients = patientCount[0].count;
-            stats.upcomingAppointments = appointmentCount[0].count;
+            res.render('users/doctor', {
+                user: req.session.user,
+                currentDoctorID: realDocID[0].DoctorID
+            });
         }
-
-        res.render('users/doctor', {
-            user: req.session.user,
-            stats: stats
-        });
     } catch (err) {
         console.error('Error loading doctor dashboard:', err);
         res.render('users/doctor', {
             user: req.session.user,
-            stats: {
-                totalPatients: 0,
-                upcomingAppointments: 0,
-                recentAppointments: []
-            }
+            currentDoctorID: null
         });
     }
 });
-
 
 
 app.post('/doctor/profile', checkRole(['doctor']),async (req, res) => {
@@ -464,6 +453,100 @@ app.get('/auth/logout', (req, res) => {
         res.redirect('/login');
     });
 });
+
+
+// GET route to display the form
+app.get('/test-doctor-patient', (req, res) => {
+    res.render('testDoctorPatient');
+});
+
+// POST route to handle form submission
+app.post('/test-doctor-patient', async (req, res) => {
+    try {
+        const { DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
+
+        await conPool.query(
+            `INSERT INTO DOCTOR_PATIENT 
+            (DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes) 
+            VALUES (?, ?, ?, ?, ?)`,
+            [DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
+        );
+
+        res.render('testDoctorPatient', { success: 'Data inserted successfully!' });
+    } catch (err) {
+        console.error('Error:', err);
+        res.render('testDoctorPatient', { 
+            error: 'Error inserting data: ' + err.message,
+            ...req.body  // Sends back the form data in case of error
+        });
+    }
+});
+
+
+// Prescription Routes
+app.get('/test-prescription', (req, res) => {
+    res.render('testPrescription');
+});
+
+app.post('/test-prescription', async (req, res) => {
+    try {
+        const { PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID } = req.body;
+
+        await conPool.query(
+            `INSERT INTO PRESCRIPTION 
+            (PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID) 
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID]
+        );
+
+        res.render('testPrescription', { success: 'Prescription added successfully!' });
+    } catch (err) {
+        console.error('Error:', err);
+        res.render('testPrescription', { error: 'Error adding prescription: ' + err.message });
+    }
+});
+
+// Medical Record Routes
+app.get('/test-medical-record', (req, res) => {
+    res.render('testMedicalRecord');
+});
+
+app.post('/test-medical-record', async (req, res) => {
+    try {
+        const { PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy } = req.body;
+
+        await conPool.query(
+            `INSERT INTO MEDICAL_RECORD 
+            (PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy]
+        );
+
+        res.render('testMedicalRecord', { success: 'Medical record added successfully!' });
+    } catch (err) {
+        console.error('Error:', err);
+        res.render('testMedicalRecord', { error: 'Error adding medical record: ' + err.message });
+    }
+});
+
+app.get('/test-view-all', async (req, res) => {
+    try {
+        // Fetch all records from all three tables
+        const [prescriptions] = await conPool.query('SELECT * FROM PRESCRIPTION ORDER BY DateIssued DESC');
+        const [medicalRecords] = await conPool.query('SELECT * FROM MEDICAL_RECORD ORDER BY RecordDate DESC');
+        const [doctorPatients] = await conPool.query('SELECT * FROM DOCTOR_PATIENT ORDER BY FirstConsultation DESC');
+
+        res.render('testViewAllRecords', {
+            prescriptions,
+            medicalRecords,
+            doctorPatients
+        });
+    } catch (err) {
+        console.error('Error fetching records:', err);
+        res.status(500).send('Error fetching records: ' + err.message);
+    }
+});
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
