@@ -54,7 +54,7 @@ const checkRole = (roles = []) => {
             return res.redirect('/login');
         }
         if (!roles.includes(req.session.user.Role.toLowerCase())) {
-            return res.status(403).render('checks/error', {
+            return res.status(403).render('error', {
                 message: 'Access Denied'
             });
         }
@@ -62,10 +62,24 @@ const checkRole = (roles = []) => {
     };
 };
 
+// Import auth controllers
+const {
+    doLogin,
+    createUser,
+    logout,
+    resetPass
+} = require('./controllers/userAuth');
+
+// Auth Routes
+app.post('/auth/login', doLogin);
+app.post('/auth/signup', createUser);
+app.get('/auth/logout', logout);
+app.post('/reset', resetPass);
+
 // Find All Doctors
 app.get('/findDr', async (req, res) => {
     try {
-        const [doctors] = await conPool.query(`
+        const [doctors] = await conPool.promise().query(`
             SELECT 
                 DoctorID,
                 Name,
@@ -92,7 +106,7 @@ app.get('/findDr/search', async (req, res) => {
     try {
         const searchTerm = req.query.search || '';
 
-        const [doctors] = await conPool.query(`
+        const [doctors] = await conPool.promise().query(`
             SELECT 
                 DoctorID,
                 Name,
@@ -126,7 +140,7 @@ app.post('/viewPres', async (req, res) => {
     try {
         const refId = req.body.refId;
 
-        const [prescriptions] = await conPool.query(`
+        const [prescriptions] = await conPool.promise().query(`
             SELECT 
                 p.PrescriptionID, 
                 p.DateIssued, 
@@ -228,6 +242,8 @@ app.post('/reset', async (req, res) => {
 
 
 // Admin routes
+
+
 app.get('/admin', checkRole(['admin']), async (req, res) => {
     try {
         // Fetch all required data in parallel
@@ -335,6 +351,8 @@ app.delete('/admin/delete-patient/:id', async (req, res) => {
     }
 });
 
+
+
 // User routes
 app.get('/doctor', checkRole(['doctor']), async (req, res) => {
     try {
@@ -374,6 +392,8 @@ app.get('/doctor', checkRole(['doctor']), async (req, res) => {
     }
 });
 
+
+
 app.post('/doctor/profile', checkRole(['doctor']),async (req, res) => {
     const userId = req.session.user.UserID;
     const { Name, Specialty, LicenseNumber, Qualifications, Phone } = req.body;
@@ -401,6 +421,7 @@ app.post('/doctor/profile', checkRole(['doctor']),async (req, res) => {
         });
     }
 });
+
 
 app.get('/patient', checkRole(['patient']), (req, res) => {
     res.render('users/patient', { user: req.session.user });
@@ -447,7 +468,7 @@ app.get('/auth/logout', (req, res) => {
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err);
-    res.status(500).render('checks/error', {
+    res.status(500).render('error', {
         message: 'Internal Server Error'
     });
 });

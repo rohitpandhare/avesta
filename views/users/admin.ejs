@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - DoctorSync</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <div class="w-64 bg-white shadow-md">
+            <div class="p-6 border-b">
+                <h2 class="text-2xl font-bold text-gray-800">Admin Panel</h2>
+            </div>
+            <nav class="p-4">
+                <ul class="space-y-4">
+                    <li>
+                        <a href="#dashboard" class="flex items-center text-gray-700 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-50">
+                            <i data-feather="home" class="w-5 h-5 mr-3"></i>
+                            Dashboard
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#users" class="flex items-center text-gray-700 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-50">
+                            <i data-feather="users" class="w-5 h-5 mr-3"></i>
+                            Users
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#doctors" class="flex items-center text-gray-700 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-50">
+                            <i data-feather="user-plus" class="w-5 h-5 mr-3"></i>
+                            Doctors
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#patients" class="flex items-center text-gray-700 hover:text-blue-600 p-2 rounded-lg hover:bg-gray-50">
+                            <i data-feather="user" class="w-5 h-5 mr-3"></i>
+                            Patients
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto p-8">
+            <header class="flex justify-between items-center mb-8">
+                <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+                <div class="flex items-center">
+                    <span class="mr-4">Welcome, <%= user?.Username?.split('@')[0] || 'Admin' %></span>
+                    <a href="/auth/logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Logout</a>
+                </div>
+            </header>
+
+            <!-- Stats Section -->
+            <section id="dashboard" class="mb-12">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-2">Total Users</h3>
+                        <p class="text-3xl font-bold text-blue-600"><%= userList?.length || 0 %></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-2">Total Doctors</h3>
+                        <p class="text-3xl font-bold text-green-600"><%= doctorList?.length || 0 %></p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-lg font-semibold mb-2">Total Patients</h3>
+                        <p class="text-3xl font-bold text-yellow-600"><%= patientList?.length || 0 %></p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section id="users" class="mb-12">
+                <h2 class="text-xl font-bold mb-4">User Management</h2>
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">UserID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Username</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <% if (userList?.length > 0) { %>
+                                <% userList.forEach(user => { %>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= user.UserID %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= user.Username %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= user.Email %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= user.Role %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button onclick="deleteItem('user', '<%= user.UserID %>')" 
+                                                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="px-6 py-4 text-center">No users available</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Doctors Section -->
+            <section id="doctors" class="mb-12">
+                <h2 class="text-xl font-bold mb-4">Doctor Management</h2>
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">DoctorID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Specialty</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">License</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <% if (doctorList?.length > 0) { %>
+                                <% doctorList.forEach(doctor => { %>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= doctor.DoctorID %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= doctor.Name %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= doctor.Specialty %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= doctor.Phone %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= doctor.LicenseNumber %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button onclick="deleteItem('doctor', '<%= doctor.DoctorID %>')" 
+                                                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="px-6 py-4 text-center">No doctors available</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Patients Section -->
+            <section id="patients" class="mb-12">
+                <h2 class="text-xl font-bold mb-4">Patient Management</h2>
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PatientID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Phone</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">DOB</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Blood Group</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <% if (patientList?.length > 0) { %>
+                                <% patientList.forEach(patient => { %>
+                                    <tr>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= patient.PatientID %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= patient.Name %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= patient.Address %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= patient.Phone %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= patient.DOB %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap"><%= patient.BloodGroup %></td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <button onclick="deleteItem('patient', '<%= patient.PatientID %>')" 
+                                                    class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                                Delete
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="px-6 py-4 text-center">No patients available</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Feather Icons
+        feather.replace();
+
+        // Delete functionality
+        function deleteItem(type, id) {
+            if (!confirm(`Are you sure you want to delete this ${type}?`)) {
+                return;
+            }
+
+            fetch(`/admin/delete-${type}/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'include'
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(error => {
+                        throw new Error(error.message || 'Error occurred');
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                alert(data.message || `${type} deleted successfully`);
+                window.location.reload();
+            })
+            .catch(error => {
+                console.error(`Error deleting ${type}:`, error);
+                alert(`Failed to delete ${type}: ${error.message}`);
+            });
+        }
+    </script>
+</body>
+</html>
