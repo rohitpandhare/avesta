@@ -39,7 +39,6 @@ const checkProfileComplete = async (req, res, next) => {
     }
 };
 
-
 // middleware/auth.js
 const checkAuth = (req, res, next) => {
     if (!req.session.loggedIn) {

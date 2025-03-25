@@ -1,4 +1,4 @@
-// public/javascripts/loginHelp.js
+// Updated loginHelp.js
 function toggleAdminCode() {
     const roleSelect = document.getElementById('role');
     const adminCodeSection = document.getElementById('adminCodeSection');
@@ -10,32 +10,36 @@ function toggleAdminCode() {
     } else {
         adminCodeSection.classList.add('hidden');
         adminCodeInput.required = false;
+        adminCodeInput.value = ''; // Clear admin code when switching roles
     }
 }
 
-
-// Add form validation for admin code
+// Form validation
 document.querySelector('form').addEventListener('submit', function(e) {
-    const roleSelect = document.getElementById('role');
-    const adminCodeInput = document.getElementById('adminCode');
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const role = document.getElementById('role').value;
+    const adminCode = document.getElementById('adminCode');
 
-    if (roleSelect.value === 'ADMIN') {
-        if (adminCodeInput.value !== '007') {
+    // Basic validation
+    if (!username || !password || !role) {
+        e.preventDefault();
+        alert('Please fill in all required fields');
+        return;
+    }
+
+    // Admin code validation
+    if (role === 'ADMIN') {
+        if (!adminCode.value.trim()) {
             e.preventDefault();
-            alert('Invalid admin code');
-            adminCodeInput.value = '';
-            adminCodeInput.focus();
+            alert('Admin code is required');
+            adminCode.focus();
+            return;
         }
     }
 });
 
-document.getElementById('loginForm').onsubmit = function (e) {
-    const usernameField = document.getElementById('username');
-    const roleField = document.getElementById('role');
-
-    // Add Client-side Validations (optional)
-    if (!usernameField.value || !roleField.value) {
-        e.preventDefault();
-        alert('Please fill in all fields.');
-    }
-};
+// Initialize admin code visibility on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleAdminCode();
+});

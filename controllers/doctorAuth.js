@@ -1,442 +1,442 @@
-const conPool = require('../config/dbHandler');
-const { sendResponse } = require('./helperAuth');
+// const conPool = require('../config/dbHandler');
+// const { sendResponse } = require('./helperAuth');
 
 
-/**
- All task - 
-    updateProfile
+// /**
+//  All task - 
+//     updateProfile
 	
-	addPatient,
+// 	addPatient,
 
-	getPatients,
+// 	getPatients,
 
-	removePatient,
+// 	removePatient,
 	
-    createPrescription,
+//     createPrescription,
 
-    updatePrescription,
+//     updatePrescription,
 
-    deletePrescription,
+//     deletePrescription,
 
-    getPrescriptionHistory,
+//     getPrescriptionHistory,
 
-    createMedicalRecord,
+//     createMedicalRecord,
 
-    getPatientMedicalHistory,
- */
+//     getPatientMedicalHistory,
+//  */
 
-//main task 
-function generateReferenceId() {
-    // Generate a prescription reference ID in format RX + 6 digits
-    const prefix = 'RX';
-    const timestamp = Date.now().toString();
-    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const uniqueId = timestamp.slice(-3) + randomNum;
-    return `${prefix}${uniqueId}`;
-}
+// //main task 
+// function generateReferenceId() {
+//     // Generate a prescription reference ID in format RX + 6 digits
+//     const prefix = 'RX';
+//     const timestamp = Date.now().toString();
+//     const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+//     const uniqueId = timestamp.slice(-3) + randomNum;
+//     return `${prefix}${uniqueId}`;
+// }
 
-// Task 1 - view patients under doc
-async function getPatients(req, res) {
-    try {
-        const UserID = req.session.user.UserID; // Get the UserID from the session
+// // Task 1 - view patients under doc
+// async function getPatients(req, res) {
+//     try {
+//         const UserID = req.session.user.UserID; // Get the UserID from the session
 
-        // Fetch DoctorID using UserID
-        const [doctorResult] = await conPool.query('SELECT DoctorID FROM doctor WHERE UserID = ?', [UserID]);
+//         // Fetch DoctorID using UserID
+//         const [doctorResult] = await conPool.query('SELECT DoctorID FROM doctor WHERE UserID = ?', [UserID]);
 
-        if (!doctorResult || doctorResult.length === 0) {
-            return sendResponse(res, "Doctor not found", {}, true, 404);
-        }
+//         if (!doctorResult || doctorResult.length === 0) {
+//             return sendResponse(res, "Doctor not found", {}, true, 404);
+//         }
 
-        const DoctorID = doctorResult[0].DoctorID;
+//         const DoctorID = doctorResult[0].DoctorID;
 
-        // Fetch patients based on DoctorID
-        const [patients] = await conPool.query(
-            `SELECT 
-                p.PatientID,
-                p.Name, 
-                p.Address, 
-                p.Phone,
-                p.DOB, 
-                p.BloodGroup,
-                p.MedicalHistory,
-                dp.ConsultationType,
-                dp.FirstConsultation,
-                dp.TreatmentNotes
-            FROM patient p 
-            INNER JOIN doctor_patient dp ON p.PatientID = dp.PatientID 
-            WHERE dp.DoctorID = ?`,
-            [DoctorID]
-        );
+//         // Fetch patients based on DoctorID
+//         const [patients] = await conPool.query(
+//             `SELECT 
+//                 p.PatientID,
+//                 p.Name, 
+//                 p.Address, 
+//                 p.Phone,
+//                 p.DOB, 
+//                 p.BloodGroup,
+//                 p.MedicalHistory,
+//                 dp.ConsultationType,
+//                 dp.FirstConsultation,
+//                 dp.TreatmentNotes
+//             FROM patient p 
+//             INNER JOIN doctor_patient dp ON p.PatientID = dp.PatientID 
+//             WHERE dp.DoctorID = ?`,
+//             [DoctorID]
+//         );
 
-        sendResponse(res, "Patients fetched successfully", patients);
-    } catch (error) {
-        console.error(error);
-        sendResponse(res, "Error fetching patients", {}, true, 500);
-    }
-}
+//         sendResponse(res, "Patients fetched successfully", patients);
+//     } catch (error) {
+//         console.error(error);
+//         sendResponse(res, "Error fetching patients", {}, true, 500);
+//     }
+// }
 
-// Task 2 - create prescription
-async function createPrescription(req, res) {
+// // Task 2 - create prescription
+// async function createPrescription(req, res) {
     
-    const { 
-        PatientID, 
-        DiagnosisNotes, 
-        Medicines
-    } = req.body;
+//     const { 
+//         PatientID, 
+//         DiagnosisNotes, 
+//         Medicines
+//     } = req.body;
 
-    // Get DoctorID from user session based on your auth approach
-    const user = req.session.user;
+//     // Get DoctorID from user session based on your auth approach
+//     const user = req.session.user;
 
-    // First get the DoctorID from doctor table using UserID from session
-    const getDoctorIDQuery = 'SELECT DoctorID FROM doctor WHERE UserID = ?';
+//     // First get the DoctorID from doctor table using UserID from session
+//     const getDoctorIDQuery = 'SELECT DoctorID FROM doctor WHERE UserID = ?';
     
 
-    // Set current date for DateIssued
-    const DateIssued = new Date().toISOString().split('T')[0];
+//     // Set current date for DateIssued
+//     const DateIssued = new Date().toISOString().split('T')[0];
     
-    // Set initial status as 'ACTIVE'
-    const Status = 'ACTIVE';
+//     // Set initial status as 'ACTIVE'
+//     const Status = 'ACTIVE';
 
-    // Generate a unique prescription reference ID
-    const GlobalReferenceID = generateReferenceId();
+//     // Generate a unique prescription reference ID
+//     const GlobalReferenceID = generateReferenceId();
 
-    conPool.getConnection((err, connection) => {
-        if (err) {
-            return sendResponse(res, "Database connection error", { message: err.message }, true, 500);
-        }
+//     conPool.getConnection((err, connection) => {
+//         if (err) {
+//             return sendResponse(res, "Database connection error", { message: err.message }, true, 500);
+//         }
 
-        connection.beginTransaction(err => {
-            if (err) {
-                connection.release();
-                return sendResponse(res, "Transaction error", { message: err.message }, true, 500);
-            }
+//         connection.beginTransaction(err => {
+//             if (err) {
+//                 connection.release();
+//                 return sendResponse(res, "Transaction error", { message: err.message }, true, 500);
+//             }
 
-            // First get DoctorID
-            connection.query(getDoctorIDQuery, [user.UserID], (err, doctorResult) => {
-                if (err) {
-                    connection.rollback(() => {
-                        connection.release();
-                        return sendResponse(res, "Error getting DoctorID", { message: err.message }, true, 500);
-                    });
-                    return;
-                }
+//             // First get DoctorID
+//             connection.query(getDoctorIDQuery, [user.UserID], (err, doctorResult) => {
+//                 if (err) {
+//                     connection.rollback(() => {
+//                         connection.release();
+//                         return sendResponse(res, "Error getting DoctorID", { message: err.message }, true, 500);
+//                     });
+//                     return;
+//                 }
 
-                if (!doctorResult || doctorResult.length === 0) {
-                    connection.rollback(() => {
-                        connection.release();
-                        return sendResponse(res, "Doctor not found", { message: "Invalid doctor account" }, true, 404);
-                    });
-                    return;
-                }
+//                 if (!doctorResult || doctorResult.length === 0) {
+//                     connection.rollback(() => {
+//                         connection.release();
+//                         return sendResponse(res, "Doctor not found", { message: "Invalid doctor account" }, true, 404);
+//                     });
+//                     return;
+//                 }
 
-                const DoctorID = doctorResult[0].DoctorID;
+//                 const DoctorID = doctorResult[0].DoctorID;
 
-                // Now create the prescription
-                const prescriptionQuery = `
-                    INSERT INTO PRESCRIPTION 
-                    (PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?)
-                `;
+//                 // Now create the prescription
+//                 const prescriptionQuery = `
+//                     INSERT INTO PRESCRIPTION 
+//                     (PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID) 
+//                     VALUES (?, ?, ?, ?, ?, ?, ?)
+//                 `;
 
-                connection.query(
-                    prescriptionQuery, 
-                    [PatientID, DoctorID,DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID],
-                    (err, result) => {
-                        if (err) {
-                            connection.rollback(() => {
-                                connection.release();
-                                return sendResponse(res, "Error creating prescription", { message: err.message }, true, 500);
-                            });
-                            return;
-                        }
+//                 connection.query(
+//                     prescriptionQuery, 
+//                     [PatientID, DoctorID,DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID],
+//                     (err, result) => {
+//                         if (err) {
+//                             connection.rollback(() => {
+//                                 connection.release();
+//                                 return sendResponse(res, "Error creating prescription", { message: err.message }, true, 500);
+//                             });
+//                             return;
+//                         }
 
-                        connection.commit(err => {
-                            if (err) {
-                                connection.rollback(() => {
-                                    connection.release();
-                                    return sendResponse(res, "Error committing transaction", { message: err.message }, true, 500);
-                                });
-                                return;
-                            }
+//                         connection.commit(err => {
+//                             if (err) {
+//                                 connection.rollback(() => {
+//                                     connection.release();
+//                                     return sendResponse(res, "Error committing transaction", { message: err.message }, true, 500);
+//                                 });
+//                                 return;
+//                             }
 
-                            connection.release();
-                            sendResponse(res, "Prescription created successfully", {
-                                PrescriptionID: result.insertId,
-                                GlobalReferenceID: GlobalReferenceID
-                            });
-                        });
-                    }
-                );
-            });
-        });
-    });
+//                             connection.release();
+//                             sendResponse(res, "Prescription created successfully", {
+//                                 PrescriptionID: result.insertId,
+//                                 GlobalReferenceID: GlobalReferenceID
+//                             });
+//                         });
+//                     }
+//                 );
+//             });
+//         });
+//     });
         
-}
+// }
 
-// 3. Alter Prescription
-async function updatePrescription(req, res) {
-        try {
-            const { prescription_id, medicines, instructions, diagnosis } = req.body;
-            const doctorId = req.user.UserID;
+// // 3. Alter Prescription
+// async function updatePrescription(req, res) {
+//         try {
+//             const { prescription_id, medicines, instructions, diagnosis } = req.body;
+//             const doctorId = req.user.UserID;
 
-            const [result] = await pool.query(`
-                UPDATE PRESCRIPTION 
-                SET Medicines = ?, Instructions = ?, Diagnosis = ?
-                WHERE PrescriptionID = ? AND DoctorID = ?
-            `, [JSON.stringify(medicines), instructions, diagnosis, prescription_id, doctorId]);
+//             const [result] = await pool.query(`
+//                 UPDATE PRESCRIPTION 
+//                 SET Medicines = ?, Instructions = ?, Diagnosis = ?
+//                 WHERE PrescriptionID = ? AND DoctorID = ?
+//             `, [JSON.stringify(medicines), instructions, diagnosis, prescription_id, doctorId]);
 
-            res.json({
-                success: true,
-                message: 'Prescription updated successfully'
-            });
-        } catch (error) {
-            console.error('Error updating prescription:', error);
-            res.status(500).json({
-                success: false,
-                message: 'Error updating prescription'
-            });
-        }
-}
+//             res.json({
+//                 success: true,
+//                 message: 'Prescription updated successfully'
+//             });
+//         } catch (error) {
+//             console.error('Error updating prescription:', error);
+//             res.status(500).json({
+//                 success: false,
+//                 message: 'Error updating prescription'
+//             });
+//         }
+// }
 
-// 4. Delete Prescription
-async function deletePrescription(req, res) {
-    try {
-        const { prescription_id } = req.params;
-        const doctorId = req.user.UserID;
+// // 4. Delete Prescription
+// async function deletePrescription(req, res) {
+//     try {
+//         const { prescription_id } = req.params;
+//         const doctorId = req.user.UserID;
 
-        await pool.query(`
-            DELETE FROM PRESCRIPTION 
-            WHERE PrescriptionID = ? AND DoctorID = ?
-        `, [prescription_id, doctorId]);
+//         await pool.query(`
+//             DELETE FROM PRESCRIPTION 
+//             WHERE PrescriptionID = ? AND DoctorID = ?
+//         `, [prescription_id, doctorId]);
 
-        res.json({
-            success: true,
-            message: 'Prescription deleted successfully'
-        });
-    } catch (error) {
-        console.error('Error deleting prescription:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error deleting prescription'
-        });
-    }
-}
+//         res.json({
+//             success: true,
+//             message: 'Prescription deleted successfully'
+//         });
+//     } catch (error) {
+//         console.error('Error deleting prescription:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error deleting prescription'
+//         });
+//     }
+// }
 
-// 5. Delete Doctor-Patient Link
-async function removePatient(req, res) {
-    try {
-        const { patient_id } = req.params;
-        const doctorId = req.user.UserID;
+// // 5. Delete Doctor-Patient Link
+// async function removePatient(req, res) {
+//     try {
+//         const { patient_id } = req.params;
+//         const doctorId = req.user.UserID;
 
-        await pool.query(`
-            DELETE FROM DOCTOR_PATIENT 
-            WHERE DoctorID = ? AND PatientID = ?
-        `, [doctorId, patient_id]);
+//         await pool.query(`
+//             DELETE FROM DOCTOR_PATIENT 
+//             WHERE DoctorID = ? AND PatientID = ?
+//         `, [doctorId, patient_id]);
 
-        res.json({
-            success: true,
-            message: 'Patient unlinked successfully'
-        });
-    } catch (error) {
-        console.error('Error unlinking patient:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error unlinking patient'
-        });
-    }
-}
+//         res.json({
+//             success: true,
+//             message: 'Patient unlinked successfully'
+//         });
+//     } catch (error) {
+//         console.error('Error unlinking patient:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error unlinking patient'
+//         });
+//     }
+// }
 
-// 6. View Prescription History
-async function getPrescriptionHistory(req, res) {
-    try {
-        const doctorId = req.user.UserID;
-        const { patient_id, start_date, end_date } = req.query;
+// // 6. View Prescription History
+// async function getPrescriptionHistory(req, res) {
+//     try {
+//         const doctorId = req.user.UserID;
+//         const { patient_id, start_date, end_date } = req.query;
 
-        let query = `
-            SELECT p.*, pat.Name as PatientName 
-            FROM PRESCRIPTION p
-            INNER JOIN PATIENT pat ON p.PatientID = pat.PatientID
-            WHERE p.DoctorID = ?
-        `;
-        const params = [doctorId];
+//         let query = `
+//             SELECT p.*, pat.Name as PatientName 
+//             FROM PRESCRIPTION p
+//             INNER JOIN PATIENT pat ON p.PatientID = pat.PatientID
+//             WHERE p.DoctorID = ?
+//         `;
+//         const params = [doctorId];
 
-        if (patient_id) {
-            query += ' AND p.PatientID = ?';
-            params.push(patient_id);
-        }
-        if (start_date && end_date) {
-            query += ' AND p.CreatedAt BETWEEN ? AND ?';
-            params.push(start_date, end_date);
-        }
+//         if (patient_id) {
+//             query += ' AND p.PatientID = ?';
+//             params.push(patient_id);
+//         }
+//         if (start_date && end_date) {
+//             query += ' AND p.CreatedAt BETWEEN ? AND ?';
+//             params.push(start_date, end_date);
+//         }
 
-        const [prescriptions] = await pool.query(query, params);
-        res.json({
-            success: true,
-            data: prescriptions
-        });
-    } catch (error) {
-        console.error('Error fetching prescription history:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching prescription history'
-        });
-    }
-}
+//         const [prescriptions] = await pool.query(query, params);
+//         res.json({
+//             success: true,
+//             data: prescriptions
+//         });
+//     } catch (error) {
+//         console.error('Error fetching prescription history:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error fetching prescription history'
+//         });
+//     }
+// }
 
-// 7. Create Medical Record
-async function createMedicalRecord(req, res) {
-    try {
-        const doctorId = req.user.UserID;
-        const { patient_id, diagnosis, treatment_plan, follow_up_date, notes } = req.body;
+// // 7. Create Medical Record
+// async function createMedicalRecord(req, res) {
+//     try {
+//         const doctorId = req.user.UserID;
+//         const { patient_id, diagnosis, treatment_plan, follow_up_date, notes } = req.body;
 
-        const [result] = await pool.query(`
-            INSERT INTO MEDICAL_RECORDS 
-            (DoctorID, PatientID, Diagnosis, TreatmentPlan, FollowUpDate, Notes)
-            VALUES (?, ?, ?, ?, ?, ?)
-        `, [doctorId, patient_id, diagnosis, treatment_plan, follow_up_date, notes]);
+//         const [result] = await pool.query(`
+//             INSERT INTO MEDICAL_RECORDS 
+//             (DoctorID, PatientID, Diagnosis, TreatmentPlan, FollowUpDate, Notes)
+//             VALUES (?, ?, ?, ?, ?, ?)
+//         `, [doctorId, patient_id, diagnosis, treatment_plan, follow_up_date, notes]);
 
-        res.json({
-            success: true,
-            data: {
-                record_id: result.insertId
-            }
-        });
-    } catch (error) {
-        console.error('Error creating medical record:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error creating medical record'
-        });
-    }
-}
+//         res.json({
+//             success: true,
+//             data: {
+//                 record_id: result.insertId
+//             }
+//         });
+//     } catch (error) {
+//         console.error('Error creating medical record:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error creating medical record'
+//         });
+//     }
+// }
 
-// 8. View Patient Medical History
-async function getPatientMedicalHistory(req, res) {
-    try {
-        const doctorId = req.user.UserID;
-        const { patient_id } = req.params;
+// // 8. View Patient Medical History
+// async function getPatientMedicalHistory(req, res) {
+//     try {
+//         const doctorId = req.user.UserID;
+//         const { patient_id } = req.params;
 
-        // Get medical records
-        const [records] = await pool.query(`
-            SELECT * FROM MEDICAL_RECORDS 
-            WHERE DoctorID = ? AND PatientID = ?
-            ORDER BY CreatedAt DESC
-        `, [doctorId, patient_id]);
+//         // Get medical records
+//         const [records] = await pool.query(`
+//             SELECT * FROM MEDICAL_RECORDS 
+//             WHERE DoctorID = ? AND PatientID = ?
+//             ORDER BY CreatedAt DESC
+//         `, [doctorId, patient_id]);
 
-        // Get prescriptions
-        const [prescriptions] = await pool.query(`
-            SELECT * FROM PRESCRIPTION 
-            WHERE DoctorID = ? AND PatientID = ?
-            ORDER BY CreatedAt DESC
-        `, [doctorId, patient_id]);
+//         // Get prescriptions
+//         const [prescriptions] = await pool.query(`
+//             SELECT * FROM PRESCRIPTION 
+//             WHERE DoctorID = ? AND PatientID = ?
+//             ORDER BY CreatedAt DESC
+//         `, [doctorId, patient_id]);
 
-        res.json({
-            success: true,
-            data: {
-                medical_records: records,
-                prescriptions: prescriptions
-            }
-        });
-    } catch (error) {
-        console.error('Error fetching patient medical history:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Error fetching patient medical history'
-        });
-    }
-}
+//         res.json({
+//             success: true,
+//             data: {
+//                 medical_records: records,
+//                 prescriptions: prescriptions
+//             }
+//         });
+//     } catch (error) {
+//         console.error('Error fetching patient medical history:', error);
+//         res.status(500).json({
+//             success: false,
+//             message: 'Error fetching patient medical history'
+//         });
+//     }
+// }
 
-// 9. Add Patient to Doctor
-async function addPatient(req, res) {
-    let connection;
-    try {
-        const { patient_id } = req.body;
-        const UserID = req.session.user.UserID;
+// // 9. Add Patient to Doctor
+// async function addPatient(req, res) {
+//     let connection;
+//     try {
+//         const { patient_id } = req.body;
+//         const UserID = req.session.user.UserID;
 
-        // Validate input
-        if (!Number.isInteger(Number(patient_id))) {
-            return sendResponse(res, "Invalid patient ID format", {}, true, 400);
-        }
+//         // Validate input
+//         if (!Number.isInteger(Number(patient_id))) {
+//             return sendResponse(res, "Invalid patient ID format", {}, true, 400);
+//         }
 
-        connection = await conPool.getConnection();
+//         connection = await conPool.getConnection();
 
-        // 1. Get DoctorID with connection release safeguard
-        const [doctorResult] = await connection.query(
-            'SELECT DoctorID FROM doctor WHERE UserID = ?', 
-            [UserID]
-        );
+//         // 1. Get DoctorID with connection release safeguard
+//         const [doctorResult] = await connection.query(
+//             'SELECT DoctorID FROM doctor WHERE UserID = ?', 
+//             [UserID]
+//         );
 
-        if (!doctorResult.length) {
-            return sendResponse(res, "Doctor profile not found", {}, true, 404);
-        }
-        const DoctorID = doctorResult[0].DoctorID;
+//         if (!doctorResult.length) {
+//             return sendResponse(res, "Doctor profile not found", {}, true, 404);
+//         }
+//         const DoctorID = doctorResult[0].DoctorID;
 
-        // 2. Verify Patient exists with name
-        const [patient] = await connection.query(
-            'SELECT PatientID, Name FROM patient WHERE PatientID = ?',
-            [patient_id]
-        );
+//         // 2. Verify Patient exists with name
+//         const [patient] = await connection.query(
+//             'SELECT PatientID, Name FROM patient WHERE PatientID = ?',
+//             [patient_id]
+//         );
 
-        if (!patient.length) {
-            return sendResponse(res, "Patient not found", {}, true, 404);
-        }
+//         if (!patient.length) {
+//             return sendResponse(res, "Patient not found", {}, true, 404);
+//         }
 
-        // 3. Check existing relationship
-        const [existing] = await connection.query(
-            `SELECT * FROM doctor_patient 
-             WHERE DoctorID = ? AND PatientID = ?`,
-            [DoctorID, patient_id]
-        );
+//         // 3. Check existing relationship
+//         const [existing] = await connection.query(
+//             `SELECT * FROM doctor_patient 
+//              WHERE DoctorID = ? AND PatientID = ?`,
+//             [DoctorID, patient_id]
+//         );
 
-        if (existing.length > 0) {
-            return sendResponse(res, 
-                `Patient ${patient[0].Name} already linked to your account`,
-                {patientName: patient[0].Name}, 
-                true, 
-                400
-            );
-        }
+//         if (existing.length > 0) {
+//             return sendResponse(res, 
+//                 `Patient ${patient[0].Name} already linked to your account`,
+//                 {patientName: patient[0].Name}, 
+//                 true, 
+//                 400
+//             );
+//         }
 
-        // 4. Create relationship
-        await connection.query(
-            `INSERT INTO doctor_patient 
-             (DoctorID, PatientID, FirstConsultation, ConsultationType) 
-             VALUES (?, ?, CURDATE(), 'REGULAR')`,
-            [DoctorID, patient_id]
-        );
+//         // 4. Create relationship
+//         await connection.query(
+//             `INSERT INTO doctor_patient 
+//              (DoctorID, PatientID, FirstConsultation, ConsultationType) 
+//              VALUES (?, ?, CURDATE(), 'REGULAR')`,
+//             [DoctorID, patient_id]
+//         );
 
-        return sendResponse(res, "Patient added successfully", { 
-            doctorId: DoctorID,
-            patientId: patient_id,
-            patientName: patient[0].Name  // Include patient name in response
-        });
+//         return sendResponse(res, "Patient added successfully", { 
+//             doctorId: DoctorID,
+//             patientId: patient_id,
+//             patientName: patient[0].Name  // Include patient name in response
+//         });
 
-    } catch (error) {
-        console.error('Add patient error:', error);
-        return sendResponse(res, "Database operation failed", {}, true, 500);
-    } finally {
-        if (connection) connection.release();
-    }
-}
+//     } catch (error) {
+//         console.error('Add patient error:', error);
+//         return sendResponse(res, "Database operation failed", {}, true, 500);
+//     } finally {
+//         if (connection) connection.release();
+//     }
+// }
 
-const verifyDoctor = async (req, res, next) => {
-    if (!req.session.user || req.session.user.Role !== 'DOCTOR') {
-        console.log('Blocked access for non-doctor:', req.session.user);
-        return res.status(403).redirect('/login');
-    }
-    next();
-};
+// const verifyDoctor = async (req, res, next) => {
+//     if (!req.session.user || req.session.user.Role !== 'DOCTOR') {
+//         console.log('Blocked access for non-doctor:', req.session.user);
+//         return res.status(403).redirect('/login');
+//     }
+//     next();
+// };
 
-module.exports = {
-    getPatients,
-    createPrescription,
-    updatePrescription,
-    deletePrescription,
-    removePatient,
-    getPrescriptionHistory,
-    createMedicalRecord,
-    getPatientMedicalHistory,
-    addPatient,
-    generateReferenceId,
-    verifyDoctor
-};
+// module.exports = {
+//     getPatients,
+//     createPrescription,
+//     updatePrescription,
+//     deletePrescription,
+//     removePatient,
+//     getPrescriptionHistory,
+//     createMedicalRecord,
+//     getPatientMedicalHistory,
+//     addPatient,
+//     generateReferenceId,
+//     verifyDoctor
+// };
