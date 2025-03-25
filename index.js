@@ -357,27 +357,43 @@ app.delete('/admin/delete-patient/:id', async (req, res) => {
 app.get('/doctor', checkRole(['doctor']), async (req, res) => {
     try {
         if (req.session.user && req.session.user.Role === 'doctor') {
-            // Get doctorID from doctor table
+            // Get doctorID
             const [realDocID] = await conPool.query(
                 'SELECT DoctorID FROM doctor WHERE UserID = ?',
                 [req.session.user.UserID]
             );
-            
-            // Add doctorID to user object
-            req.session.user.doctorID = realDocID[0].DoctorID;
-            
-            console.log("Updated user object:", req.session.user); // For debugging
+
+            // Get prescriptions for this doctor
+            const [prescriptions] = await conPool.query(
+                'SELECT * FROM prescription WHERE DoctorID = ?',
+                [realDocID[0].DoctorID]
+            );
+
+            const updatedUser = { ...req.session.user };
+            updatedUser.doctorID = realDocID[0].DoctorID;
+
+            const [medicalRecords] = await conPool.query('SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
+                [realDocID[0].DoctorID]);
+
+            const [doctorPatients] = await conPool.query('SELECT * FROM DOCTOR_PATIENT WHERE DoctorID = ?',
+                [realDocID[0].DoctorID]);
 
             res.render('users/doctor', {
-                user: req.session.user,
-                currentDoctorID: realDocID[0].DoctorID
+                user: updatedUser,
+                currentDoctorID: realDocID[0].DoctorID,
+                prescriptions: prescriptions,
+                medicalRecords: medicalRecords,
+                doctorPatients: doctorPatients
             });
         }
     } catch (err) {
         console.error('Error loading doctor dashboard:', err);
         res.render('users/doctor', {
             user: req.session.user,
-            currentDoctorID: null
+            currentDoctorID: null,
+            prescriptions: [],
+            medicalRecords: [],
+            doctorPatients: []
         });
     }
 });
