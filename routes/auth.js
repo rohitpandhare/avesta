@@ -15,12 +15,6 @@ router.post('/login', doLogin);
 router.post('/signup', createUser);
 router.post('/reset', resetPass);
 
-router.get('/logout', (req, res) => {
-    req.session.destroy();
-    res.redirect('/login');
-});
-
-
 module.exports = router;
 
 

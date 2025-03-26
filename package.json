@@ -8,7 +8,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "seed": "node scripts/generateDummyData.js"
+    "seed": "node scripts/generateDummyData.js",
+    "css:build": "tailwindcss -i ./public/styles/tailwind.css -o ./public/styles/style.css",
+    "css:watch": "tailwindcss -i ./public/styles/tailwind.css -o ./public/styles/style.css --watch",
+    "dev": "node index.js"
   },
   "dependencies": {
     "@faker-js/faker": "^9.6.0",
@@ -17,8 +20,13 @@
     "express": "^4.21.2",
     "express-flash": "^0.0.2",
     "express-session": "^1.18.1",
-    "faker": "^6.6.6",
     "mysql2": "^3.14.0",
     "path": "^0.12.7"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.3",
+    "postcss-cli": "^11.0.1",
+    "tailwindcss": "^4.0.16"
   }
 }

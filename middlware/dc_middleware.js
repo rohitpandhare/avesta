@@ -49,11 +49,10 @@ const checkAuth = (req, res, next) => {
 
 const checkRole = (roles = []) => {
     return (req, res, next) => {
-        if (!req.session.loggedIn) {
+        if (!req.session.user) {
             return res.redirect('/login');
         }
-        
-        if (!roles.includes(req.session.user.Role)) {
+        if (!roles.includes(req.session.user.Role.toLowerCase())) {
             return res.status(403).render('error', {
                 message: 'Access Denied'
             });

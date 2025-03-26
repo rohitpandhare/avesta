@@ -352,7 +352,6 @@ app.delete('/admin/delete-patient/:id', async (req, res) => {
 });
 
 
-
 // User routes
 app.get('/doctor', checkRole(['doctor']), async (req, res) => {
     try {
@@ -369,9 +368,6 @@ app.get('/doctor', checkRole(['doctor']), async (req, res) => {
                 [realDocID[0].DoctorID]
             );
 
-            const updatedUser = { ...req.session.user };
-            updatedUser.doctorID = realDocID[0].DoctorID;
-
             const [medicalRecords] = await conPool.query('SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
                 [realDocID[0].DoctorID]);
 
@@ -379,7 +375,7 @@ app.get('/doctor', checkRole(['doctor']), async (req, res) => {
                 [realDocID[0].DoctorID]);
 
             res.render('users/doctor', {
-                user: updatedUser,
+                user: req.session.user,
                 currentDoctorID: realDocID[0].DoctorID,
                 prescriptions: prescriptions,
                 medicalRecords: medicalRecords,
@@ -393,10 +389,93 @@ app.get('/doctor', checkRole(['doctor']), async (req, res) => {
             currentDoctorID: null,
             prescriptions: [],
             medicalRecords: [],
-            doctorPatients: []
+            doctorPatients: [],
+            error: 'Error loading dashboard: ' + err.message
         });
     }
 });
+
+app.post('/doctor/addPatient', checkRole(['doctor']), async(req, res) => {
+    const connection= await conPool.getConnection();
+    try {
+        await connection.beginTransaction();
+
+        const { PatientID, FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
+        const doctorID  = req.session.user.DoctorID;
+
+        // // Get doctorID
+        // const [realDocID] = await conPool.query(
+        //     'SELECT DoctorID FROM doctor WHERE UserID = ?',
+        //     [req.session.user.UserID]
+        // );
+
+        // Insert new relationship
+        await conPool.query(
+            `INSERT INTO DOCTOR_PATIENT 
+            (DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes) 
+            VALUES (?, ?, ?, ?, ?)`,
+            [doctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
+        );
+
+        await connection.commit();
+
+        // Fetch all required data
+        const [prescriptions] = await conPool.query(
+            'SELECT * FROM prescription WHERE DoctorID = ?',
+            [doctorID]
+        );
+
+        const [medicalRecords] = await conPool.query(
+            'SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
+            [doctorID]
+        );
+
+        const [doctorPatients] = await conPool.query(
+            'SELECT * FROM DOCTOR_PATIENT WHERE DoctorID = ?',
+            [doctorID]
+        );
+
+        res.render('users/doctor', {
+            user: req.session.user,
+            currentDoctorID: realDocID[0].DoctorID,
+            prescriptions,
+            medicalRecords,
+            doctorPatients,
+            success: 'Patient relationship added successfully!'
+        });
+
+    } catch (err) {
+        await connection.rollback();
+        console.error('Error:', err);
+        
+        const [prescriptions] = await conPool.query(
+            'SELECT * FROM prescription WHERE DoctorID = ?',
+            [req.session.user.DoctorID]
+        );
+
+        const [medicalRecords] = await conPool.query(
+            'SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
+            [req.session.user.DoctorID]
+        );
+
+        const [doctorPatients] = await conPool.query(
+            'SELECT * FROM DOCTOR_PATIENT WHERE DoctorID = ?',
+            [req.session.user.DoctorID]
+        );
+
+        res.render('users/doctor', {
+            user: req.session.user,
+            currentDoctorID: realDocID[0].DoctorID,
+            prescriptions,
+            medicalRecords,
+            doctorPatients,
+            error: 'Error adding patient relationship: ' + err.message
+        });
+    } finally{
+        connection.release();
+    }
+});
+
 
 
 app.post('/doctor/profile', checkRole(['doctor']),async (req, res) => {
@@ -469,7 +548,6 @@ app.get('/auth/logout', (req, res) => {
         res.redirect('/login');
     });
 });
-
 
 // GET route to display the form
 app.get('/test-doctor-patient', (req, res) => {

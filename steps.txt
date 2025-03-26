@@ -5,6 +5,13 @@
 5) npm install faker @faker-js/faker mysql2
 
 
+// Old import
+// const faker = require('faker');
+
+// New import
+const { faker } = require('@faker-js/faker');
+
+
 -- doctor.ejs : (backup)
 <!DOCTYPE html>
 <html lang="en">

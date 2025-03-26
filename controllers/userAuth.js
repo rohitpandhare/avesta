@@ -83,22 +83,16 @@ async function doLogin(req, res) {
 
         // Basic validation
         if (!Username || !Password || !Role) {
-            return res.status(400).render('dashboard/login', {
-                error: 'All fields are required',
-                username: Username,
-                role: Role,
+            return res.render('dashboard/login', {
+                error: 'All fields are required'
             });
         }
 
         // Admin code validation
-        if (Role === 'ADMIN') {
-            if (!adminCode || adminCode !== '007') {
-                return res.status(401).render('dashboard/login', {
-                    error: 'Invalid admin code',
-                    username: Username,
-                    role: Role,
-                });
-            }
+        if (Role === 'ADMIN' && adminCode !== '007') {
+            return res.render('dashboard/login', {
+                error: 'Invalid admin code'
+            });
         }
 
         const hashedPassword = md5(Password);
@@ -109,105 +103,87 @@ async function doLogin(req, res) {
             [Username]
         );
 
-        if (!users || users.length === 0) {
-            return res.status(401).render('dashboard/login', {
-                error: 'User not found',
-                username: Username,
-                role: Role
-            });
-        }
-
-        const user = users[0];
-        if (user.Password !== hashedPassword) {
-            return res.status(401).render('dashboard/login', {
-                error: 'Invalid password',
-                username: Username,
-                role: Role
-            });
-        }
-
-        if (user.Role !== Role) {
-            return res.status(401).render('dashboard/login', {
-                error: 'Invalid role for this user',
-                username: Username,
-                role: Role
+        if (!users.length || users[0].Password !== hashedPassword || users[0].Role !== Role) {
+            return res.render('dashboard/login', {
+                error: 'Invalid credentials'
             });
         }
 
         // Set up session
         req.session.user = {
-            UserID: user.UserID,
-            Username: user.Username,
-            Role: user.Role
+            UserID: users[0].UserID,
+            Username: users[0].Username,
+            Role: users[0].Role
         };
 
-        // Role-based rendering
+        // Role-based redirection
         switch (Role) {
             case 'ADMIN':
-                // Fetch all required data for admin dashboard
-                try {
-                    // Get all users
-                    const [userList] = await conPool.query('SELECT * FROM user');
-                    
-                    // Get all doctors with their details
-                    const [doctorList] = await conPool.query(`
-                        SELECT d.*, u.Username 
-                        FROM doctor d 
-                        JOIN user u ON d.UserID = u.UserID 
-                        WHERE u.Role = 'DOCTOR'
-                    `);
-                    
-                    // Get all patients with their details
-                    const [patientList] = await conPool.query(`
-                        SELECT p.*, u.Username 
-                        FROM patient p 
-                        JOIN user u ON p.UserID = u.UserID 
-                        WHERE u.Role = 'PATIENT'
-                    `);
+                const [userList] = await conPool.query('SELECT * FROM user');
+                const [doctorList] = await conPool.query(`
+                    SELECT d.*, u.Username 
+                    FROM doctor d 
+                    JOIN user u ON d.UserID = u.UserID 
+                    WHERE u.Role = 'DOCTOR'
+                `);
+                const [patientList] = await conPool.query(`
+                    SELECT p.*, u.Username 
+                    FROM patient p 
+                    JOIN user u ON p.UserID = u.UserID 
+                    WHERE u.Role = 'PATIENT'
+                `);
 
-                    return res.render('users/admin', {
-                        user: req.session.user,
-                        userList: userList,
-                        doctorList: doctorList,
-                        patientList: patientList,
-                        error: null
-                    });
-                } catch (dataErr) {
-                    console.error('Error fetching admin dashboard data:', dataErr);
-                    return res.status(500).render('dashboard/login', {
-                        error: 'Error loading admin dashboard',
-                        username: Username,
-                        role: Role
-                    });
-                }
-            
+                return res.render('users/admin', {
+                    user: req.session.user,
+                    userList,
+                    doctorList,
+                    patientList
+                });
+
             case 'DOCTOR':
+                const [doctorData] = await conPool.query(
+                    'SELECT * FROM doctor WHERE UserID = ?',
+                    [req.session.user.UserID]
+                );
+                const [prescriptions] = await conPool.query(
+                    'SELECT * FROM prescription WHERE DoctorID = ?',
+                    [doctorData[0].DoctorID]
+                );
+                const [medicalRecords] = await conPool.query(
+                    'SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
+                    [doctorData[0].DoctorID]
+                );
+                const [doctorPatients] = await conPool.query(
+                    'SELECT * FROM DOCTOR_PATIENT WHERE DoctorID = ?',
+                    [doctorData[0].DoctorID]
+                );
+
                 return res.render('users/doctor', {
                     user: req.session.user,
-                    error: null
+                    currentDoctorID: doctorData[0].DoctorID,
+                    prescriptions,
+                    medicalRecords,
+                    doctorPatients
                 });
-            
+
             case 'PATIENT':
                 return res.render('users/patient', {
-                    user: req.session.user,
-                    error: null
+                    user: req.session.user
                 });
-            
+
             default:
-                return res.render('dashboard/index', {
-                    error: 'Invalid role specified'
+                return res.render('dashboard/login', {
+                    error: 'Invalid role'
                 });
         }
-
     } catch (err) {
         console.error('Login error:', err);
-        return res.status(500).render('dashboard/login', {
-            error: 'Server error during login',
-            username: req.body.Username,
-            role: req.body.Role
+        return res.render('dashboard/login', {
+            error: 'Server error during login'
         });
     }
 }
+
 
 // Reset Password Route
 async function resetPass (req, res) {
