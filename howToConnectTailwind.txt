@@ -1,0 +1,73 @@
+
+1. **Clean and install dependencies**:
+```powershell
+Remove-Item -Recurse -Force node_modules
+Remove-Item package-lock.json
+npm cache clean --force
+npm install tailwindcss@3.3.3 --save-dev
+```
+
+2. **build-css.js**:
+```javascript
+const { execSync } = require('child_process');
+const path = require('path');
+
+const tailwindBin = path.join(__dirname, 'node_modules', '.bin', 'tailwindcss.cmd');
+const inputFile = path.join(__dirname, 'public', 'css', 'tailwind.css');
+const outputFile = path.join(__dirname, 'public', 'css', 'styles.css');
+
+try {
+    const command = `"${tailwindBin}" -i "${inputFile}" -o "${outputFile}"`;
+    console.log('Running command:', command);
+    execSync(command, { stdio: 'inherit' });
+    console.log('CSS built successfully!');
+} catch (error) {
+    console.error('Build failed:', error);
+}
+```
+
+3. **package.json**:
+```json
+{
+  "name": "avesta",
+  "version": "1.0.0",
+  "scripts": {
+    "build:css": "node build-css.js"
+  },
+  "devDependencies": {
+    "tailwindcss": "3.3.3"
+  }
+}
+```
+
+4. **tailwind.config.js**:
+```javascript
+/** @type {import('tailwindcss').Config} */
+module.exports = {
+  content: ["./views/**/*.ejs"],
+  theme: {
+    extend: {},
+  },
+  plugins: [],
+}
+```
+
+5. **public/css/tailwind.css**:
+```css
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+```
+
+**To build CSS**:
+```powershell
+npm run build:css
+```
+
+Remember to:
+- Add `public/css/styles.css` to your `.gitignore`
+- Run the build command before starting your application
+- Link the generated CSS file in your EJS templates:
+```html
+<link rel="stylesheet" href="/css/styles.css">
+``` 
