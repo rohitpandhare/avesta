@@ -40,7 +40,7 @@ app.use(cors(corsOptions));
 app.use(session({
     secret: 'rohitiscool',
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,
     cookie: {
         secure: false,
         maxAge: 1000 * 60 * 60 * 24
@@ -79,7 +79,7 @@ app.post('/reset', resetPass);
 // Find All Doctors
 app.get('/findDr', async (req, res) => {
     try {
-        const [doctors] = await conPool.promise().query(`
+        const [doctors] = await conPool.query(`
             SELECT 
                 DoctorID,
                 Name,
@@ -106,7 +106,7 @@ app.get('/findDr/search', async (req, res) => {
     try {
         const searchTerm = req.query.search || '';
 
-        const [doctors] = await conPool.promise().query(`
+        const [doctors] = await conPool.query(`
             SELECT 
                 DoctorID,
                 Name,
@@ -140,7 +140,7 @@ app.post('/viewPres', async (req, res) => {
     try {
         const refId = req.body.refId;
 
-        const [prescriptions] = await conPool.promise().query(`
+        const [prescriptions] = await conPool.query(`
             SELECT 
                 p.PrescriptionID, 
                 p.DateIssued, 
@@ -351,131 +351,132 @@ app.delete('/admin/delete-patient/:id', async (req, res) => {
     }
 });
 
-
 // User routes
 app.get('/doctor', checkRole(['doctor']), async (req, res) => {
     try {
-        if (req.session.user && req.session.user.Role === 'doctor') {
-            // Get doctorID
-            const [realDocID] = await conPool.query(
-                'SELECT DoctorID FROM doctor WHERE UserID = ?',
+        if (req.session.user && req.session.user.Role === 'DOCTOR') {
+            // Get doctor details
+            const [doctorDetails] = await conPool.query(
+                'SELECT d.*, u.Name as Username, u.Email FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE d.UserID = ?',
                 [req.session.user.UserID]
             );
 
-            // Get prescriptions for this doctor
+            if (!doctorDetails.length) {
+                throw new Error('Doctor details not found');
+            }
+
+            const doctorID = doctorDetails[0].DoctorID;
+
+            // Get prescriptions with patient names
             const [prescriptions] = await conPool.query(
-                'SELECT * FROM prescription WHERE DoctorID = ?',
-                [realDocID[0].DoctorID]
+                `SELECT 
+                    p.*,
+                    pat.Name AS PatientName
+                FROM prescription p
+                LEFT JOIN patient pat ON p.PatientID = pat.PatientID
+                WHERE p.DoctorID = ?
+                ORDER BY p.DateIssued DESC`,
+                [doctorID]
             );
 
-            const [medicalRecords] = await conPool.query('SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
-                [realDocID[0].DoctorID]);
+            // Get medical records with patient names
+            const [medicalRecords] = await conPool.query(
+                `SELECT 
+                    mr.*,
+                    pat.Name AS PatientName
+                FROM medical_record mr
+                LEFT JOIN patient pat ON mr.PatientID = pat.PatientID
+                WHERE mr.DoctorID = ?
+                ORDER BY mr.RecordDate DESC`,
+                [doctorID]
+            );
 
-            const [doctorPatients] = await conPool.query('SELECT * FROM DOCTOR_PATIENT WHERE DoctorID = ?',
-                [realDocID[0].DoctorID]);
+            // Get doctor patients with patient details
+            const [doctorPatients] = await conPool.query(
+                `SELECT 
+                    dp.*,
+                    pat.Name AS PatientName,
+                    pat.Phone,
+                    pat.DOB,
+                    pat.BloodGroup
+                FROM doctor_patient dp
+                LEFT JOIN patient pat ON dp.PatientID = pat.PatientID
+                WHERE dp.DoctorID = ?`,
+                [doctorID]
+            );
+
+            // Merge doctor details with session user
+            const userData = {
+                ...req.session.user,
+                ...doctorDetails[0]
+            };
 
             res.render('users/doctor', {
-                user: req.session.user,
-                currentDoctorID: realDocID[0].DoctorID,
+                user: userData,
+                currentDoctorID: doctorID,
                 prescriptions: prescriptions,
                 medicalRecords: medicalRecords,
-                doctorPatients: doctorPatients
+                doctorPatients: doctorPatients,
+                success: req.session.success,
+                error: req.session.error,
+                doctorRelationships: []
             });
+
+            // Clear flash messages
+            delete req.session.success;
+            delete req.session.error;
         }
     } catch (err) {
         console.error('Error loading doctor dashboard:', err);
         res.render('users/doctor', {
-            user: req.session.user,
+            user: {
+                ...req.session.user,
+                Username: req.session.user.Name || 'Doctor' // Fallback name
+            },
             currentDoctorID: null,
             prescriptions: [],
             medicalRecords: [],
             doctorPatients: [],
-            error: 'Error loading dashboard: ' + err.message
+            error: 'Error loading dashboard: ' + err.message,
+            doctorRelationships: []
         });
     }
 });
 
-app.post('/doctor/addPatient', checkRole(['doctor']), async(req, res) => {
-    const connection= await conPool.getConnection();
+app.post('/doctor/addPatient', async(req, res) => {
     try {
-        await connection.beginTransaction();
+        // Get doctorID first
+        const [realDocID] = await conPool.query(
+            'SELECT DoctorID FROM doctor WHERE UserID = ?',
+            [req.session.user.UserID]
+        );
 
         const { PatientID, FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
-        const doctorID  = req.session.user.DoctorID;
 
-        // // Get doctorID
-        // const [realDocID] = await conPool.query(
-        //     'SELECT DoctorID FROM doctor WHERE UserID = ?',
-        //     [req.session.user.UserID]
-        // );
-
-        // Insert new relationship
+        // Insert the relationship
         await conPool.query(
             `INSERT INTO DOCTOR_PATIENT 
             (DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes) 
             VALUES (?, ?, ?, ?, ?)`,
-            [doctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
+            [realDocID[0].DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
         );
 
-        await connection.commit();
-
-        // Fetch all required data
-        const [prescriptions] = await conPool.query(
-            'SELECT * FROM prescription WHERE DoctorID = ?',
-            [doctorID]
-        );
-
-        const [medicalRecords] = await conPool.query(
-            'SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
-            [doctorID]
-        );
-
-        const [doctorPatients] = await conPool.query(
-            'SELECT * FROM DOCTOR_PATIENT WHERE DoctorID = ?',
-            [doctorID]
-        );
-
-        res.render('users/doctor', {
-            user: req.session.user,
-            currentDoctorID: realDocID[0].DoctorID,
-            prescriptions,
-            medicalRecords,
-            doctorPatients,
-            success: 'Patient relationship added successfully!'
-        });
+        // Set success message in session
+        req.session.success = 'Patient relationship added successfully!';
+        
+        // Redirect back to doctor dashboard
+        res.redirect('/doctor');
 
     } catch (err) {
-        await connection.rollback();
         console.error('Error:', err);
         
-        const [prescriptions] = await conPool.query(
-            'SELECT * FROM prescription WHERE DoctorID = ?',
-            [req.session.user.DoctorID]
-        );
-
-        const [medicalRecords] = await conPool.query(
-            'SELECT * FROM MEDICAL_RECORD WHERE DoctorID = ?',
-            [req.session.user.DoctorID]
-        );
-
-        const [doctorPatients] = await conPool.query(
-            'SELECT * FROM DOCTOR_PATIENT WHERE DoctorID = ?',
-            [req.session.user.DoctorID]
-        );
-
-        res.render('users/doctor', {
-            user: req.session.user,
-            currentDoctorID: realDocID[0].DoctorID,
-            prescriptions,
-            medicalRecords,
-            doctorPatients,
-            error: 'Error adding patient relationship: ' + err.message
-        });
-    } finally{
-        connection.release();
+        // Set error message in session
+        req.session.error = 'Error adding patient relationship: ' + err.message;
+        
+        // Redirect back to doctor dashboard
+        res.redirect('/doctor');
     }
 });
-
 
 
 app.post('/doctor/profile', checkRole(['doctor']),async (req, res) => {
@@ -506,10 +507,235 @@ app.post('/doctor/profile', checkRole(['doctor']),async (req, res) => {
     }
 });
 
+// Helper function to generate reference ID
+function generateReferenceId() {
+    const prefix = 'RX';
+    const timestamp = Date.now().toString();
+    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    const uniqueId = timestamp.slice(-3) + randomNum;
+    return `${prefix}${uniqueId}`;
+}
 
-app.get('/patient', checkRole(['patient']), (req, res) => {
-    res.render('users/patient', { user: req.session.user });
+app.post('/doctor/addPres', async (req, res) => {
+    try {
+        const {
+            PatientID,
+            DateIssued,
+            DiagnosisNotes,
+            Medicines,
+            Status
+        } = req.body;
+
+        // Get DoctorID from session
+        const DoctorID = req.session.user.DoctorID;
+
+        // Add validation
+        if (!PatientID || !DateIssued || !DiagnosisNotes || !Medicines || !Status) {
+            throw new Error('All required fields must be filled');
+        }
+
+        if (!DoctorID) {
+            throw new Error('Doctor ID not found in session');
+        }
+
+        // Generate GlobalReferenceID
+        const GlobalReferenceID = generateReferenceId();
+
+        // Set date to today if not provided
+        const finalDateIssued = DateIssued || new Date().toISOString().split('T')[0];
+
+        // Insert into database
+        await conPool.query(
+            `INSERT INTO prescription
+            (PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [PatientID, DoctorID, finalDateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID]
+        );
+
+        // Fetch all required data for the dashboard with patient information
+        const [prescriptions] = await conPool.query(
+            `SELECT 
+                p.DateIssued,
+                p.DiagnosisNotes,
+                p.Medicines,
+                p.Status,
+                p.GlobalReferenceID,
+                pat.Name AS PatientName
+            FROM prescription p
+            LEFT JOIN patient pat ON p.PatientID = pat.PatientID
+            WHERE p.DoctorID = ?
+            ORDER BY p.DateIssued DESC`,
+            [DoctorID]
+        );
+
+        const [doctorPatients] = await conPool.query(
+            'SELECT * FROM doctor_patient WHERE DoctorID = ?',
+            [DoctorID]
+        );
+
+        const [medicalRecords] = await conPool.query(
+            'SELECT * FROM medical_record WHERE DoctorID = ?',
+            [DoctorID]
+        );
+
+        res.render('users/doctor', {
+            success: 'Prescription added successfully!',
+            prescriptions,
+            doctorPatients,
+            medicalRecords,
+            user: req.session.user,
+            doctorID: DoctorID,
+            doctorRelationships: []
+        });
+
+    } catch (err) {
+        console.error('Error:', err);
+        
+        try {
+            const [prescriptions] = await conPool.query(
+                `SELECT 
+                    p.DateIssued,
+                    p.DiagnosisNotes,
+                    p.Medicines,
+                    p.Status,
+                    p.GlobalReferenceID,
+                    pat.Name AS PatientName
+                FROM prescription p
+                LEFT JOIN patient pat ON p.PatientID = pat.PatientID
+                WHERE p.DoctorID = ?
+                ORDER BY p.DateIssued DESC`,
+                [req.session.user.DoctorID]
+            );
+
+            const [doctorPatients] = await conPool.query(
+                'SELECT * FROM doctor_patient WHERE DoctorID = ?',
+                [req.session.user.DoctorID]
+            );
+
+            const [medicalRecords] = await conPool.query(
+                'SELECT * FROM medical_record WHERE DoctorID = ?',
+                [req.session.user.DoctorID]
+            );
+
+            res.render('users/doctor', {
+                error: 'Error adding prescription: ' + err.message,
+                prescriptions,
+                doctorPatients,
+                medicalRecords,
+                user: req.session.user,
+                doctorID: req.session.user.DoctorID,
+                doctorRelationships: []
+            });
+        } catch (fetchError) {
+            res.render('users/doctor', {
+                error: 'Error: ' + err.message,
+                prescriptions: [],
+                doctorPatients: [],
+                medicalRecords: [],
+                user: req.session.user,
+                doctorID: req.session.user.DoctorID,
+                doctorRelationships: []
+            });
+        }
+    }
 });
+
+
+app.post('/doctor/addMedRec', async (req,res) =>{
+    try {
+        const { PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy } = req.body;
+
+        await conPool.query(
+            `INSERT INTO MEDICAL_RECORD 
+            (PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy]
+        );
+
+        res.render('users/doctor', { success: 'Medical record added successfully!' });
+    } catch (err) {
+        console.error('Error:', err);
+        res.render('users/doctor', { 
+            error: 'Error adding medical record: ' + err.message,
+            user: req.session.user });
+    }
+})
+
+app.get('/patient', checkRole(['patient']), async (req, res) => {
+    try {
+        if (req.session.user && req.session.user.Role === 'PATIENT') {
+            // Get patientID
+            const [patientData] = await conPool.query(
+                'SELECT PatientID FROM patient WHERE UserID = ?',
+                [req.session.user.UserID]
+            );
+
+            if (!patientData.length) {
+                throw new Error('Patient ID not found');
+            }
+
+            // Get all data in parallel
+            const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
+                conPool.query(`
+                    SELECT 
+                        dp.*,
+                        d.Name as DoctorName,
+                        d.Specialty,
+                        d.Phone as DoctorPhone
+                    FROM doctor_patient dp
+                    LEFT JOIN doctor d ON dp.DoctorID = d.DoctorID
+                    WHERE dp.PatientID = ?`,
+                    [patientData[0].PatientID]
+                ),
+                conPool.query(`
+                    SELECT 
+                        mr.*,
+                        d.Name as DoctorName
+                    FROM medical_record mr
+                    LEFT JOIN doctor d ON mr.DoctorID = d.DoctorID
+                    WHERE mr.PatientID = ?`,
+                    [patientData[0].PatientID]
+                ),
+                conPool.query(`
+                    SELECT 
+                        p.*,
+                        d.Name as DoctorName
+                    FROM prescription p
+                    LEFT JOIN doctor d ON p.DoctorID = d.DoctorID
+                    WHERE p.PatientID = ?`,
+                    [patientData[0].PatientID]
+                )
+            ]);
+
+            res.render('users/patient', {
+                user: req.session.user,
+                currentPatientID: patientData[0].PatientID,
+                doctorRelationships: doctorRelationships[0],
+                medicalRecords: medicalRecords[0],
+                prescriptions: prescriptions[0],
+                success: req.session.success,
+                error: req.session.error
+            });
+
+            // Clear flash messages
+            delete req.session.success;
+            delete req.session.error;
+        } else {
+            res.redirect('/login');
+        }
+    } catch (err) {
+        console.error('Error loading patient dashboard:', err);
+        res.render('users/patient', {
+            user: req.session.user,
+            currentPatientID: null,
+            doctorRelationships: [],
+            medicalRecords: [],
+            prescriptions: [],
+            error: 'Error loading dashboard: ' + err.message
+        });
+    }
+});
+
 
 app.post('/patient/profile', async (req, res) => {
     const userId = req.session.user.UserID;
