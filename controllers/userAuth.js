@@ -1,7 +1,6 @@
 // Importing required modules
 const { conPool } = require('../config/dbHandler'); // importing conpool for DB operations
 const md5 = require('md5'); // for hashing passwords
-const { sendResponse } = require('./helperAuth'); // helper func
 
 // Update the createUser function to include Qualifications
 const createUser = async (req, res) => {
@@ -326,43 +325,42 @@ async function doLogin(req, res) {
     }
 }
 
-
 // Reset Password Route
 async function resetPass (req, res) {
-    try {
-        const { Username, newPassword, confirmPassword } = req.body;
-
-        // Check if passwords match
-        if (newPassword !== confirmPassword) {
-            return res.status(400).render('dashboard/resetPass', {
-                error: 'Passwords do not match'
+      try {
+            const { Username, newPassword, confirmPassword } = req.body;
+    
+            // Check if passwords match
+            if (newPassword !== confirmPassword) {
+                return res.status(400).render('dashboard/resetPass', {
+                    error: 'Passwords do not match'
+                });
+            }
+    
+            // Hash the password using md5
+            const hashedPassword = md5(newPassword);
+    
+            // Update password in database
+            const [result] = await conPool.query(
+                'UPDATE user SET Password = ? WHERE Username = ?',
+                [hashedPassword, Username]
+            );
+    
+            // Check if user was found and updated
+            if (result.affectedRows > 0) {
+                res.redirect('/login');
+            } else {
+                res.status(404).render('dashboard/resetPass', {
+                    error: 'User not found'
+                });
+            }
+    
+        } catch (err) {
+            console.error('Password reset error:', err);
+            res.status(500).render('dashboard/resetPass', {
+                error: 'Error in resetting password'
             });
         }
-
-        // Hash the password using md5
-        const hashedPassword = md5(newPassword);
-
-        // Update password in database
-        const [result] = await conPool.query(
-            'UPDATE user SET Password = ? WHERE Username = ?',
-            [hashedPassword, Username]
-        );
-
-        // Check if user was found and updated
-        if (result.affectedRows > 0) {
-            res.redirect('/login');
-        } else {
-            res.status(404).render('dashboard/resetPass', {
-                error: 'User not found'
-            });
-        }
-
-    } catch (err) {
-        console.error('Password reset error:', err);
-        res.status(500).render('dashboard/resetPass', {
-            error: 'Error in resetting password'
-        });
-    }
 };
 
 function logout(req, res){

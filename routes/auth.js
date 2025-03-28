@@ -9,7 +9,6 @@ const {
     logout
 } = require('../controllers/userAuth');
 
-// Update route handlers to use the imported controller functions
 router.get('/logout', logout);
 router.post('/login', doLogin);
 router.post('/signup', createUser);
