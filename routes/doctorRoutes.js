@@ -15,7 +15,7 @@ router.get('/',checkRole(['doctor']), getDoctor);
 router.post('/profile', getDocProfile);
 
 router.post('/addPatient', addPatient);
-router.post('/addPres', addPrescription);
+router.post('/addPres', checkRole(['doctor']),addPrescription);
 router.post('/addMedRec', addMedRecords);
 
 module.exports = router;
