@@ -142,92 +142,92 @@ async function doLogin(req, res) {
                 });
 
                 case 'DOCTOR':
-    try {
-        // Get doctor data
-        const [doctorData] = await conPool.query(
-            'SELECT * FROM doctor WHERE UserID = ?',
-            [req.session.user.UserID]
-        );
+                    try {
+                        // Get doctor data
+                        const [doctorData] = await conPool.query(
+                            'SELECT * FROM doctor WHERE UserID = ?',
+                            [req.session.user.UserID]
+                        );
 
-        if (!doctorData.length) {
-            return res.render('dashboard/login', {
-                error: 'Doctor profile not found'
-            });
-        }
+                        if (!doctorData.length) {
+                            return res.render('dashboard/login', {
+                                error: 'Doctor profile not found'
+                            });
+                        }
 
-        // Add DoctorID to session
-        req.session.user.DoctorID = doctorData[0].DoctorID;
+                        // Add DoctorID to session
+                        req.session.user.DoctorID = doctorData[0].DoctorID;
 
-        // Get all required data in parallel with patient information
-        const [prescriptions, doctorPatients, medicalRecords] = await Promise.all([
-            conPool.query(
-                `SELECT 
-                    p.*,
-                    pat.Name AS PatientName
-                FROM prescription p
-                LEFT JOIN patient pat ON p.PatientID = pat.PatientID
-                WHERE p.DoctorID = ? 
-                ORDER BY p.DateIssued DESC`,
-                [doctorData[0].DoctorID]
-            ),
-            conPool.query(
-                `SELECT 
-                    dp.*,
-                    pat.Name AS PatientName,
-                    pat.Phone,
-                    pat.DOB,
-                    pat.BloodGroup
-                FROM doctor_patient dp
-                LEFT JOIN patient pat ON dp.PatientID = pat.PatientID
-                WHERE dp.DoctorID = ?`,
-                [doctorData[0].DoctorID]
-            ),
-            conPool.query(
-                `SELECT 
-                    mr.*,
-                    pat.Name AS PatientName
-                FROM medical_record mr
-                LEFT JOIN patient pat ON mr.PatientID = pat.PatientID
-                WHERE mr.DoctorID = ?
-                ORDER BY mr.RecordDate DESC`,
-                [doctorData[0].DoctorID]
-            )
-        ]);
+                        // Get all required data in parallel with patient information
+                        const [prescriptions, doctorPatients, medicalRecords] = await Promise.all([
+                            conPool.query(
+                                `SELECT 
+                                    p.*,
+                                    pat.Name AS PatientName
+                                FROM prescription p
+                                LEFT JOIN patient pat ON p.PatientID = pat.PatientID
+                                WHERE p.DoctorID = ? 
+                                ORDER BY p.DateIssued DESC`,
+                                [doctorData[0].DoctorID]
+                            ),
+                            conPool.query(
+                                `SELECT 
+                                    dp.*,
+                                    pat.Name AS PatientName,
+                                    pat.Phone,
+                                    pat.DOB,
+                                    pat.BloodGroup
+                                FROM doctor_patient dp
+                                LEFT JOIN patient pat ON dp.PatientID = pat.PatientID
+                                WHERE dp.DoctorID = ?`,
+                                [doctorData[0].DoctorID]
+                            ),
+                            conPool.query(
+                                `SELECT 
+                                    mr.*,
+                                    pat.Name AS PatientName
+                                FROM medical_record mr
+                                LEFT JOIN patient pat ON mr.PatientID = pat.PatientID
+                                WHERE mr.DoctorID = ?
+                                ORDER BY mr.RecordDate DESC`,
+                                [doctorData[0].DoctorID]
+                            )
+                        ]);
 
-        // Save session
-        await new Promise((resolve, reject) => {
-            req.session.save((err) => {
-                if (err) reject(err);
-                resolve();
-            });
-        });
+                        // Save session
+                        await new Promise((resolve, reject) => {
+                            req.session.save((err) => {
+                                if (err) reject(err);
+                                resolve();
+                            });
+                        });
 
-        // Debug log
-        console.log('Loaded prescriptions:', prescriptions[0]);
-        console.log('Loaded patients:', doctorPatients[0]);
-        console.log('Loaded records:', medicalRecords[0]);
+                        // // Debug log
+                        // console.log('Loaded prescriptions:', prescriptions[0]);
+                        // console.log('Loaded patients:', doctorPatients[0]);
+                        // console.log('Loaded records:', medicalRecords[0]);
 
-        return res.render('users/doctor', {
-            user: req.session.user,
-            prescriptions: prescriptions[0],
-            doctorPatients: doctorPatients[0],
-            medicalRecords: medicalRecords[0],
-            doctorRelationships: [],
-            success: req.session.success,
-            error: req.session.error
-        });
+                        return res.render('users/doctor', {
+                            user: req.session.user,
+                            prescriptions: prescriptions[0],
+                            doctorPatients: doctorPatients[0],
+                            medicalRecords: medicalRecords[0],
+                            doctorRelationships: [],
+                            success: req.session.success,
+                            error: req.session.error
+                        });
 
-    } catch (err) {
-        console.error('Error in doctor login:', err);
-        return res.render('users/doctor', {
-            user: req.session.user,
-            prescriptions: [],
-            doctorPatients: [],
-            medicalRecords: [],
-            doctorRelationships: [],
-            error: 'Error loading dashboard: ' + err.message
-        });
-    }
+                    } catch (err) {
+                        console.error('Error in doctor login:', err);
+                        return res.render('users/doctor', {
+                            user: req.session.user,
+                            prescriptions: [],
+                            doctorPatients: [],
+                            medicalRecords: [],
+                            doctorRelationships: [],
+                            error: 'Error loading dashboard: ' + err.message
+                        });
+                    }
 
 
                 case 'PATIENT':

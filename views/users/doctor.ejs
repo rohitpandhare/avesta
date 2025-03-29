@@ -1,475 +1,453 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Doctor Dashboard</title>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Doctor Dashboard</title>
     <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="/css/styles.css">
-<style>
-    /* Custom scrollbar styling */
-    .overflow-auto::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-    }
 
-    .overflow-auto::-webkit-scrollbar-track {
-        background: #f1f1f1;
-        border-radius: 4px;
-    }
-
-    .overflow-auto::-webkit-scrollbar-thumb {
-        background: #888;
-        border-radius: 4px;
-    }
-
-    .overflow-auto::-webkit-scrollbar-thumb:hover {
-        background: #555;
-    }
-</style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-    <!-- Navigation Bar -->
-    <nav class="bg-white shadow-lg">
-        <div class="max-w-7xl mx-auto px-4 py-3">
-            <div class="flex justify-between items-center">
-                <div class="flex items-center">
-                    <h1 class="text-2xl font-bold text-gray-800">Doctor Dashboard</h1>
-                </div>
-                <div class="flex items-center space-x-4">
-                    <div class="text-gray-700">
-                        <span class="font-medium">Dr. <%= user?.Username || 'Doctor' %></span>
-            
-                    </div>
-                    <a href="/auth/logout" class="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600 transition-colors">
-                        Logout
-                    </a>
-                </div>
-            </div>
-        </div>
-    </nav>
-
-    <div class="max-w-7xl mx-auto px-4 py-4">
-        <nav class="bg-white shadow-md rounded-lg">
-            <ul class="flex justify-around p-4">
-                <li>
-                    <a href="#part1" 
-                       class="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-md transition-all duration-300"
-                       onclick="scrollToSection('part1')">
-                        <i data-feather="users" class="w-5 h-5 mr-2"></i>
-                        Doctor-Patient Relations
-                    </a>
-                </li>
-                <li>
-                    <a href="#part2" 
-                       class="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-md transition-all duration-300"
-                       onclick="scrollToSection('part2')">
-                        <i data-feather="file-text" class="w-5 h-5 mr-2"></i>
-                        Medical Records
-                    </a>
-                </li>
-                <li>
-                    <a href="#part3" 
-                       class="flex items-center text-gray-700 hover:text-blue-600 hover:bg-blue-50 p-2 rounded-md transition-all duration-300"
-                       onclick="scrollToSection('part3')">
-                        <i data-feather="clipboard" class="w-5 h-5 mr-2"></i>
-                        Prescriptions
-                    </a>
-                </li>
+<body class="bg-gray-100 min-h-screen font-sans antialiased">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <!-- <aside class="w-64 bg-white shadow-lg flex flex-col">
+      <div class="p-6 border-b border-gray-200">
+        <h1 class="text-2xl font-bold text-gray-800">Doctor Dashboard</h1>
+        <p class="text-sm text-gray-600 mt-1">Dr. <%= user?.Username || 'Doctor' %></p>
+      </div>
+      <nav class="flex-1 p-4">
+        <div class="space-y-6">
+          <div>
+            <p class="text-xs text-gray-500 uppercase font-medium mb-3">View Records</p>
+            <ul class="space-y-1">
+              <li>
+                <a href="#patients-section" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                  </svg>
+                  Patients
+                </a>
+              </li>
+              <li>
+                <a href="#records-section" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Medical Records
+                </a>
+              </li>
+              <li>
+                <a href="#prescriptions-section" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H14" />
+                  </svg>
+                  Prescriptions
+                </a>
+              </li>
             </ul>
-        </nav>
-    </div>
-        
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 uppercase font-medium mb-3">Add New</p>
+            <ul class="space-y-1">
+              <li>
+                <a href="#addPatForm" class="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Patient
+                </a>
+              </li>
+              <li>
+                <a href="#addMedRec" class="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Medical Record
+                </a>
+              </li>
+              <li>
+                <a href="#addPres" class="w-full flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                  </svg>
+                  Add Prescription
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </nav>
+      <div class="p-4 border-t border-gray-200">
+        <a href="/auth/logout" class="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+          <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          Logout
+        </a>
+      </div>
+    </aside> -->
 
     <!-- Main Content -->
-<div class="max-w-7xl mx-auto px-4 py-8">
-<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            
-            <!-- view current records  -->
-    <div class="container mx-auto">
+    <main class="flex-1 overflow-y-auto p-8">
+      <header class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-800" id="page-title">Dashboard Overview</h1>
+        <p class="text-gray-600 mt-1" id="page-description">Welcome back, Dr. <%= user?.Username || 'Doctor' %></p>
+      </header>
 
-        <div id="part 1">            
-            <!-- Doctor-Patient Relationships Table -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold mb-4">Doctor-Patient Relationships</h2>
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left">DoctorID</th>
-                                <th class="px-4 py-2 text-left">PatientID</th>
-                                <th class="px-4 py-2 text-left">FirstConsultation</th>
-                                <th class="px-4 py-2 text-left">ConsultationType</th>
-                                <th class="px-4 py-2 text-left">TreatmentNotes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            <% if (typeof doctorPatients !== 'undefined' && doctorPatients.length > 0) { %>
-                            <% doctorPatients.forEach(relationship => { %>
-                                <tr class="border-t">
-                                    <td class="px-4 py-2"><%= relationship.DoctorID %></td>
-                                    <td class="px-4 py-2"><%= relationship.PatientID %></td>
-                                    <td class="px-4 py-2"><%= relationship.FirstConsultation.toLocaleDateString() %></td>
-                                    <td class="px-4 py-2"><%= relationship.ConsultationType %></td>
-                                    <td class="px-4 py-2"><%= relationship.TreatmentNotes %></td>
-                                </tr>
-                            <% }) %>
-                            <% } else { %>
-                                <tr class="border-t">
-                                    <td colspan="4" class="px-4 py-2 text-center text-gray-500">No doctorPatients found</td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+      <div id="main-content" class="space-y-12">
+        <!-- Patients Section -->
+        <section class="space-y-6" id="addPatForm">
+          <h2 class="text-2xl font-semibold text-gray-800">Doctor-Patient Relationships</h2>
+          <div class="bg-white rounded-lg shadow overflow-hidden" id="patients-section">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientID</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">First Consultation</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Consultation Type</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Treatment Notes</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <% if (typeof doctorPatients !== 'undefined' && doctorPatients.length > 0) { %>
+                    <% doctorPatients.forEach(relationship => { %>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4"><%= relationship.DoctorID %></td>
+                        <td class="px-6 py-4"><%= relationship.PatientID %></td>
+                        <td class="px-6 py-4"><%= relationship.FirstConsultation.toLocaleDateString() %></td>
+                        <td class="px-6 py-4"><%= relationship.ConsultationType %></td>
+                        <td class="px-6 py-4"><%= relationship.TreatmentNotes %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="5" class="px-6 py-4 text-center text-gray-500">No relationships found</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
             </div>
+          </div>
 
-            <!-- Doctor-Patient Relationship Form -->
-            <!-- <section class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-6">Add Doctor-Patient Relationship</h2>
-                
-                <% if (locals.error) { %>
-                    <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-md"><%= error %></div>
-                <% } %>
-                <% if (locals.success) { %>
-                    <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-md"><%= success %></div>
-                <% } %>
+          <div class="bg-white rounded-lg shadow-md p-6">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Doctor-Patient Relationship</h3>
+            <% if (locals.success) { %>
+              <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg alert-success"><%= success %></div>
+            <% } %>
+            <% if (locals.error) { %>
+              <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg alert-error"><%= error %></div>
+            <% } %>
+            <form action="/doctor/addPatient" method="POST" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
+                <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">First Consultation Date</label>
+                <input type="date" name="FirstConsultation" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="<%= new Date().toISOString().split('T')[0] %>">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Consultation Type</label>
+                <select name="ConsultationType" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="REGULAR">REGULAR</option>
+                  <option value="EMERGENCY">EMERGENCY</option>
+                  <option value="FOLLOWUP">FOLLOWUP</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Treatment Notes</label>
+                <textarea name="TreatmentNotes" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
+            </form>
+          </div>
+        </section>
 
-                <form action="/doctor/addPatient" method="POST" class="space-y-4">
-
-                    <div >
-                        
-                        <input type="hidden" name="DoctorID" value="<%= user.DoctorID || doctorID %>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-                    </div>
-                    
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
-                        <input type="number" name="PatientID" required 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">First Consultation Date</label>
-                        <input type="date" name="FirstConsultation" required 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Consultation Type</label>
-                        <select name="ConsultationType" required 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="REGULAR">REGULAR</option>
-                            <option value="EMERGENCY">EMERGENCY</option>
-                            <option value="FOLLOWUP">FOLLOWUP</option>
-                        </select>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Treatment Notes</label>
-                        <textarea name="TreatmentNotes" required 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-
-                    <button type="submit" 
-                            class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Submit
-                    </button>
-                </form>
-                <div class="mb-4">
-                    <% if (locals.success) { %>
-                        <div class="p-4 mb-4 text-sm text-green-700 bg-green-100 rounded-lg">
-                            <%= success %>
-                        </div>
-                    <% } %>
-                    
-                    <% if (locals.error) { %>
-                        <div class="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
-                            <%= error %>
-                        </div>
-                    <% } %>
-                </div>
-                
-            </section> -->
-        </div>
-
-        <div id="part2">
-            <!-- Medical Records Table -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold mb-4">Medical Records</h2>
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left">RecordID</th>
-                                <th class="px-4 py-2 text-left">PatientID</th>
-                                <th class="px-4 py-2 text-left">DoctorID</th>
-                                <th class="px-4 py-2 text-left">Diagnosis</th>
-                                <th class="px-4 py-2 text-left">Symptoms</th>
-                                <th class="px-4 py-2 text-left">Treatments</th>
-                                <th class="px-4 py-2 text-left">RecordDate</th>
-                                <th class="px-4 py-2 text-left">Notes</th>
-                                <th class="px-4 py-2 text-left">UpdatedBy</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            <% if (typeof medicalRecords !== 'undefined' && medicalRecords.length > 0) { %>
-                            <% medicalRecords.forEach(record => { %>
-                                <tr class="border-t">
-                                    <td class="px-4 py-2"><%= record.RecordID %></td>
-                                    <td class="px-4 py-2"><%= record.PatientID %></td>
-                                    <td class="px-4 py-2"><%= record.DoctorID %></td>
-                                    <td class="px-4 py-2"><%= record.Diagnosis %></td>
-                                    <td class="px-4 py-2"><%= record.Symptoms %></td>
-                                    <td class="px-4 py-2"><%= record.Treatments %></td>
-                                    <td class="px-4 py-2"><%= record.RecordDate.toLocaleDateString() %></td>
-                                    <td class="px-4 py-2"><%= record.Notes %></td>
-                                    <td class="px-4 py-2"><%= record.UpdatedBy %></td>
-                                </tr>
-                            <% }) %>
-                            <% } else { %>
-                                <tr class="border-t">
-                                    <td colspan="4" class="px-4 py-2 text-center text-gray-500">No medicalRecords found</td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
+        <!-- Medical Records Section -->
+        <section class="space-y-6" id="records-section">
+          <h2 class="text-2xl font-semibold text-gray-800">Medical Records</h2>
+          <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">RecordID</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientID</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Symptoms</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Treatments</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Record Date</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Notes</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Updated By</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <% if (typeof medicalRecords !== 'undefined' && medicalRecords.length > 0) { %>
+                    <% medicalRecords.forEach(record => { %>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4"><%= record.RecordID %></td>
+                        <td class="px-6 py-4"><%= record.PatientID %></td>
+                        <td class="px-6 py-4"><%= record.DoctorID %></td>
+                        <td class="px-6 py-4"><%= record.Diagnosis %></td>
+                        <td class="px-6 py-4"><%= record.Symptoms %></td>
+                        <td class="px-6 py-4"><%= record.Treatments %></td>
+                        <td class="px-6 py-4"><%= record.RecordDate.toLocaleDateString() %></td>
+                        <td class="px-6 py-4"><%= record.Notes %></td>
+                        <td class="px-6 py-4"><%= record.UpdatedBy %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="9" class="px-6 py-4 text-center text-gray-500">No medical records found</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
             </div>
+          </div>
 
-              <!-- Medical Records Form -->
-              <section class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-6">Add Medical Record</h2>
-                
-                <form action="/doctor/addMedRec" method="POST" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
-                        <input type="number" name="PatientID" required 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
+          <div class="bg-white rounded-lg shadow-md p-6" id="addMedRec">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Medical Record</h3>
+            <form action="/doctor/addMedRec" method="POST" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
+                <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <input type="hidden" name="DoctorID" value="<%= user.DoctorID || doctorID %>">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
+                <input type="text" name="Diagnosis" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Symptoms</label>
+                <textarea name="Symptoms" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Treatments</label>
+                <textarea name="Treatments" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Record Date</label>
+                <input type="date" name="RecordDate" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea name="Notes" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Updated By</label>
+                <select name="UpdatedBy" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="DOCTOR">DOCTOR</option>
+                  <option value="STAFF">STAFF</option>
+                </select>
+              </div>
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
+            </form>
+          </div>
+        </section>
 
-                    
-                    <div>
-                        <input type="hidden" name="DoctorID" value="<%= user.DoctorID || doctorID %>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
-                        <input type="text" name="Diagnosis" required 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Symptoms</label>
-                        <textarea name="Symptoms" required 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Treatments</label>
-                        <textarea name="Treatments" required 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Record Date</label>
-                        <input type="date" name="RecordDate" required
-                               value="<%= new Date().toISOString().split('T')[0] %>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-                
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                        <textarea name="Notes" required 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Updated By</label>
-                        <select name="UpdatedBy" required 
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="DOCTOR">DOCTOR</option>
-                            <option value="STAFF">STAFF</option>
-                        </select>
-                    </div>
-
-                    <button type="submit" 
-                            class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Submit
-                    </button>
-                </form>
-            </section>
-        </div>
-
-        <div id="part3">
-            <!-- Prescriptions Table -->
-            <div class="mb-8">
-                <h2 class="text-2xl font-bold mb-4">Prescriptions</h2>
-                <div class="bg-white rounded-lg shadow">
-                    <div class="overflow-auto" style="max-height: 500px;">
-                        <table class="min-w-full table-auto">
-                            <thead class="bg-gray-50 sticky top-0">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Date Issued</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Patient Name</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis Notes</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Medicines</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
-                                    <th class="px-4 py-3 text-left text-sm font-semibold text-gray-700">Reference ID</th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-gray-200">
-                                <% if (prescriptions && prescriptions.length > 0) { %>
-                                    <% prescriptions.forEach(prescription => { %>
-                                        <tr class="hover:bg-gray-50 transition-colors">
-                                            <td class="px-4 py-3 text-sm text-gray-900">
-                                                <%= new Date(prescription.DateIssued).toLocaleDateString() %>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-gray-900">
-                                                <%= prescription.PatientName || 'N/A' %>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-gray-900">
-                                                <div class="max-w-xs overflow-hidden text-ellipsis">
-                                                    <%= prescription.DiagnosisNotes || 'N/A' %>
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm text-gray-900">
-                                                <div class="max-w-xs whitespace-pre-line">
-                                                    <%= prescription.Medicines || 'N/A' %>
-                                                </div>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm">
-                                                <span class="px-2 py-1 text-xs font-medium rounded-full
-                                                    <%= prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
-                                                    <%= prescription.Status %>
-                                                </span>
-                                            </td>
-                                            <td class="px-4 py-3 text-sm font-mono text-gray-900">
-                                                <%= prescription.GlobalReferenceID %>
-                                            </td>
-                                        </tr>
-                                    <% }) %>
-                                <% } else { %>
-                                    <tr>
-                                        <td colspan="6" class="px-4 py-3 text-sm text-center text-gray-500">
-                                            No prescriptions found
-                                        </td>
-                                    </tr>
-                                <% } %>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+        <!-- Prescriptions Section -->
+        <section class="space-y-6" id="prescriptions-section">
+          <h2 class="text-2xl font-semibold text-gray-800">Prescriptions</h2>
+          <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto max-h-[500px]">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50 sticky top-0">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date Issued</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Patient Name</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis Notes</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Medicines</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Reference ID</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  <% if (prescriptions && prescriptions.length > 0) { %>
+                    <% prescriptions.forEach(prescription => { %>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4"><%= new Date(prescription.DateIssued).toLocaleDateString() %></td>
+                        <td class="px-6 py-4"><%= prescription.PatientName || 'N/A' %></td>
+                        <td class="px-6 py-4 max-w-xs truncate"><%= prescription.DiagnosisNotes || 'N/A' %></td>
+                        <td class="px-6 py-4 max-w-xs whitespace-pre-line"><%= prescription.Medicines || 'N/A' %></td>
+                        <td class="px-6 py-4">
+                          <span class="px-2 py-1 text-xs font-medium rounded-full <%= prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
+                            <%= prescription.Status %>
+                          </span>
+                        </td>
+                        <td class="px-6 py-4 font-mono"><%= prescription.GlobalReferenceID %></td>
+                      </tr>
+                    <% }) %>
+                  <% } else { %>
+                    <tr>
+                      <td colspan="6" class="px-6 py-4 text-center text-gray-500">No prescriptions found</td>
+                    </tr>
+                  <% } %>
+                </tbody>
+              </table>
             </div>
+          </div>
 
-            <!-- Prescription Form -->
-            <section class="bg-white rounded-lg shadow-md p-6">
-                <h2 class="text-xl font-semibold text-gray-800 mb-6">Add Prescription</h2>
-                
-                <!-- Prescription Form -->
-                <form action="/doctor/addPres" method="POST" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
-                        <input type="number" name="PatientID" required
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
+          <div class="bg-white rounded-lg shadow-md p-6" id="addPres">
+            <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Prescription</h3>
+            <form action="/doctor/addPres" method="POST" class="space-y-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
+                <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <input type="hidden" name="DoctorID" value="<%= user.DoctorID || doctorID %>">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date Issued</label>
+                <input type="date" name="DateIssued" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis Notes</label>
+                <textarea name="DiagnosisNotes" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Medicines</label>
+                <textarea name="Medicines" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="Status" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                </select>
+              </div>
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
+            </form>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
 
-                    <div>
-                        <input type="hidden" name="DoctorID" value="<%= user.DoctorID || doctorID %>"
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-500">
-                    </div>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM element constants
+      const mainContent = document.getElementById('main-content');
+      const pageTitle = document.getElementById('page-title');
+      const pageDescription = document.getElementById('page-description');
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Date Issued</label>
-                        <input type="date" name="DateIssued" required
-                            value="<%= new Date().toISOString().split('T')[0] %>"
-                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
+      // Navigation state
+      const navState = {
+        currentSection: 'patients-section',
+        sections: {
+          'patients-section': {
+            title: 'Patient Management',
+            description: 'View and manage patient relationships'
+          },
+          'records-section': {
+            title: 'Medical Records',
+            description: 'View and add medical records'
+          },
+          'prescriptions-section': {
+            title: 'Prescriptions',
+            description: 'Manage patient prescriptions'
+          }
+        }
+      };
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis Notes</label>
-                        <textarea name="DiagnosisNotes" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
+      // Navigation handler
+      function handleNavigation(event) {
+        const target = event.target.closest('a');
+        if (!target) return;
+        event.preventDefault();
+        const sectionId = target.getAttribute('href').substring(1);
+        updateActiveSection(sectionId);
+        scrollToSection(sectionId);
+        updatePageHeader(sectionId);
+      }
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Medicines</label>
-                        <textarea name="Medicines" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"></textarea>
-                    </div>
+      // Update active section UI
+      function updateActiveSection(sectionId) {
+        document.querySelectorAll('nav a').forEach(link => {
+          link.classList.remove('bg-blue-50', 'text-blue-600');
+          if (link.getAttribute('href') === `#${sectionId}`) {
+            link.classList.add('bg-blue-50', 'text-blue-600');
+          }
+        });
+      }
 
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                        <select name="Status" required
-                                class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <option value="ACTIVE">ACTIVE</option>
-                            <option value="COMPLETED">COMPLETED</option>
-                        </select>
-                    </div>
-
-                    <button type="submit"
-                            class="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Submit
-                    </button>
-                </form>
-
-            </section>
-        
-        </div>
-            
-</div>
-</div>
-    </div>
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-<script>
-    // Initialize Feather Icons
-    feather.replace();
-
-    // Smooth scroll function
-    function scrollToSection(sectionId) {
+      // Smooth scroll to section
+      function scrollToSection(sectionId) {
         const section = document.getElementById(sectionId);
         if (section) {
-            section.scrollIntoView({
-                behavior: 'smooth',
-                block: 'start'
-            });
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-    }
+      }
 
-    // Add active state to navigation
-    document.addEventListener('DOMContentLoaded', function() {
-        const navLinks = document.querySelectorAll('nav a');
-        const sections = document.querySelectorAll('[id^="part"]');
-        
-        function setActiveLink() {
-            let current = '';
-            
-            sections.forEach(section => {
-                const sectionTop = section.offsetTop;
-                const sectionHeight = section.clientHeight;
-                if (window.pageYOffset >= (sectionTop - 150)) {
-                    current = section.getAttribute('id');
-                }
-            });
-
-            navLinks.forEach(link => {
-                link.classList.remove('text-blue-600', 'bg-blue-50');
-                if (link.getAttribute('href').slice(1) === current) {
-                    link.classList.add('text-blue-600', 'bg-blue-50');
-                }
-            });
+      // Update header title and description based on section
+      function updatePageHeader(sectionId) {
+        const sectionInfo = navState.sections[sectionId];
+        if (sectionInfo) {
+          pageTitle.textContent = sectionInfo.title;
+          pageDescription.textContent = sectionInfo.description;
         }
+      }
 
-        // Update active state on scroll
-        window.addEventListener('scroll', setActiveLink);
-        
-        // Set initial active state
-        setActiveLink();
+      // Handle form submissions via fetch API
+      function handleFormSubmission(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        fetch(form.action, {
+          method: 'POST',
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          showNotification(data.message, data.success ? 'success' : 'error');
+          if (data.success) {
+            form.reset();
+            refreshTableData(form.closest('section').id);
+          }
+        })
+        .catch(error => {
+          showNotification('An error occurred. Please try again.', 'error');
+        });
+      }
+
+      // Notification system
+      function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white transform transition-transform duration-300 translate-x-full`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        requestAnimationFrame(() => {
+          notification.classList.remove('translate-x-full');
+        });
+        setTimeout(() => {
+          notification.classList.add('translate-x-full');
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
+      }
+
+      // Add event listeners
+      document.querySelector('nav').addEventListener('click', handleNavigation);
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', handleFormSubmission);
+      });
+
+      // Initialize Intersection Observer for section tracking
+      const observerOptions = { threshold: 0.2, rootMargin: '-100px' };
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            updateActiveSection(entry.target.id);
+            updatePageHeader(entry.target.id);
+          }
+        });
+      }, observerOptions);
+      document.querySelectorAll('section[id]').forEach(section => {
+        observer.observe(section);
+      });
     });
-</script>
-
+  </script>
 </body>
 </html>

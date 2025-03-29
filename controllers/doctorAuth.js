@@ -6,7 +6,7 @@ async function getDoctor (req, res){
         if (req.session.user && req.session.user.Role === 'DOCTOR') {
             // Get doctor details
             const [doctorDetails] = await conPool.query(
-                'SELECT d.*, u.Name as Username, u.Email FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE d.UserID = ?',
+                'SELECT d.*, u.Username as Username, u.Email FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE d.UserID = ?',
                 [req.session.user.UserID]
             );
 
@@ -92,6 +92,71 @@ async function getDoctor (req, res){
     }
 };
 
+async function addPatient (req, res) {
+    try {
+        // Get doctorID first
+        const [doctorData] = await conPool.query(
+            'SELECT DoctorID FROM doctor WHERE UserID = ?',
+            [req.session.user.UserID]
+        );
+
+        if(!doctorData.length){
+            throw new Error('Doctor not Found');
+        }
+        const DoctorID = doctorData[0].DoctorID;
+
+        let { PatientID,FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
+
+        // Set default date if not provided
+        if (!FirstConsultation) {
+            FirstConsultation = new Date().toISOString().split('T')[0];
+        }
+        
+        // Validate patient exists
+        const [patientExists] = await conPool.query(
+            'SELECT PatientID FROM patient WHERE PatientID = ?',
+            [PatientID]
+        );
+
+        if (!patientExists.length) {
+            throw new Error('Patient not found');
+        }
+
+        // Check if relationship already exists
+        const [existingRelation] = await conPool.query(
+            'SELECT * FROM doctor_patient WHERE DoctorID = ? AND PatientID = ?',
+            [DoctorID, PatientID]
+        );
+
+        if (existingRelation.length > 0) {
+            throw new Error('Relationship already exists');
+        }
+
+        // Insert the relationship
+        await conPool.query(
+            `INSERT INTO DOCTOR_PATIENT 
+            (DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes) 
+            VALUES (?, ?, ?, ?, ?)`,
+            [DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
+        );
+
+        // Set success message in session
+        req.session.success = 'Patient relationship added successfully!';
+        
+        // Redirect back to doctor dashboard
+        res.redirect('/doctor');
+
+    } catch (err) {
+        console.error('Error:', err);
+        
+        // Set error message in session
+        req.session.error = 'Error adding patient relationship: ' + err.message;
+        
+        // Redirect back to doctor dashboard
+        res.redirect('/doctor');
+    }
+};
+
 async function getDocProfile (req, res){
     const userId = req.session.user.UserID;
     const { Name, Specialty, LicenseNumber, Qualifications, Phone } = req.body;
@@ -117,41 +182,6 @@ async function getDocProfile (req, res){
             error: 'Failed to update profile',
             formData: req.body
         });
-    }
-};
-
-async function addPatient (req, res) {
-    try {
-        // Get doctorID first
-        const [realDocID] = await conPool.query(
-            'SELECT DoctorID FROM doctor WHERE UserID = ?',
-            [req.session.user.UserID]
-        );
-
-        const { PatientID, FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
-
-        // Insert the relationship
-        await conPool.query(
-            `INSERT INTO DOCTOR_PATIENT 
-            (DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes) 
-            VALUES (?, ?, ?, ?, ?)`,
-            [realDocID[0].DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
-        );
-
-        // Set success message in session
-        req.session.success = 'Patient relationship added successfully!';
-        
-        // Redirect back to doctor dashboard
-        res.redirect('/doctor');
-
-    } catch (err) {
-        console.error('Error:', err);
-        
-        // Set error message in session
-        req.session.error = 'Error adding patient relationship: ' + err.message;
-        
-        // Redirect back to doctor dashboard
-        res.redirect('/doctor');
     }
 };
 

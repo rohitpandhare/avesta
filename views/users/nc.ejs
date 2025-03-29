@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Doctor Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+<body class="bg-gray-100">
+    <div class="flex h-screen">
+        <!-- Left Sidebar - Keep this part unchanged -->
+        <div class="bg-white w-64 border-r shadow-sm flex flex-col">
+            <!-- Your existing sidebar code remains the same -->
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 overflow-auto">
+            <div class="p-8">
+                <!-- Header Section -->
+                <div class="mb-6">
+                    <h1 class="text-2xl font-bold text-gray-800" id="pageTitle">Dashboard Overview</h1>
+                    <p class="text-sm text-gray-600" id="pageDescription">Welcome back, Dr. <%= user?.Username || 'Doctor' %></p>
+                </div>
+
+                <!-- Dynamic Content Container -->
+                <div id="mainContent" class="space-y-6">
+                    <!-- Content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Store HTML templates
+        const templates = {
+            viewPatients: `
+                <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold mb-4">Patient List</h2>
+                        <!-- Your existing patients table code -->
+                    </div>
+                </div>
+            `,
+            
+            addPatient: `
+                <div class="bg-white rounded-lg shadow-lg">
+                    <div class="p-6">
+                        <h2 class="text-xl font-semibold mb-4">Add New Patient</h2>
+                        <form action="/doctor/addPatient" method="POST" class="space-y-4">
+                            <!-- Your existing patient form fields -->
+                        </form>
+                    </div>
+                </div>
+            `,
+            
+            // Add similar templates for other views
+        };
+
+        // Function to update content
+        function updateContent(type, title = '') {
+            const mainContent = document.getElementById('mainContent');
+            const pageTitle = document.getElementById('pageTitle');
+            
+            // Update page title
+            pageTitle.textContent = title || type.replace(/([A-Z])/g, ' $1').trim();
+            
+            // Clear and update content
+            mainContent.innerHTML = templates[type] || '';
+            
+            // Scroll to top
+            window.scrollTo(0, 0);
+        }
+
+        // Function to handle navigation
+        function handleNavigation(event) {
+            event.preventDefault();
+            const type = event.target.dataset.view;
+            const title = event.target.dataset.title;
+            updateContent(type, title);
+        }
+
+        // Initialize event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click handlers to navigation items
+            const navItems = document.querySelectorAll('[data-view]');
+            navItems.forEach(item => {
+                item.addEventListener('click', handleNavigation);
+            });
+
+            // Show default view
+            updateContent('viewPatients', 'Patient List');
+        });
+
+        // Notification handler
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${
+                type === 'success' ? 'bg-green-500' : 'bg-red-500'
+            } text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
