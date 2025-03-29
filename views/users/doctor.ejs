@@ -104,8 +104,8 @@
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientID</th>
+                    <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th> -->
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientName</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">First Consultation</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Consultation Type</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Treatment Notes</th>
@@ -115,8 +115,8 @@
                   <% if (typeof doctorPatients !== 'undefined' && doctorPatients.length > 0) { %>
                     <% doctorPatients.forEach(relationship => { %>
                       <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4"><%= relationship.DoctorID %></td>
-                        <td class="px-6 py-4"><%= relationship.PatientID %></td>
+                        <!-- <td class="px-6 py-4"><%= relationship.DoctorID %></td> -->
+                        <td class="px-6 py-4"><%= relationship.PatientName || 'N/A' %></td>
                         <td class="px-6 py-4"><%= relationship.FirstConsultation.toLocaleDateString() %></td>
                         <td class="px-6 py-4"><%= relationship.ConsultationType %></td>
                         <td class="px-6 py-4"><%= relationship.TreatmentNotes %></td>
@@ -174,13 +174,13 @@
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">RecordID</th>
+                    <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">RecordID</th> -->
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientID</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th>
+                    <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th> -->
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Record Date</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Symptoms</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Treatments</th>
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Record Date</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Notes</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Updated By</th>
                   </tr>
@@ -189,13 +189,13 @@
                   <% if (typeof medicalRecords !== 'undefined' && medicalRecords.length > 0) { %>
                     <% medicalRecords.forEach(record => { %>
                       <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4"><%= record.RecordID %></td>
-                        <td class="px-6 py-4"><%= record.PatientID %></td>
-                        <td class="px-6 py-4"><%= record.DoctorID %></td>
+                        <!-- <td class="px-6 py-4"><%= record.RecordID %></td> -->
+                        <td class="px-6 py-4"><%= record.PatientName %></td>
+                        <!-- <td class="px-6 py-4"><%= record.DoctorID %></td> -->
+                        <td class="px-6 py-4"><%= record.RecordDate.toLocaleDateString() %></td>
                         <td class="px-6 py-4"><%= record.Diagnosis %></td>
                         <td class="px-6 py-4"><%= record.Symptoms %></td>
                         <td class="px-6 py-4"><%= record.Treatments %></td>
-                        <td class="px-6 py-4"><%= record.RecordDate.toLocaleDateString() %></td>
                         <td class="px-6 py-4"><%= record.Notes %></td>
                         <td class="px-6 py-4"><%= record.UpdatedBy %></td>
                       </tr>
