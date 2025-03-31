@@ -9,9 +9,11 @@ async function getPatients (req, res) {
                 [req.session.user.UserID]
             );
 
-            if (!patientData.length) {
+            if (!patientData || patientData.length === 0) {
                 throw new Error('Patient ID not found');
             }
+
+            const patientID = patientData[0].PatientID;
 
             // Get all data in parallel
             const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
@@ -24,7 +26,7 @@ async function getPatients (req, res) {
                     FROM doctor_patient dp
                     LEFT JOIN doctor d ON dp.DoctorID = d.DoctorID
                     WHERE dp.PatientID = ?`,
-                    [patientData[0].PatientID]
+                    [patientID]
                 ),
                 conPool.query(`
                     SELECT 
@@ -33,7 +35,7 @@ async function getPatients (req, res) {
                     FROM medical_record mr
                     LEFT JOIN doctor d ON mr.DoctorID = d.DoctorID
                     WHERE mr.PatientID = ?`,
-                    [patientData[0].PatientID]
+                    [patientID]
                 ),
                 conPool.query(`
                     SELECT 
@@ -42,13 +44,13 @@ async function getPatients (req, res) {
                     FROM prescription p
                     LEFT JOIN doctor d ON p.DoctorID = d.DoctorID
                     WHERE p.PatientID = ?`,
-                    [patientData[0].PatientID]
+                    [patientID]
                 )
             ]);
 
             res.render('users/patient', {
                 user: req.session.user,
-                currentPatientID: patientData[0].PatientID,
+                currentPatientID: patientID,
                 doctorRelationships: doctorRelationships[0],
                 medicalRecords: medicalRecords[0],
                 prescriptions: prescriptions[0],
@@ -107,18 +109,3 @@ module.exports ={
 	getPatients,
 	getPatientProfile
 }
-
-/**
- all task under patients
-
- 	getMyPrescriptions  - of --Status ENUM('ACTIVE', 'COMPLETED', 'CANCELED') DEFAULT 'ACTIVE',
-
-	viewMyDoctors
-
-	createMedicalRecord,
-	
-	getPatientMedicalHistory,
-
-	updateProfile
-
- */

@@ -3,244 +3,427 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Dashboard - DoctorSync</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <title>Patient Dashboard</title>
     <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        body {
+            background-color: #f0f8ff; /* Light sky blue background */
+            color: #333; /* Neutral text color */
+            font-family: Arial, sans-serif;
+            }
+                  
+        aside {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 256px;
+            height: 100vh;
+            /* background: #f8f9fa; */
+            background-color: #fff;
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+            z-index: 10; /* Ensure it's above other content */
+        }
 
-    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex">
-    <!-- Sidebar -->
-    <div class="w-64 bg-white shadow-md">
-        <div class="p-6 border-b">
-            <h2 class="text-2xl font-bold text-gray-800">Patient Portal</h2>
-        </div>
-        <nav class="p-4">
-            <ul class="space-y-2">
-                <li>
-                    <a href="#doctors-section" class="flex items-center text-gray-700 hover:bg-blue-50 p-2 rounded">
-                        <i data-feather="activity" class="mr-3"></i>
-                        My Doctors
-                    </a>
-                </li>
-                <li>
-                    <a href="#records-section" class="flex items-center text-gray-700 hover:bg-blue-50 p-2 rounded">
-                        <i data-feather="file-text" class="mr-3"></i>
-                        Medical Records
-                    </a>
-                </li>
-                <li>
-                    <a href="#prescriptions-section" class="flex items-center text-gray-700 hover:bg-blue-50 p-2 rounded">
-                        <i data-feather="calendar" class="mr-3"></i>
-                        Prescriptions
-                    </a>
-                </li>
-            </ul>
-        </nav>
-    </div>
+        main {
+            margin-left: 270px; /* Adjust to prevent overlap */
+            padding: 20px;
+        }
 
-    <!-- Main Content -->
-    <div class="flex-1 p-10">
-        <header class="flex justify-between items-center mb-10">
-            <h1 class="text-3xl font-bold text-gray-800">Dashboard</h1>
-            <div class="flex items-center">
-                <span class="mr-4 text-gray-600">Welcome, <%= user?.Username %> </span>
-                <a href="/auth/logout" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">
-                    Logout
-                </a>
-            </div>
-        </header>
+        .hamburger {
+            display: none;
+            cursor: pointer;
+            padding: 10px;
+        }
 
-        <!-- <div class="grid grid-cols-3 gap-6">
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-xl font-semibold mb-4">Total Consultations</h3>
-                <p class="text-3xl font-bold text-blue-600">12</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-xl font-semibold mb-4">Active Prescriptions</h3>
-                <p class="text-3xl font-bold text-green-600">4</p>
-            </div>
-            <div class="bg-white p-6 rounded-lg shadow">
-                <h3 class="text-xl font-semibold mb-4">Upcoming Appointments</h3>
-                <p class="text-3xl font-bold text-yellow-600">2</p>
-            </div>
-        </div> -->
-        <div class="container mx-auto p-4">
-            <% if (locals.error) { %>
-                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span class="block sm:inline"><%= error %></span>
-                </div>
-            <% } %>
-        
-            <% if (locals.success) { %>
-                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative mb-4" role="alert">
-                    <span class="block sm:inline"><%= success %></span>
-                </div>
-            <% } %>
-        
-            <!-- Doctor-Patient Relationships Table -->
-            <div class="mb-8" id = "doctors-section">
-                <h2 class="text-2xl font-bold mb-4">My Doctors</h2>
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left">Doctor Name</th>
-                                <th class="px-4 py-2 text-left">Specialty</th>
-                                <th class="px-4 py-2 text-left">Phone</th>
-                                <th class="px-4 py-2 text-left">First Consultation</th>
-                                <th class="px-4 py-2 text-left">Consultation Type</th>
-                                <th class="px-4 py-2 text-left">Treatment Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (doctorRelationships && doctorRelationships.length > 0) { %>
-                                <% doctorRelationships.forEach(relationship => { %>
-                                    <tr class="border-t hover:bg-gray-50">
-                                        <td class="px-4 py-2 font-medium"><%= relationship.DoctorName || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= relationship.Specialty || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= relationship.DoctorPhone || 'N/A' %></td>
-                                        <td class="px-4 py-2">
-                                            <%= relationship.FirstConsultation ? 
-                                                new Date(relationship.FirstConsultation).toLocaleDateString() : 'N/A' %>
-                                        </td>
-                                        <td class="px-4 py-2"><%= relationship.ConsultationType || 'N/A' %></td>
-                                        <td class="px-4 py-2">
-                                            <div class="max-w-xs overflow-hidden">
-                                                <%= relationship.TreatmentNotes || 'N/A' %>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr class="border-t">
-                                    <td colspan="6" class="px-4 py-2 text-center text-gray-500">
-                                        No doctor relationships found
-                                    </td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        
-            <!-- Medical Records Table -->
-            <div class="mb-8" id="records-section">
-                <h2 class="text-2xl font-bold mb-4">Medical Records</h2>
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left">Date</th>
-                                <th class="px-4 py-2 text-left">Doctor</th>
-                                <th class="px-4 py-2 text-left">Diagnosis</th>
-                                <th class="px-4 py-2 text-left">Symptoms</th>
-                                <th class="px-4 py-2 text-left">Treatments</th>
-                                <th class="px-4 py-2 text-left">Notes</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (medicalRecords && medicalRecords.length > 0) { %>
-                                <% medicalRecords.forEach(record => { %>
-                                    <tr class="border-t">
-                                        <td class="px-4 py-2"><%= record.RecordDate ? new Date(record.RecordDate).toLocaleDateString() : 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= record.DoctorName || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= record.Diagnosis || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= record.Symptoms || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= record.Treatments || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= record.Notes || 'N/A' %></td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr class="border-t">
-                                    <td colspan="6" class="px-4 py-2 text-center text-gray-500">No medical records found</td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        
-            <!-- Prescriptions Table -->
-            <div class="mb-8" id="prescriptions-section">
-                <h2 class="text-2xl font-bold mb-4">Prescriptions</h2>
-                <div class="overflow-x-auto bg-white rounded-lg shadow">
-                    <table class="min-w-full">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-2 text-left">Date Issued</th>
-                                <th class="px-4 py-2 text-left">Doctor</th>
-                                <th class="px-4 py-2 text-left">Diagnosis</th>
-                                <th class="px-4 py-2 text-left">Medicines</th>
-                                <th class="px-4 py-2 text-left">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% if (prescriptions && prescriptions.length > 0) { %>
-                                <% prescriptions.forEach(prescription => { %>
-                                    <tr class="border-t">
-                                        <td class="px-4 py-2"><%= prescription.DateIssued ? new Date(prescription.DateIssued).toLocaleDateString() : 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= prescription.DoctorName || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= prescription.DiagnosisNotes || 'N/A' %></td>
-                                        <td class="px-4 py-2 whitespace-pre-line"><%= prescription.Medicines || 'N/A' %></td>
-                                        <td class="px-4 py-2"><%= prescription.Status || 'N/A' %></td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr class="border-t">
-                                    <td colspan="5" class="px-4 py-2 text-center text-gray-500">No prescriptions found</td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-        
+        .hamburger div {
+            width: 25px;
+            height: 3px;
+            background-color: #333;
+            margin: 5px 0;
+        }
 
-    </div>
-    </div>
-    
-    <script>
-        function scrollToSection(sectionId) {
-            const section = document.getElementById(sectionId);
-            if (section) {
-                section.scrollIntoView({
-                    behavior: 'smooth',
-                    block: 'start'
-                });
+        .close-icon {
+            position: absolute;
+            top: 2px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+        .close-icon:hover {
+      color: #475565; 
+        }
+
+        @media (max-width: 768px) {
+            aside {
+                transform: translateX(-100%);
+            }
+
+            aside.open {
+                transform: translateX(0);
+            }
+
+            .hamburger {
+                display: block;
+            }
+
+            main {
+                margin-left: 0;
             }
         }
-        
-        // Add active state to navigation items
-        document.addEventListener('DOMContentLoaded', function() {
-            const navLinks = document.querySelectorAll('nav a');
-            const sections = document.querySelectorAll('[id$="-section"]');
-            
-            // Highlight active section while scrolling
-            window.addEventListener('scroll', () => {
-                let current = '';
-                
-                sections.forEach(section => {
-                    const sectionTop = section.offsetTop;
-                    if (pageYOffset >= sectionTop - 60) {
-                        current = section.getAttribute('id');
-                    }
-                });
-        
-                navLinks.forEach(link => {
-                    link.classList.remove('bg-blue-50', 'text-blue-600');
-                    if (link.getAttribute('href').slice(1) === current) {
-                        link.classList.add('bg-blue-50', 'text-blue-600');
-                    }
-                });
-            });
-        });
-        
-        feather.replace();
-        </script>
-        
-       
-</body>
 
+        /* Table styles */
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        thead {
+            background-color: #e6f7ff; /* Light bluish shade for headers */
+            }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            vertical-align: top;
+            border-top: 1px solid #dee2e6;
+            text-align: left;
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table tbody + tbody {
+            border-top: 2px solid #dee2e6;
+        }
+
+        .table .table {
+            background-color: #fff;
+        }
+
+        .table-sm th,
+        .table-sm td {
+            padding: 0.3rem;
+        }
+
+        .table-bordered {
+            border: 1px solid #dee2e6;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+
+        .table-bordered thead th,
+        .table-bordered thead td {
+            border-bottom-width: 2px;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: #ffffff; /* White for odd rows */
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #e6f7ff; /* Light bluish shade for even rows */
+        }
+
+        tbody tr:hover {
+            background-color: #bdd1e6; /* Dark blue shade on hover */
+            color: #ffffff; /* White text on hover */
+        }
+
+
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans antialiased">
+<% if (locals.success || locals.error) { %>
+    <div id="toast" role="alert" class="fixed top-4 right-4 z-50 flex items-center p-4 max-w-sm w-full space-x-4 text-gray-700 bg-white rounded shadow-lg transform transition-all duration-500">
+        <div class="flex-shrink-0">
+            <% if (locals.success) { %>
+                <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+            <% } else if (locals.error) { %>
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            <% } %>
+        </div>
+
+        <div class="flex-1">
+            <% if (locals.success) { %>
+                <p class="font-semibold text-green-600">Success!</p>
+                <p class="text-sm"><%= success %></p>
+            <% } else if (locals.error) { %>
+                <p class="font-semibold text-red-600">Error!</p>
+                <p class="text-sm"><%= error %></p>
+            <% } %>
+        </div>
+
+        <!-- Close button with onclick event -->
+        <button onclick="closeToast()" class="text-gray-500 hover:text-gray-700">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414
+          10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10
+          4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+            </svg>
+        </button>
+    </div>
+<% } %>
+
+<div class="flex h-screen relative">
+    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+        <div></div>
+        <div></div>
+        <div></div>
+    </div>
+
+    <aside class="w-64 bg-white shadow-lg flex flex-col fixed top-0 h-screen overflow-y-auto" id="sidebar">
+        <span class="close-icon" id="close-icon" onclick="closeSidebar()">X</span>
+        <br>
+        <div class="p-6 border-b border-gray-200">
+            <h1 class="text-2xl font-bold text-gray-800">Patient Dashboard</h1>
+            <p class="text-sm text-blue-600 mt-1"><%= user?.Name || 'Patient' %></p>
+            <p class="text-sm text-blue-600 mt-1">PatientID: <%= user?.PatientID || '0' %></p>
+        </div>
+        <!-- side navbar -->
+        <nav class="flex-1 p-4">
+            <!-- <div class="space-y-6"> -->
+            <!-- view divs -->
+            <div>
+                <p class="text-xs text-gray-500 uppercase font-medium mb-3">View Records</p>
+                <ul class="space-y-1">
+                    <li>
+                        <a href="#doctors-section" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                            </svg>
+                            Doctors
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#records-section" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                            </svg>
+                            Medical Records
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#prescriptions-section" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                            <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H14"/>
+                            </svg>
+                            Prescriptions
+                        </a>
+                    </li>
+                </ul>
+            </div>
+<!--               
+            </div> -->
+        </nav>
+
+        <!-- logout button -->
+        <div class="p-4 border-t border-black-200">
+            <a href="/auth/logout" class="flex items-center justify-center px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                </svg>
+                Logout
+            </a>
+        </div>
+
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-8">
+        <!-- header -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800" id="page-title">Dashboard Overview</h1>
+            <p class="text-blue-600 mt-1" id="page-description">Welcome back, <%= user?.Name || 'Patient' %></p>
+        </header>
+
+        <div id="main-content" class="space-y-12">
+            <!-- Doctors Section -->
+            <section class="space-y-6" id="doctors-section">
+                <h2 class="text-2xl font-semibold text-gray-800">Doctors</h2>
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th>Doctor Name</th>
+                                <th>Specialty</th>
+                                <th>Phone</th>
+                                <th>First Consultation</th>
+                                <th>Consultation Type</th>
+                                <th>Treatment Notes</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <% if (doctorRelationships && doctorRelationships.length > 0) { %>
+                                <% doctorRelationships.forEach(doc => { %>
+                                    <tr>
+                                        <td><%= doc.DoctorName || 'N/A' %></td>
+                                        <td><%= doc.Specialty || 'N/A' %></td>
+                                        <td><%= doc.DoctorPhone || 'N/A' %></td>
+                                        <td><%= new Date(doc.FirstConsultation).toLocaleDateString() %></td>
+                                        <td><%= doc.ConsultationType || 'N/A' %></td>
+                                        <td><%= doc.TreatmentNotes || 'N/A' %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center">No doctor relationships found.</td>
+                                </tr>
+                            <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Medical Records Section -->
+            <section class="space-y-6" id="records-section">
+                <h2 class="text-2xl font-semibold text-gray-800">Medical Records</h2>
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th>Doctor Name</th>
+                                <th>Record Date</th>
+                                <th>Diagnosis</th>
+                                <th>Symptoms</th>
+                                <th>Treatments</th>
+                                <th>Notes</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <% if (medicalRecords && medicalRecords.length > 0) { %>
+                                <% medicalRecords.forEach(record => { %>
+                                    <tr>
+                                        <td><%= record.DoctorName || 'N/A' %></td>
+                                        <td><%= new Date(record.RecordDate).toLocaleDateString() %></td>
+                                        <td><%= record.Diagnosis || 'N/A' %></td>
+                                        <td><%= record.Symptoms || 'N/A' %></td>
+                                        <td><%= record.Treatments || 'N/A' %></td>
+                                        <td><%= record.Notes || 'N/A' %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="6" class="text-center">No medical records found.</td>
+                                </tr>
+                            <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Prescriptions Section -->
+            <section class="space-y-6" id="prescriptions-section">
+                <h2 class="text-2xl font-semibold text-gray-800">Prescriptions</h2>
+                <div class="bg-white rounded-lg shadow overflow-hidden">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-bordered table-hover">
+                            <thead class="bg-gray-50">
+                            <tr>
+                                <th>Doctor Name</th>
+                                <th>DateIssued</th>
+                                <th>Medication</th>
+                                <th>Dosage</th>
+                                <th>Status</th>
+                                <th>GlobalReferenceID</th>
+
+                            </tr>
+                            </thead>
+                            <tbody>
+                            <% if (prescriptions && prescriptions.length > 0) { %>
+                                <% prescriptions.forEach(prescription => { %>
+                                    <tr>
+                                        <td><%= prescription.DoctorName || 'N/A' %></td>
+                                        <td><%= new Date(prescription.DateIssued).toLocaleDateString() %></td>
+                                        <td><%= prescription.Medicines || 'N/A' %></td>
+                                        <td><%= prescription.DiagnosisNotes || 'N/A' %></td>
+                                        <td class="px-6 py-4">
+                                            <span class="px-2 py-1 text-xs font-medium rounded-full <%= prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
+                                              <%= prescription.Status || 'N/A'%>
+                                            </span>
+                                          </td>
+                                        <td><%= prescription.GlobalReferenceID || 'N/A' %></td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="5" class="text-center">No prescriptions found.</td>
+                                </tr>
+                            <% } %>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mainContent = document.getElementById('main-content');
+      const pageTitle = document.getElementById('page-title');
+      const pageDescription = document.getElementById('page-description');
+      const main = document.querySelector('main');
+      const sidebar = document.getElementById('sidebar');
+      const hamburger = document.getElementById('hamburger');
+      const closeIcon = document.getElementById('close-icon');
+
+    function toggleSidebar() {
+        sidebar.classList.toggle('open');
+    }
+
+    function closeSidebar() {
+        sidebar.classList.remove('open');
+    }
+
+    hamburger.addEventListener('click', toggleSidebar);
+    closeIcon.addEventListener('click', closeSidebar);
+
+    function closeToast() {
+        const toast = document.getElementById('toast');
+        if (toast) {
+          toast.style.transform = 'translateX(100%)'; // Slide out to the right
+          setTimeout(() => toast.remove(), 500); // Remove after animation
+        }
+      }
+
+    // Automatically hide toast after 5 seconds
+    setTimeout(function() {
+        var toast = document.getElementById('toast');
+        if (toast) {
+            toast.style.display = 'none';
+        }
+    }, 5000);
+
+});
+</script>
+</body>
 </html>
+

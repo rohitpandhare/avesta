@@ -4,20 +4,217 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Doctor Dashboard</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
-    <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/css/styles.css">
+  <style>
+    body {
+            background-color: #f0f8ff; /* Light sky blue background */
+            color: #333; /* Neutral text color */
+            font-family: Arial, sans-serif;
+         }
+
+    /* Sidebar styling */
+    aside {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 256px;
+      height: 100vh;
+      /* background: #f8f9fa; */
+      background-color: #fff;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+      transition: transform 0.3s ease;
+      z-index: 10;
+    }
+    
+    /* Main content should have left margin to prevent overlap */
+    main {
+      margin-left: 270px;
+      padding: 20px;
+    }
+    
+    /* Hamburger menu for mobile */
+    .hamburger {
+      display: none;
+      cursor: pointer;
+      padding: 10px;
+    }
+    
+    .hamburger div {
+      width: 25px;
+      height: 3px;
+      background-color: #333;
+      margin: 5px 0;
+    }
+      /* Close button styling */
+      .close-icon {
+            position: absolute;
+            top: 2px;
+            right: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: #007bff;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+    .close-icon:hover {
+      color: #475565; /* Change color on hover for better interactivity */
+    }
+
+    
+    @media (max-width: 768px) {
+      aside {
+        transform: translateX(-100%);
+      }
+      aside.open {
+        transform: translateX(0);
+      }
+      .hamburger {
+        display: block;
+      }
+      main {
+        margin-left: 0;
+      }
+    }
+
+     /* Table styles */
+     .table-container {
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1rem;
+        }
+        thead {
+            background-color: #e6f7ff; /* Light bluish shade for headers */
+            }
+
+        .table th,
+        .table td {
+            padding: 0.75rem;
+            vertical-align: top;
+            border-top: 1px solid #dee2e6;
+            text-align: left;
+        }
+
+        .table thead th {
+            vertical-align: bottom;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .table tbody + tbody {
+            border-top: 2px solid #dee2e6;
+        }
+
+        .table .table {
+            background-color: #fff;
+        }
+
+        .table-sm th,
+        .table-sm td {
+            padding: 0.3rem;
+        }
+
+        .table-bordered {
+            border: 1px solid #dee2e6;
+        }
+
+        .table-bordered th,
+        .table-bordered td {
+            border: 1px solid #dee2e6;
+        }
+
+        .table-bordered thead th,
+        .table-bordered thead td {
+            border-bottom-width: 2px;
+        }
+
+        tbody tr:nth-child(odd) {
+            background-color: #ffffff; /* White for odd rows */
+        }
+
+        tbody tr:nth-child(even) {
+            background-color: #e6f7ff; /* Light bluish shade for even rows */
+        }
+
+        tbody tr:hover {
+            background-color: #bdd1e6; /* Dark blue shade on hover */
+            color: #ffffff; /* White text on hover */
+        }
+
+
+        .table-responsive {
+            display: block;
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        #statics{
+          background-color: #e6f7ff;
+        }
+  </style>
 
 </head>
+
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
-  <div class="flex h-screen">
-    <!-- Sidebar -->
-    <!-- <aside class="w-64 bg-white shadow-lg flex flex-col">
-      <div class="p-6 border-b border-gray-200">
-        <h1 class="text-2xl font-bold text-gray-800">Doctor Dashboard</h1>
-        <p class="text-sm text-gray-600 mt-1">Dr. <%= user?.Username || 'Doctor' %></p>
+  <% if (locals.success || locals.error) { %>
+    <div id="toast" role="alert" class="fixed top-4 right-4 z-50 flex items-center p-4 max-w-sm w-full space-x-4 text-gray-700 bg-white rounded shadow-lg transform transition-all duration-500">
+      <div class="flex-shrink-0">
+        <% if (locals.success) { %>
+          <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        <% } else if (locals.error) { %>
+          <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        <% } %>
       </div>
+  
+      <div class="flex-1">
+        <% if (locals.success) { %>
+          <p class="font-semibold text-green-600">Success!</p>
+          <p class="text-sm"><%= success %></p>
+        <% } else if (locals.error) { %>
+          <p class="font-semibold text-red-600">Error!</p>
+          <p class="text-sm"><%= error %></p>
+        <% } %>
+      </div>
+      
+      <!-- Close button with onclick event -->
+      <button onclick="closeToast()" class="text-gray-500 hover:text-gray-700">
+        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 
+          10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 
+          4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+  <% } %>
+  
+  <div class="flex h-screen relative">
+    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+      <div></div>
+      <div></div>
+      <div></div>
+    </div>
+    
+    <aside class="w-64 bg-white shadow-lg flex flex-col fixed top-0 h-screen overflow-y-auto" id="sidebar">
+      <span class="close-icon" id="close-icon" onclick="closeSidebar()">X</span>
+      <br>
+      <div class="p-6 border-b border-gray-200 mt-80">
+        <h1 class="text-2xl font-bold text-gray-800">Doctor Dashboard</h1>
+        <p class="text-sm text-blue-600 mt-1"><%= user?.Name || 'Doctor' %></p>   
+        <p class="text-sm text-blue-600 mt-1">DoctorID: <%= user?.DoctorID || '0' %></p>
+      </div>
+      <!-- side navbar -->
       <nav class="flex-1 p-4">
         <div class="space-y-6">
+          <!-- view divs  -->
           <div>
             <p class="text-xs text-gray-500 uppercase font-medium mb-3">View Records</p>
             <ul class="space-y-1">
@@ -47,6 +244,7 @@
               </li>
             </ul>
           </div>
+          <!-- add divs  -->
           <div>
             <p class="text-xs text-gray-500 uppercase font-medium mb-3">Add New</p>
             <ul class="space-y-1">
@@ -76,29 +274,33 @@
               </li>
             </ul>
           </div>
+
         </div>
       </nav>
-      <div class="p-4 border-t border-gray-200">
-        <a href="/auth/logout" class="flex items-center justify-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+
+      <!-- logout button  -->
+      <div class="p-4 border-t border-black-200">
+        <a href="/auth/logout" class="flex items-center justify-center px-4 py-2 bg-red-600 text-black rounded-lg hover:bg-red-700 transition-colors">
           <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
           </svg>
           Logout
         </a>
       </div>
-    </aside> -->
 
-    <!-- Main Content -->
+    </aside>
+
     <main class="flex-1 overflow-y-auto p-8">
+      <!-- header  -->
       <header class="mb-8">
         <h1 class="text-3xl font-bold text-gray-800" id="page-title">Dashboard Overview</h1>
-        <p class="text-gray-600 mt-1" id="page-description">Welcome back, Dr. <%= user?.Username || 'Doctor' %></p>
+        <p class="text-blue-600 mt-1" id="page-description">Welcome back, <%= user?.Name || 'Doctor' %></p>
       </header>
 
       <div id="main-content" class="space-y-12">
-        <!-- Patients Section -->
+         <!-- add patients  -->
         <section class="space-y-6" id="addPatForm">
-          <h2 class="text-2xl font-semibold text-gray-800">Doctor-Patient Relationships</h2>
+        <h2 class="text-2xl font-semibold text-gray-800">Patients</h2>
           <div class="bg-white rounded-lg shadow overflow-hidden" id="patients-section">
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
@@ -111,10 +313,11 @@
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Treatment Notes</th>
                   </tr>
                 </thead>
+
                 <tbody class="divide-y divide-gray-200">
                   <% if (typeof doctorPatients !== 'undefined' && doctorPatients.length > 0) { %>
                     <% doctorPatients.forEach(relationship => { %>
-                      <tr class="hover:bg-gray-50">
+                      <tr>
                         <!-- <td class="px-6 py-4"><%= relationship.DoctorID %></td> -->
                         <td class="px-6 py-4"><%= relationship.PatientName || 'N/A' %></td>
                         <td class="px-6 py-4"><%= relationship.FirstConsultation.toLocaleDateString() %></td>
@@ -132,26 +335,24 @@
             </div>
           </div>
 
+          <!-- patient reg form  -->
           <div class="bg-white rounded-lg shadow-md p-6">
             <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Doctor-Patient Relationship</h3>
-            <% if (locals.success) { %>
-              <div class="mb-4 p-3 bg-green-100 text-green-700 rounded-lg alert-success"><%= success %></div>
-            <% } %>
-            <% if (locals.error) { %>
-              <div class="mb-4 p-3 bg-red-100 text-red-700 rounded-lg alert-error"><%= error %></div>
-            <% } %>
             <form action="/doctor/addPatient" method="POST" class="space-y-4">
+              <div class="hidden">
+                <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
                 <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
               </div>
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">First Consultation Date</label>
-                <input type="date" name="FirstConsultation" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="<%= new Date().toISOString().split('T')[0] %>">
+                <label class="block text-sm font-medium text-gray-700 mb-1" >First Consultation Date</label>
+                <input type="date" name="FirstConsultation" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" value="<%= new Date().toISOString().split('T')[0] %>"  id="statics">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Consultation Type</label>
-                <select name="ConsultationType" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select name="ConsultationType" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics" >
                   <option value="REGULAR">REGULAR</option>
                   <option value="EMERGENCY">EMERGENCY</option>
                   <option value="FOLLOWUP">FOLLOWUP</option>
@@ -164,19 +365,20 @@
               <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
             </form>
           </div>
-        </section>
 
-        <!-- Medical Records Section -->
+        </section>
+        <br>
+
+        <!-- add medical records  -->
         <section class="space-y-6" id="records-section">
           <h2 class="text-2xl font-semibold text-gray-800">Medical Records</h2>
+          <!-- view rec  -->
           <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                   <tr>
-                    <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">RecordID</th> -->
-                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientID</th>
-                    <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th> -->
+                    <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientName</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Record Date</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis</th>
                     <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Symptoms</th>
@@ -188,10 +390,8 @@
                 <tbody class="divide-y divide-gray-200">
                   <% if (typeof medicalRecords !== 'undefined' && medicalRecords.length > 0) { %>
                     <% medicalRecords.forEach(record => { %>
-                      <tr class="hover:bg-gray-50">
-                        <!-- <td class="px-6 py-4"><%= record.RecordID %></td> -->
+                      <tr>
                         <td class="px-6 py-4"><%= record.PatientName %></td>
-                        <!-- <td class="px-6 py-4"><%= record.DoctorID %></td> -->
                         <td class="px-6 py-4"><%= record.RecordDate.toLocaleDateString() %></td>
                         <td class="px-6 py-4"><%= record.Diagnosis %></td>
                         <td class="px-6 py-4"><%= record.Symptoms %></td>
@@ -210,14 +410,19 @@
             </div>
           </div>
 
+          <!-- add medical rec  -->
           <div class="bg-white rounded-lg shadow-md p-6" id="addMedRec">
             <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Medical Record</h3>
             <form action="/doctor/addMedRec" method="POST" class="space-y-4">
+              <div class="hidden">
+                <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
                 <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
               </div>
-              <input type="hidden" name="DoctorID" value="<%= user.DoctorID || doctorID %>">
+              
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
                 <input type="text" name="Diagnosis" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -232,7 +437,7 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Record Date</label>
-                <input type="date" name="RecordDate" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="date" name="RecordDate" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
@@ -240,7 +445,7 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Updated By</label>
-                <select name="UpdatedBy" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select name="UpdatedBy" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
                   <option value="DOCTOR">DOCTOR</option>
                   <option value="STAFF">STAFF</option>
                 </select>
@@ -249,10 +454,12 @@
             </form>
           </div>
         </section>
+        <br>
 
-        <!-- Prescriptions Section -->
+        <!-- add prescriptions  -->
         <section class="space-y-6" id="prescriptions-section">
           <h2 class="text-2xl font-semibold text-gray-800">Prescriptions</h2>
+          <!-- view pres  -->
           <div class="bg-white rounded-lg shadow overflow-hidden">
             <div class="overflow-x-auto max-h-[500px]">
               <table class="min-w-full divide-y divide-gray-200">
@@ -269,7 +476,7 @@
                 <tbody class="divide-y divide-gray-200">
                   <% if (prescriptions && prescriptions.length > 0) { %>
                     <% prescriptions.forEach(prescription => { %>
-                      <tr class="hover:bg-gray-50">
+                      <tr >
                         <td class="px-6 py-4"><%= new Date(prescription.DateIssued).toLocaleDateString() %></td>
                         <td class="px-6 py-4"><%= prescription.PatientName || 'N/A' %></td>
                         <td class="px-6 py-4 max-w-xs truncate"><%= prescription.DiagnosisNotes || 'N/A' %></td>
@@ -292,17 +499,21 @@
             </div>
           </div>
 
+          <!-- add pres  -->
           <div class="bg-white rounded-lg shadow-md p-6" id="addPres">
             <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Prescription</h3>
+            
             <form action="/doctor/addPres" method="POST" class="space-y-4">
+              <div class="hidden">
+                <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
                 <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
               </div>
-              <input type="hidden" name="DoctorID" value="<%= user.DoctorID || doctorID %>">
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Date Issued</label>
-                <input type="date" name="DateIssued" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <input type="date" name="DateIssued" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis Notes</label>
@@ -314,16 +525,18 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="Status" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select name="Status" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
                   <option value="ACTIVE">ACTIVE</option>
                   <option value="COMPLETED">COMPLETED</option>
                 </select>
               </div>
               <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
-            </form>
+            </form>            
           </div>
         </section>
+
       </div>
+
     </main>
   </div>
 
@@ -333,37 +546,48 @@
       const mainContent = document.getElementById('main-content');
       const pageTitle = document.getElementById('page-title');
       const pageDescription = document.getElementById('page-description');
-
-      // Navigation state
-      const navState = {
-        currentSection: 'patients-section',
-        sections: {
-          'patients-section': {
-            title: 'Patient Management',
-            description: 'View and manage patient relationships'
-          },
-          'records-section': {
-            title: 'Medical Records',
-            description: 'View and add medical records'
-          },
-          'prescriptions-section': {
-            title: 'Prescriptions',
-            description: 'Manage patient prescriptions'
-          }
-        }
-      };
-
-      // Navigation handler
+      const sidebar = document.querySelector('aside');
+      const main = document.querySelector('main');
+      const hamburger = document.getElementById('hamburger');
+      const closeIcon = document.getElementById('close-icon');
+  
+      // // Navigation state
+      // const navState = {
+      //   currentSection: 'patients-section',
+      //   sections: {
+      //     'patients-section': {
+      //       title: 'Patient Management',
+      //       description: 'View and manage patient relationships'
+      //     },
+      //     'records-section': {
+      //       title: 'Medical Records',
+      //       description: 'View and add medical records'
+      //     },
+      //     'prescriptions-section': {
+      //       title: 'Prescriptions',
+      //       description: 'Manage patient prescriptions'
+      //     }
+      //   }
+      // };
+  
+      // Function to handle navigation
+      
       function handleNavigation(event) {
         const target = event.target.closest('a');
         if (!target) return;
+  
         event.preventDefault();
         const sectionId = target.getAttribute('href').substring(1);
         updateActiveSection(sectionId);
         scrollToSection(sectionId);
         updatePageHeader(sectionId);
+  
+        // Close sidebar on mobile views
+        if (window.innerWidth <= 768) {
+          toggleSidebar(); // use toggle function here for consistency
+        }
       }
-
+  
       // Update active section UI
       function updateActiveSection(sectionId) {
         document.querySelectorAll('nav a').forEach(link => {
@@ -373,7 +597,7 @@
           }
         });
       }
-
+  
       // Smooth scroll to section
       function scrollToSection(sectionId) {
         const section = document.getElementById(sectionId);
@@ -381,17 +605,32 @@
           section.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
       }
-
+  
       // Update header title and description based on section
-      function updatePageHeader(sectionId) {
-        const sectionInfo = navState.sections[sectionId];
-        if (sectionInfo) {
-          pageTitle.textContent = sectionInfo.title;
-          pageDescription.textContent = sectionInfo.description;
-        }
+      // function updatePageHeader(sectionId) {
+      //   const sectionInfo = navState.sections[sectionId];
+      //   if (sectionInfo) {
+      //     pageTitle.textContent = sectionInfo.title;
+      //     pageDescription.textContent = sectionInfo.description;
+      //   }
+      // }
+  
+      // Notification system
+      function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white transform transition-transform duration-300 translate-x-full`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        requestAnimationFrame(() => {
+          notification.classList.remove('translate-x-full');
+        });
+        setTimeout(() => {
+          notification.classList.add('translate-x-full');
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
       }
-
-      // Handle form submissions via fetch API
+  
+         // Handle form submissions via fetch API
       function handleFormSubmission(event) {
         event.preventDefault();
         const form = event.target;
@@ -412,42 +651,55 @@
           showNotification('An error occurred. Please try again.', 'error');
         });
       }
-
-      // Notification system
-      function showNotification(message, type = 'success') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white transform transition-transform duration-300 translate-x-full`;
-        notification.textContent = message;
-        document.body.appendChild(notification);
-        requestAnimationFrame(() => {
-          notification.classList.remove('translate-x-full');
-        });
-        setTimeout(() => {
-          notification.classList.add('translate-x-full');
-          setTimeout(() => notification.remove(), 300);
-        }, 3000);
-      }
-
+      
       // Add event listeners
       document.querySelector('nav').addEventListener('click', handleNavigation);
       document.querySelectorAll('form').forEach(form => {
         form.addEventListener('submit', handleFormSubmission);
       });
-
+  
       // Initialize Intersection Observer for section tracking
       const observerOptions = { threshold: 0.2, rootMargin: '-100px' };
       const observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
           if (entry.isIntersecting) {
             updateActiveSection(entry.target.id);
-            updatePageHeader(entry.target.id);
+            // updatePageHeader(entry.target.id);
           }
         });
       }, observerOptions);
+  
       document.querySelectorAll('section[id]').forEach(section => {
         observer.observe(section);
       });
+  
+      function toggleSidebar() {
+        sidebar.classList.toggle('open'); // Toggles visibility of the sidebar
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open'); // Ensures sidebar is hidden
+      }
+
+      hamburger.addEventListener('click', toggleSidebar);
+      closeIcon.addEventListener('click', closeSidebar);
+     
+      // Function to close toast notification
+      function closeToast() {
+        const toast = document.getElementById('toast');
+        if (toast) {
+          toast.style.transform = 'translateX(100%)'; // Slide out to the right
+          setTimeout(() => toast.remove(), 500); // Remove after animation
+        }
+      }
+  
+      // Automatically close the toast after 5 seconds
+      const toast = document.getElementById('toast');
+      if (toast) {
+        setTimeout(closeToast, 5000);
+      }
     });
   </script>
+  
 </body>
 </html>
