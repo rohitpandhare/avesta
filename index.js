@@ -54,7 +54,30 @@ const doctorLinks = require('./routes/doctorRoutes');
 app.use('/doctor', doctorLinks);
 
 const patientLinks = require('./routes/patientRoutes'); 
+const { conPool } = require('./config/dbHandler');
 app.use('/patient', patientLinks);
+
+
+app.get("/search-patient", async (req, res) => {
+    const searchQuery = req.query.query;  // Changed from req.query.name to req.query.query
+    
+    if (!searchQuery) {
+        return res.json([]);
+    }
+
+    try {
+        const [patients] = await conPool.query(
+            "SELECT PatientID, Name FROM patient WHERE Name LIKE ? LIMIT 5",
+            [`%${searchQuery}%`]
+        );
+        res.json(patients);
+    } catch (error) {
+        console.error("Error fetching patients:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

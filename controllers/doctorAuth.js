@@ -138,13 +138,28 @@ async function deletePres(req, res) {
         //     throw new Error('No prescription found to delete.');
         // }
         const PrescriptionID = req.params.id;
+        
+        // First verify the prescription exists and belongs to this doctor
+        const [prescription] = await conPool.query(
+            'SELECT * FROM prescription WHERE PrescriptionID = ?',
+            [PrescriptionID]
+        );
+
+        if (!prescription.length) {
+            return res.status(404).json({ error: 'Prescription not found' });
+        }
+
         // Attempt to delete the relationship
         const [result] = await conPool.query('DELETE FROM prescription WHERE PrescriptionID = ?', [PrescriptionID]);
 
         // Send JSON response
-        res.status(result.affectedRows > 0 ? 200 : 404).json({
-            success: result.affectedRows > 0,
-            message: result.affectedRows > 0 ? 'Prescription Deleted successfully!' : 'Patient not found!'
+        // res.status(result.affectedRows > 0 ? 200 : 404).json({
+        //     success: result.affectedRows > 0,
+        //     message: result.affectedRows > 0 ? 'Prescription Deleted successfully!' : 'Patient not found!'
+        // });
+        res.json({ 
+            success: true,
+            message: 'Prescription deleted successfully'
         });
 
     } catch (err) {
@@ -241,13 +256,26 @@ async function addPatient (req, res) {
     try {
          // Get doctor details
         const {doctorID} = await getDocID(req.session.user.UserID);   
-        let { PatientID,FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
+        let { PatientID,patientName,FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
         
         // Set default date if not provided
         if (!FirstConsultation) {
             FirstConsultation = new Date().toISOString().split('T')[0];
         }
         
+         // If PatientID is missing, fetch from database using patient name
+         if (!PatientID || PatientID.trim() === "") {
+            const [patient] = await conPool.query(
+                "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
+                [patientName.trim()]
+            );
+
+            if (patient.length === 0) {
+                throw new Error("Patient not found");
+            }
+            PatientID = patient[0].PatientID;
+        }
+
         // Validate patient exists
         const [patientExists] = await conPool.query(
             'SELECT PatientID FROM patient WHERE PatientID = ?',
@@ -359,13 +387,39 @@ async function addPrescription(req, res) {
 
         const {
             PatientID,
+            patientName,
             DateIssued,
             DiagnosisNotes,
             Medicines,
             Status
         } = req.body;
+
+        
+         // If PatientID is missing, fetch from database using patient name
+         if (!PatientID || PatientID.trim() === "") {
+            const [patient] = await conPool.query(
+                "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
+                [patientName.trim()]
+            );
+
+            if (patient.length === 0) {
+                throw new Error("Patient not found");
+            }
+            PatientID = patient[0].PatientID;
+        }
+
+        // Validate patient exists
+        const [patientExists] = await conPool.query(
+            'SELECT PatientID FROM patient WHERE PatientID = ?',
+            [PatientID]
+        );
+        
+        if (!patientExists.length) {
+            throw new Error('Patient not found');
+        }
+
         // Validate required fields (PatientID, DiagnosisNotes, Medicines, Status)
-    checkRequiredFields(['PatientID', 'DiagnosisNotes', 'Medicines', 'Status'], req.body);
+        checkRequiredFields(['PatientID', 'DiagnosisNotes', 'Medicines', 'Status'], req.body);
 
         // Add validation
         if (!PatientID || !DateIssued || !DiagnosisNotes || !Medicines || !Status) {
@@ -450,15 +504,38 @@ async function addMedRecords (req,res) {
          // Get doctor details
         const {doctorID} = await getDocID(req.session.user.UserID);
            
+        let { PatientID, patientName, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy } = req.body;
+
          // Set default date if not provided
          if (!req.body.RecordDate) {
             req.body.RecordDate = new Date().toISOString().split('T')[0];
         }
+
+        // If PatientID is missing, fetch from database using patient name
+        if (!PatientID || PatientID.trim() === "") {
+            const [patient] = await conPool.query(
+                "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
+                [patientName.trim()]
+            );
+
+            if (patient.length === 0) {
+                throw new Error("Patient not found");
+            }
+            PatientID = patient[0].PatientID;
+        }
+
+        // Validate patient exists
+        const [patientExists] = await conPool.query(
+            'SELECT PatientID FROM patient WHERE PatientID = ?',
+            [PatientID]
+        );
         
-        const { PatientID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy } = req.body;
+        if (!patientExists.length) {
+            throw new Error('Patient not found');
+        }
 
         // Validate required fields (PatientID, Diagnosis, Symptoms, Treatments, Notes, UpdatedBy)
-    checkRequiredFields(['PatientID', 'Diagnosis', 'Symptoms', 'Treatments', 'Notes', 'UpdatedBy'], req.body);
+        checkRequiredFields(['PatientID', 'Diagnosis', 'Symptoms', 'Treatments', 'Notes', 'UpdatedBy'], req.body);
 
         // Add validation
         if (!PatientID || !Diagnosis || !Symptoms || !Treatments || !RecordDate || !Notes || !UpdatedBy) {
@@ -494,12 +571,13 @@ async function addMedRecords (req,res) {
         try{
              // Get doctor details
            const {doctorID} = await getDocID(req.session.user.UserID);
+
            //get updated data
            const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
 
            console.log("Received data:", req.body);
 
-        res.render('users/doctor', { 
+            res.render('users/doctor', { 
                 error:  'Error adding medical record: ' + err.message,
                 prescriptions,
                 doctorPatients,
@@ -512,6 +590,7 @@ async function addMedRecords (req,res) {
             delete req.session.success;
             delete req.session.error;
 
+            console.log("Received data:", req.body);
         } catch (fetchError) {
             res.render('users/doctor', {
                 error: 'Error: ' + err.message,
