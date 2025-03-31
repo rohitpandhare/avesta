@@ -14,7 +14,7 @@ router.get('/',checkRole(['admin']), getAdmin);
 router.delete('/delete-user/:id', deleteUser);
 
 router.delete('/delete-doctor/:id', deleteDoctor);
-router.delete('/delete-patient?:id', deletePatient);
+router.delete('/delete-patient/:id', deletePatient);
 
 module.exports = router;
 

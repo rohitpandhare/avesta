@@ -2,10 +2,10 @@ function toggleExtraFields() {
     const role = document.getElementById('role').value;
     const doctorFields = document.getElementById('doctorFields');
     const patientFields = document.getElementById('patientFields');
-    const adminFields = document.getElementById('adminFields');
+    // const adminFields = document.getElementById('adminFields');
 
     // Hide all fields first
-    [doctorFields, patientFields, adminFields].forEach(field => 
+    [doctorFields, patientFields].forEach(field => 
         field.classList.add('hidden')
     );
 
@@ -28,14 +28,15 @@ function toggleExtraFields() {
             field.disabled = false;
             field.required = true;
         });
-
-    } else if (role === 'ADMIN') {
-        adminFields.classList.remove('hidden');
-        adminFields.querySelectorAll('.role-specific-field').forEach(field => {
-            field.disabled = false;
-            field.required = true;
-        });
     }
+
+    // } else if (role === 'ADMIN') {
+    //     adminFields.classList.remove('hidden');
+    //     adminFields.querySelectorAll('.role-specific-field').forEach(field => {
+    //         field.disabled = false;
+    //         field.required = true;
+    //     });
+    // }
 }
 
 function handleSpecialty() {

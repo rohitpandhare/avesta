@@ -41,7 +41,7 @@ async function getDocID(UserID) {
     const [doctorDetails] = await conPool.query(
         'SELECT d.*, u.Username as Username, u.Email FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE d.UserID = ?',
         [UserID]
-``    );
+   );
 
     if (!doctorDetails.length) {
         throw new Error('Doctor details not found');
@@ -54,6 +54,137 @@ async function getDocID(UserID) {
         doctorDetails: doctorDetails[0],
     };
 }
+
+// Helper function to build detailed missing-fields message
+function checkRequiredFields(fields, data) {
+    const missing = fields.filter(field => !data[field] || data[field].toString().trim() === '');
+    if (missing.length) {
+      throw new Error(`Missing required field(s): ${missing.join(', ')}`);
+    }
+  }
+
+// DELETE patient reln
+async function deleteRelation(req, res) {
+    try {
+        const { doctorID } = await getDocID(req.session.user.UserID);
+        // const { doctorPatients } = await updateData(doctorID);
+        // const PatientID = doctorPatients[0]?.PatientID;
+        const PatientID = req.params.id;
+
+        if (!PatientID) {
+            throw new Error('No patient found to delete.');
+        }
+
+        // Attempt to delete the relationship
+        const [result] = await conPool.query('DELETE FROM doctor_patient WHERE PatientID = ? AND DoctorID = ?', [PatientID, doctorID]);
+
+        // Send JSON response
+        res.status(result.affectedRows > 0 ? 200 : 404).json({
+            success: result.affectedRows > 0,
+            message: result.affectedRows > 0 ? 'Patient Deleted successfully!' : 'Patient not found!'
+        });
+
+    } catch (err) {
+        console.error(err);
+        // Send error response
+        res.status(500).json({ success: false, message: 'Error deleting user' });
+    } finally {
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+    }
+}
+
+// DELETE medicalRecords
+async function deleteRecord(req, res) {
+    try {
+        // const { doctorID } = await getDocID(req.session.user.UserID);
+        // const { medicalRecords } = await updateData(doctorID);
+        // const PatientID = medicalRecords[0]?.PatientID;
+
+        // if (!PatientID) {
+        //     throw new Error('No medical record found to delete.');
+        // }
+        const RecordID = req.params.id; // get id manually
+
+        // Attempt to delete the relationship
+        const [result] = await conPool.query('DELETE FROM medical_record WHERE RecordID = ?', [RecordID]);
+
+        // Send JSON response
+        res.status(result.affectedRows > 0 ? 200 : 404).json({
+            success: result.affectedRows > 0,
+            message: result.affectedRows > 0 ? 'Medical Record Deleted successfully!' : 'Patient not found!'
+        });
+
+    } catch (err) {
+        console.error(err);
+        // Send error response
+        res.status(500).json({ success: false, message: 'Error deleting record' });
+    } finally {
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+    }
+}
+
+// DELETE medicalRecords
+async function deletePres(req, res) {
+    try {
+        // const { doctorID } = await getDocID(req.session.user.UserID);
+        // const { prescriptions } = await updateData(doctorID);
+        // const PatientID = prescriptions[0]?.PatientID;
+
+        // if (!PatientID) {
+        //     throw new Error('No prescription found to delete.');
+        // }
+        const PrescriptionID = req.params.id;
+        // Attempt to delete the relationship
+        const [result] = await conPool.query('DELETE FROM prescription WHERE PrescriptionID = ?', [PrescriptionID]);
+
+        // Send JSON response
+        res.status(result.affectedRows > 0 ? 200 : 404).json({
+            success: result.affectedRows > 0,
+            message: result.affectedRows > 0 ? 'Prescription Deleted successfully!' : 'Patient not found!'
+        });
+
+    } catch (err) {
+        console.error(err);
+        // Send error response
+        res.status(500).json({ success: false, message: 'Error deleting Prescription' });
+    } finally {
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+    }
+}
+
+async function getDocProfile (req, res){
+    const userId = req.session.user.UserID;
+    const { Name, Specialty, LicenseNumber, Qualifications, Phone } = req.body;
+
+    try {
+        const [result] = await conPool.query(
+            `UPDATE DOCTOR SET 
+                Name = ?, 
+                Specialty = ?, 
+                LicenseNumber = ?, 
+                Qualifications = ?, 
+                Phone = ?
+             WHERE UserID = ?`,
+            [Name, Specialty, LicenseNumber, Qualifications, Phone, userId]
+        );
+
+        // Update session
+        req.session.user.profileComplete = true;
+        res.redirect('/login');
+    } catch (err) {
+        console.error(err);
+        res.render('dashboard/index', { 
+            error: 'Failed to update profile',
+            formData: req.body
+        });
+    }
+};
 
 // User routes
 async function getDoctor (req, res){
@@ -109,8 +240,7 @@ async function addPatient (req, res) {
     // doctorData = null
     try {
          // Get doctor details
-        const {doctorID, doctorDetails} = await getDocID(req.session.user.UserID);
-           
+        const {doctorID} = await getDocID(req.session.user.UserID);   
         let { PatientID,FirstConsultation, ConsultationType, TreatmentNotes } = req.body;
         
         // Set default date if not provided
@@ -149,6 +279,8 @@ async function addPatient (req, res) {
         //get updated data
         const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
         
+        console.log("Received data:", req.body);
+
         res.render('users/doctor', {
             success: 'Patient relationship added successfully!',
             prescriptions,
@@ -166,7 +298,7 @@ async function addPatient (req, res) {
     } catch (err) {
         try {
              // Get doctor details
-           const {doctorID, doctorDetails} = await getDocID(req.session.user.UserID);
+           const {doctorID} = await getDocID(req.session.user.UserID);
            
            //get updated data
            const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
@@ -183,6 +315,8 @@ async function addPatient (req, res) {
             // Clear flash messages
             delete req.session.success;
             delete req.session.error;
+
+            console.log("Received data:", req.body);
 
         } catch (fetchError) {
             res.render('users/doctor', {
@@ -202,33 +336,6 @@ async function addPatient (req, res) {
     }
 };
 
-async function getDocProfile (req, res){
-    const userId = req.session.user.UserID;
-    const { Name, Specialty, LicenseNumber, Qualifications, Phone } = req.body;
-
-    try {
-        const [result] = await conPool.query(
-            `UPDATE DOCTOR SET 
-                Name = ?, 
-                Specialty = ?, 
-                LicenseNumber = ?, 
-                Qualifications = ?, 
-                Phone = ?
-             WHERE UserID = ?`,
-            [Name, Specialty, LicenseNumber, Qualifications, Phone, userId]
-        );
-
-        // Update session
-        req.session.user.profileComplete = true;
-        res.redirect('/login');
-    } catch (err) {
-        console.error(err);
-        res.render('dashboard/index', { 
-            error: 'Failed to update profile',
-            formData: req.body
-        });
-    }
-};
 
 // Helper function to generate reference ID
 function generateReferenceId() {
@@ -243,7 +350,12 @@ async function addPrescription(req, res) {
     // let doctorData;
     try {
         // Get doctor details
-        const {doctorID, doctorDetails} = await getDocID(req.session.user.UserID);
+        const {doctorID} = await getDocID(req.session.user.UserID);
+
+         // Set default date if not provided
+         if (!req.body.DateIssued) {
+            req.body.DateIssued = new Date().toISOString().split('T')[0];
+        }
 
         const {
             PatientID,
@@ -252,6 +364,8 @@ async function addPrescription(req, res) {
             Medicines,
             Status
         } = req.body;
+        // Validate required fields (PatientID, DiagnosisNotes, Medicines, Status)
+    checkRequiredFields(['PatientID', 'DiagnosisNotes', 'Medicines', 'Status'], req.body);
 
         // Add validation
         if (!PatientID || !DateIssued || !DiagnosisNotes || !Medicines || !Status) {
@@ -260,11 +374,6 @@ async function addPrescription(req, res) {
 
         // Generate GlobalReferenceID
         const GlobalReferenceID = generateReferenceId();
-
-        // Set default date if not provided
-        if (!DateIssued) {
-            DateIssued = new Date().toISOString().split('T')[0];
-        }
 
         // Insert into database
         await conPool.query(
@@ -292,14 +401,14 @@ async function addPrescription(req, res) {
         delete req.session.success;
         delete req.session.error;
 
+        console.log("Received data:", req.body);
+
     } catch (err) {
         console.error('Error:', err);
         
-        try {
-                        
+        try {        
             // Get doctor details
-            const {doctorID, doctorDetails} = await getDocID(req.session.user.UserID);
-                    
+            const {doctorID} = await getDocID(req.session.user.UserID);      
             //get updated data
             const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
 
@@ -339,19 +448,21 @@ async function addMedRecords (req,res) {
     // let doctorData; 
     try {
          // Get doctor details
-        const {doctorID, doctorDetails} = await getDocID(req.session.user.UserID);
+        const {doctorID} = await getDocID(req.session.user.UserID);
            
+         // Set default date if not provided
+         if (!req.body.RecordDate) {
+            req.body.RecordDate = new Date().toISOString().split('T')[0];
+        }
         
         const { PatientID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy } = req.body;
+
+        // Validate required fields (PatientID, Diagnosis, Symptoms, Treatments, Notes, UpdatedBy)
+    checkRequiredFields(['PatientID', 'Diagnosis', 'Symptoms', 'Treatments', 'Notes', 'UpdatedBy'], req.body);
 
         // Add validation
         if (!PatientID || !Diagnosis || !Symptoms || !Treatments || !RecordDate || !Notes || !UpdatedBy) {
             throw new Error('All required fields must be filled');
-        }
-
-        // // Set default date if not provided
-        if (!RecordDate) {
-            RecordDate = new Date().toISOString().split('T')[0];
         }
          
          await conPool.query(
@@ -363,6 +474,7 @@ async function addMedRecords (req,res) {
 
         //get updated data
         const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
+        console.log("Received data:", req.body);
 
         res.render('users/doctor', { 
             success: 'Medical record added successfully!',
@@ -381,10 +493,11 @@ async function addMedRecords (req,res) {
         console.error('Error:', err);
         try{
              // Get doctor details
-           const {doctorID, doctorDetails} = await getDocID(req.session.user.UserID);
-           
+           const {doctorID} = await getDocID(req.session.user.UserID);
            //get updated data
            const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
+
+           console.log("Received data:", req.body);
 
         res.render('users/doctor', { 
                 error:  'Error adding medical record: ' + err.message,
@@ -421,7 +534,10 @@ module.exports ={
     getDocProfile,
     addPatient,
     addPrescription,
-    addMedRecords
+    addMedRecords,
+    deleteRelation,
+    deleteRecord,
+    deletePres
 }
 
 // const conPool = require('../config/dbHandler');

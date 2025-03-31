@@ -5,7 +5,7 @@ const md5 = require('md5'); // for hashing passwords
 // Update the createUser function to include Qualifications
 const createUser = async (req, res) => {
     const { 
-        Username, Email, Password, Role, AdminCode,
+        Username, Email, Password, Role,
         Name, Phone, DOB, BloodGroup,
         LicenseNumber, Specialty, other_specialty, Qualifications
     } = req.body;
@@ -20,12 +20,13 @@ const createUser = async (req, res) => {
     const connection = await conPool.getConnection();
     try {
         await connection.beginTransaction();
+        // const createdAt = new Date().toISOString().split('T')[0];
 
         // Insert into USER table
         const [userResult] = await connection.query(
-            `INSERT INTO user (Username, Email, Password, Role, AdminCode, CreatedAt)
-             VALUES (?, ?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [Username, Email, md5(Password), Role, Role === 'ADMIN' ? AdminCode : null]
+            `INSERT INTO user (Username, Email, Password, Role, CreatedAt)
+             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
+            [Username, Email, md5(Password), Role]
         );
         const userId = userResult.insertId;
 

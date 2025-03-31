@@ -10,7 +10,6 @@
             background-color: #f0f8ff; /* Light sky blue background */
             color: #333; /* Neutral text color */
             font-family: Arial, sans-serif;
-            overflow-x: visible !important;
          }
 
     /* Sidebar styling */
@@ -25,7 +24,7 @@
       box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
       overflow-y: auto;
       transition: transform 0.3s ease;
-      /* z-index: 10;  */
+      z-index: 10;
     }
     
     /* Main content should have left margin to prevent overlap */
@@ -157,20 +156,13 @@
         #statics{
           background-color: #e6f7ff;
         }
-
-        #toast {
-      z-index: 9999 !important;
-      position: fixed !important;
-      top: 1rem !important;
-      right: 1rem !important;
-    }
   </style>
 
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
   <% if (locals.success || locals.error) { %>
-    <div id="toast" role="alert" class="fixed top-4 right-4 flex items-center p-4 max-w-sm w-full space-x-4 text-gray-700 bg-white rounded shadow-lg transform transition-all duration-500">
+    <div id="toast" role="alert" class="fixed top-4 right-4 z-50 flex items-center p-4 max-w-sm w-full space-x-4 text-gray-700 bg-white rounded shadow-lg transform transition-all duration-500">
         <div class="flex-shrink-0">
             <% if (locals.success) { %>
                 <svg class="w-6 h-6 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -183,7 +175,7 @@
             <% } %>
         </div>
 
-        <div class="flex-1" id="topper">
+        <div class="flex-1">
             <% if (locals.success) { %>
                 <p class="font-semibold text-green-600">Success!</p>
                 <p class="text-sm"><%= success || 'Operation successful.' %></p>
@@ -414,7 +406,7 @@
                         <td class="px-6 py-4"><%= record.Notes %></td>
                         <td class="px-6 py-4"><%= record.UpdatedBy %></td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          <button onclick="deleteItem('<%= record.RecordID%>','record')" 
+                          <button onclick="deleteItem('<%= record.PatientID%>','record')" 
                                   class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
                               Delete
                           </button>
@@ -434,45 +426,46 @@
           <!-- add medical rec  -->
           <div class="bg-white rounded-lg shadow-md p-6" id="addMedRec">
             <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Medical Record</h3>
-              <form action="/doctor/addMedRec" method="POST" class="space-y-4">
-                <div class="hidden">
-                  <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
-                  <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
-                  <input type="text" name="Diagnosis" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Symptoms</label>
-                  <textarea name="Symptoms" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Treatments</label>
-                  <textarea name="Treatments" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Record Date</label>
-                  <input type="date" name="RecordDate" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                  <textarea name="Notes" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
-                </div>
-                <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-1">Updated By</label>
-                  <select name="UpdatedBy" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="DOCTOR">DOCTOR</option>
-                    <option value="STAFF">STAFF</option>
-                  </select>
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
-              </form>
+            <form action="/doctor/addMedRec" method="POST" class="space-y-4">
+              <div class="hidden">
+                <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
+                <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis</label>
+                <input type="text" name="Diagnosis" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Symptoms</label>
+                <textarea name="Symptoms" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Treatments</label>
+                <textarea name="Treatments" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Record Date</label>
+                <input type="date" name="RecordDate" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                <textarea name="Notes" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Updated By</label>
+                <select name="UpdatedBy" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
+                  <option value="DOCTOR">DOCTOR</option>
+                  <option value="STAFF">STAFF</option>
+                </select>
+              </div>
+              <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
+            </form>
           </div>
-            
         </section>
         <br>
 
@@ -509,7 +502,7 @@
                         </td>
                         <td class="px-6 py-4 font-mono"><%= prescription.GlobalReferenceID %></td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                          <button onclick="deleteItem('<%= prescription.PrescriptionID %>','prescription')" 
+                          <button onclick="deleteItem('<%= prescription.PatientID%>','prescription')" 
                                   class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
                               Delete
                           </button>
@@ -529,6 +522,7 @@
           <!-- add pres  -->
           <div class="bg-white rounded-lg shadow-md p-6" id="addPres">
             <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Prescription</h3>
+            
             <form action="/doctor/addPres" method="POST" class="space-y-4">
               <div class="hidden">
                 <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
@@ -536,6 +530,10 @@
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Patient ID</label>
                 <input type="number" name="PatientID" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Date Issued</label>
+                <input type="date" name="DateIssued" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Diagnosis Notes</label>
@@ -547,19 +545,14 @@
               </div>
               <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select name="Status" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                <select name="Status" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" id="statics">
                   <option value="ACTIVE">ACTIVE</option>
-                  <option value="INACTIVE">INACTIVE</option>
+                  <option value="COMPLETED">COMPLETED</option>
                 </select>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">Date Issued</label>
-                <input type="date" name="DateIssued" required value="<%= new Date().toISOString().split('T')[0] %>" class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-              </div>
               <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">Submit</button>
-            </form>
+            </form>            
           </div>
-          
         </section>
 
       </div>
@@ -568,99 +561,225 @@
   </div>
 
   <script>
-    //delete patient reln
-    function deleteItem(id, type) {
-        let confirmMessage;
-        let url;
-    
-        // Determine the URL and confirmation message based on the type
-        switch(type) {
-            case 'relation':
-                confirmMessage = `Are you sure you want to delete this Relation?`;
-                url = `/doctor/deleteRelation/${id}`;
-                break;
-            case 'record':
-                confirmMessage = `Are you sure you want to delete this Record?`;
-                url = `/doctor/deleteRecord/${id}`;
-                break;
-            case 'prescription':
-                confirmMessage = `Are you sure you want to delete this Prescription?`;
-                url = `/doctor/deletePres/${id}`;
-                break;
-            default:
-                console.error('Unknown type:', type);
-                return; // Exit if type is unknown
+
+//delete patient reln
+function deleteItem(id, type) {
+    let confirmMessage;
+    let url;
+
+    // Determine the URL and confirmation message based on the type
+    switch(type) {
+        case 'relation':
+            confirmMessage = `Are you sure you want to delete this Relation?`;
+            url = `/doctor/deleteRelation/${id}`;
+            break;
+        case 'record':
+            confirmMessage = `Are you sure you want to delete this Record?`;
+            url = `/doctor/deleteRecord/${id}`;
+            break;
+        case 'prescription':
+            confirmMessage = `Are you sure you want to delete this Prescription?`;
+            url = `/doctor/deletePres/${id}`;
+            break;
+        default:
+            console.error('Unknown type:', type);
+            return; // Exit if type is unknown
+    }
+
+    // Show confirmation dialog
+    if (!confirm(confirmMessage)) {
+        return; // Exit if the user cancels
+    }
+
+    // Perform the delete operation
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include' // Ensure cookies are sent with the request
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(error => {
+                throw new Error(error.message || `An error occurred while deleting the ${type}s.`);
+            });
         }
-    
-        // Show confirmation dialog
-        if (!confirm(confirmMessage)) {
-            return; // Exit if the user cancels
+        return response.json(); // Parse JSON response on success
+    })
+    .then(data => {
+        // Display success message and update UI accordingly
+        alert(data.message || `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully!`);
+        // Optionally, refresh or update the UI to reflect the deletion
+        window.location.reload(); // Reload the page to reflect changes
+    })
+    .catch(error => {
+        console.error('Error deleting:', error);
+        alert(`Failed to delete: ${error.message}`);
+    });
+}
+
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM element constants
+      const mainContent = document.getElementById('main-content');
+      const pageTitle = document.getElementById('page-title');
+      const pageDescription = document.getElementById('page-description');
+      const sidebar = document.querySelector('aside');
+      const main = document.querySelector('main');
+      const hamburger = document.getElementById('hamburger');
+      const closeIcon = document.getElementById('close-icon');
+  
+      // // Navigation state
+      // const navState = {
+      //   currentSection: 'patients-section',
+      //   sections: {
+      //     'patients-section': {
+      //       title: 'Patient Management',
+      //       description: 'View and manage patient relationships'
+      //     },
+      //     'records-section': {
+      //       title: 'Medical Records',
+      //       description: 'View and add medical records'
+      //     },
+      //     'prescriptions-section': {
+      //       title: 'Prescriptions',
+      //       description: 'Manage patient prescriptions'
+      //     }
+      //   }
+      // };
+  
+      // Function to handle navigation
+      
+      function handleNavigation(event) {
+        const target = event.target.closest('a');
+        if (!target) return;
+  
+        event.preventDefault();
+        const sectionId = target.getAttribute('href').substring(1);
+        updateActiveSection(sectionId);
+        scrollToSection(sectionId);
+        updatePageHeader(sectionId);
+  
+        // Close sidebar on mobile views
+        if (window.innerWidth <= 768) {
+          toggleSidebar(); // use toggle function here for consistency
         }
-    
-        // Perform the delete operation
-        fetch(url, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'include' // Ensure cookies are sent with the request
+      }
+  
+      // Update active section UI
+      function updateActiveSection(sectionId) {
+        document.querySelectorAll('nav a').forEach(link => {
+          link.classList.remove('bg-blue-50', 'text-blue-600');
+          if (link.getAttribute('href') === `#${sectionId}`) {
+            link.classList.add('bg-blue-50', 'text-blue-600');
+          }
+        });
+      }
+  
+      // Smooth scroll to section
+      function scrollToSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+  
+      // Update header title and description based on section
+      // function updatePageHeader(sectionId) {
+      //   const sectionInfo = navState.sections[sectionId];
+      //   if (sectionInfo) {
+      //     pageTitle.textContent = sectionInfo.title;
+      //     pageDescription.textContent = sectionInfo.description;
+      //   }
+      // }
+  
+      // Notification system
+      function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg ${type === 'success' ? 'bg-green-500' : 'bg-red-500'} text-white transform transition-transform duration-300 translate-x-full`;
+        notification.textContent = message;
+        document.body.appendChild(notification);
+        requestAnimationFrame(() => {
+          notification.classList.remove('translate-x-full');
+        });
+        setTimeout(() => {
+          notification.classList.add('translate-x-full');
+          setTimeout(() => notification.remove(), 300);
+        }, 3000);
+      }
+  
+         // Handle form submissions via fetch API
+      function handleFormSubmission(event) {
+        event.preventDefault();
+        const form = event.target;
+        const formData = new FormData(form);
+        fetch(form.action, {
+          method: 'POST',
+          body: formData
         })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(error => {
-                    throw new Error(error.message || `An error occurred while deleting the ${type}s.`);
-                });
-            }
-            return response.json(); // Parse JSON response on success
-        })
+        .then(response => response.json())
         .then(data => {
-            // Display success message and update UI accordingly
-            alert(data.message || `${type.charAt(0).toUpperCase() + type.slice(1)} deleted successfully!`);
-            // Optionally, refresh or update the UI to reflect the deletion
-            window.location.reload(); // Reload the page to reflect changes
+          showNotification(data.message, data.success ? 'success' : 'error');
+          if (data.success) {
+            form.reset();
+            refreshTableData(form.closest('section').id);
+          }
         })
         .catch(error => {
-            console.error('Error deleting:', error);
-            alert(`Failed to delete: ${error.message}`);
+          showNotification('An error occurred. Please try again.', 'error');
         });
-    }
-    
-    document.addEventListener('DOMContentLoaded', () => {
-        // Sidebar functionality
-        const sidebar = document.querySelector('aside');
-        const hamburger = document.getElementById('hamburger');
-        const closeIcon = document.getElementById('close-icon');
-    
-        function toggleSidebar() {
-            sidebar.classList.toggle('open');
-        }
-    
-        function closeSidebar() {
-            sidebar.classList.remove('open');
-        }
-    
-        hamburger.addEventListener('click', toggleSidebar);
-        closeIcon.addEventListener('click', closeSidebar);
-        
-        // Function to close toast notification
-        function closeToast() {
-            const toast = document.getElementById('toast');
-            if (toast) {
-                toast.style.transform = 'translateX(100%)';
-                toast.style.zIndex = '9999';
-                setTimeout(() => toast.remove(), 500);
-            }
-        }
-    
-        // Automatically close the toast after 5 seconds
+      }
+      
+      // Add event listeners
+      document.querySelector('nav').addEventListener('click', handleNavigation);
+      document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', handleFormSubmission);
+      });
+  
+      // Initialize Intersection Observer for section tracking
+      const observerOptions = { threshold: 0.2, rootMargin: '-100px' };
+      const observer = new IntersectionObserver(entries => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            updateActiveSection(entry.target.id);
+            // updatePageHeader(entry.target.id);
+          }
+        });
+      }, observerOptions);
+  
+      document.querySelectorAll('section[id]').forEach(section => {
+        observer.observe(section);
+      });
+  
+      function toggleSidebar() {
+        sidebar.classList.toggle('open'); // Toggles visibility of the sidebar
+      }
+
+      function closeSidebar() {
+        sidebar.classList.remove('open'); // Ensures sidebar is hidden
+      }
+
+      hamburger.addEventListener('click', toggleSidebar);
+      closeIcon.addEventListener('click', closeSidebar);
+     
+      // Function to close toast notification
+      function closeToast() {
         const toast = document.getElementById('toast');
         if (toast) {
-            toast.style.zIndex = '9999';
-            setTimeout(closeToast, 5000);
+          toast.style.transform = 'translateX(100%)'; // Slide out to the right
+          setTimeout(() => toast.remove(), 500); // Remove after animation
         }
-        
+      }
+  
+      // Automatically close the toast after 5 seconds
+      const toast = document.getElementById('toast');
+      if (toast) {
+        setTimeout(closeToast, 5000);
+      }
     });
-    </script>
+  </script>
+  
 </body>
 </html>
