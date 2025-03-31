@@ -62,7 +62,11 @@ async function viewPrescriptions(req, res){
 // Handle Prescription Lookup
 async function viewCreatedPres (req, res){
     try {
-        const refId = req.body.refId;
+        const refId = req.query.refId;
+
+        if (!refId) {
+            return res.render('dashboard/viewPres', { error: 'Please enter a prescription reference ID' });
+        }
 
         const [prescriptions] = await conPool.query(`
             SELECT 
