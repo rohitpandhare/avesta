@@ -1,0 +1,215 @@
+body {
+        background-color: #f0f8ff; /* Light sky blue background */
+        color: #333; /* Neutral text color */
+        font-family: Arial, sans-serif;
+        overflow-x: visible !important;
+     }
+
+/* Sidebar styling */
+aside {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 256px;
+  height: 100vh;
+  /* background: #f8f9fa; */
+  background-color: #fff;
+  box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+  transition: transform 0.3s ease;
+  /* z-index: 10;  */
+}
+
+/* Main content should have left margin to prevent overlap */
+main {
+  margin-left: 270px;
+  padding: 20px;
+  transition: margin-left 0.3s ease;
+}
+
+/* Hamburger menu for mobile */
+.hamburger {
+  display: none;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.hamburger div {
+  width: 25px;
+  height: 3px;
+  background-color: #333;
+  margin: 5px 0;
+}
+  /* Close button styling */
+  .close-icon {
+      display: none;
+        position: absolute;
+        top: 2px;
+        right: 10px;
+        font-size: 24px;
+        font-weight: bold;
+        color: #007bff;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+
+.close-icon:hover {
+  color: #475565; /* Change color on hover for better interactivity */
+}
+
+
+@media (max-width: 768px) {
+  .close-icon{
+    display: block;
+  }
+  aside {
+    transform: translateX(-100%);
+  }
+  aside.open {
+    transform: translateX(0);
+  }
+  aside.open + main {
+    margin-left: 256px;
+}
+  .hamburger {
+    display: block;
+  }
+  main {
+    margin-left: 0;
+    padding-top: 60px;
+  }
+}
+
+ /* Table styles */
+ .table-container {
+        overflow-x: auto;
+    }
+
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1rem;
+    }
+    thead {
+        background-color: #e6f7ff; /* Light bluish shade for headers */
+        }
+
+    .table th,
+    .table td {
+        padding: 0.75rem;
+        vertical-align: top;
+        border-top: 1px solid #dee2e6;
+        text-align: left;
+    }
+
+    .table thead th {
+        vertical-align: bottom;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .table tbody + tbody {
+        border-top: 2px solid #dee2e6;
+    }
+
+    .table .table {
+        background-color: #fff;
+    }
+
+    .table-sm th,
+    .table-sm td {
+        padding: 0.3rem;
+    }
+
+    .table-bordered {
+        border: 1px solid #dee2e6;
+    }
+
+    .table-bordered th,
+    .table-bordered td {
+        border: 1px solid #dee2e6;
+    }
+
+    .table-bordered thead th,
+    .table-bordered thead td {
+        border-bottom-width: 2px;
+    }
+
+    tbody tr:nth-child(odd) {
+        background-color: #ffffff; /* White for odd rows */
+    }
+
+    tbody tr:nth-child(even) {
+        background-color: #e6f7ff; /* Light bluish shade for even rows */
+    }
+
+    tbody tr:hover {
+        background-color: #bdd1e6; /* Dark blue shade on hover */
+        color: #ffffff; /* White text on hover */
+    }
+
+
+    .table-responsive {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    #statics{
+      background-color: #e6f7ff;
+    }
+
+    #toast {
+  z-index: 9999 !important;
+  position: fixed !important;
+  top: 1rem !important;
+  right: 1rem !important;
+}
+
+  #suggestionsAddPat,
+  #suggestionsMedRec,
+  #suggestionsPres {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      width: 100%;
+      max-height: 150px;
+      overflow-y: auto;
+      z-index: 1000; /* Ensure it appears above other elements */
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Better section styling */
+section {
+background: white;
+border-radius: 0.5rem;
+box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+padding: 1.5rem;
+margin-bottom: 2rem;
+}
+
+/* Form input consistency */
+input, textarea, select {
+transition: all 0.2s ease;
+}
+
+input:focus, textarea:focus, select:focus {
+border-color: #3b82f6;
+box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+}
+
+/* Table improvements */
+.table-container {
+border-radius: 0.5rem;
+overflow: hidden;
+}
+
+/* Button consistency */
+button[type="submit"] {
+transition: all 0.2s ease;
+}
+
+button[type="submit"]:hover {
+transform: translateY(-1px);
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}

@@ -119,7 +119,7 @@ async function doLogin(req, res) {
         // Role-based redirection
         switch (Role) {
             case 'ADMIN':
-                const [userList, doctorList, patientList] = await Promise.all([
+                const [userList, doctorList, patientList, prescriptionStats] = await Promise.all([
                     conPool.query('SELECT * FROM user'),
                     conPool.query(`
                         SELECT d.*, u.Username
@@ -132,16 +132,55 @@ async function doLogin(req, res) {
                         FROM patient p
                         JOIN user u ON p.UserID = u.UserID
                         WHERE u.Role = 'PATIENT'
+                    `),
+                    conPool.query(`
+                        SELECT 
+                            d.Specialty, 
+                            SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
+                            SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
+                        FROM 
+                            prescription p
+                        JOIN 
+                            doctor d ON p.DoctorID = d.DoctorID
+                        GROUP BY 
+                            d.Specialty
                     `)
                 ]);
-
+            
+                // Process specialties data (same as in getAdmin)
+                const specialtyStats = {};
+                doctorList[0].forEach(doctor => {
+                    const spec = doctor.Specialty || 'Other';
+                    if (!specialtyStats[spec]) {
+                        specialtyStats[spec] = {
+                            doctorCount: 0,
+                            activePrescriptions: 0,
+                            completedPrescriptions: 0
+                        };
+                    }
+                    specialtyStats[spec].doctorCount++;
+                });
+            
+                prescriptionStats[0].forEach(row => {
+                    const spec = row.Specialty || 'Other';
+                    if (specialtyStats[spec]) {
+                        specialtyStats[spec].activePrescriptions = row.active;
+                        specialtyStats[spec].completedPrescriptions = row.completed;
+                    }
+                });
+            
+                const specialties = Object.entries(specialtyStats)
+                    .map(([name, stats]) => ({ name, ...stats }))
+                    .sort((a, b) => b.doctorCount - a.doctorCount);
+            
                 return res.render('users/admin', {
                     user: req.session.user,
                     userList: userList[0],
                     doctorList: doctorList[0],
-                    patientList: patientList[0]
+                    patientList: patientList[0],
+                    specialties: specialties // MUST include this
                 });
-
+                
             case 'DOCTOR':
                 try {
                     // Get doctor data
@@ -351,8 +390,13 @@ async function resetPass (req, res) {
     
             // Check if user was found and updated
             if (result.affectedRows > 0) {
-                res.redirect('/login');
-            } else {
+                // res.redirect('/login');
+                // res.render('dashboard/login', {
+                //     success: 'Password Changed!'
+                // });
+                res.redirect('/login?success=Password Changed!');
+    
+            } else { 
                 res.status(404).render('dashboard/resetPass', {
                     error: 'User not found'
                 });
