@@ -277,3 +277,40 @@ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       .btn-primary:hover {
           background-color: #2563eb;
       }
+
+         /* Table styles */
+         .data-table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-bottom: 1rem;
+      }
+
+      .data-table thead {
+          background-color: #e6f7ff;
+      }
+
+      .data-table th,
+      .data-table td {
+          padding: 0.75rem;
+          vertical-align: top;
+          border-top: 1px solid #dee2e6;
+          text-align: left;
+      }
+
+      .data-table thead th {
+          vertical-align: bottom;
+          border-bottom: 2px solid #dee2e6;
+      }
+
+      .data-table tbody tr:nth-child(odd) {
+          background-color: #ffffff;
+      }
+
+      .data-table tbody tr:nth-child(even) {
+          background-color: #e6f7ff;
+      }
+
+      .data-table tbody tr:hover {
+          background-color: #bdd1e6;
+          color: #ffffff;
+      }
