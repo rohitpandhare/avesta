@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - DoctorSync</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="/css/styles.css">
 
 </head>
@@ -16,13 +15,12 @@
                 <h2 class="text-3xl font-bold text-gray-900">Welcome Back</h2>
                 <p class="text-gray-600 mt-2">Login to your account</p>
             </div>
-
-                <!-- Add this after the header div in login.ejs -->
-<% if (locals.error) { %>
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
-        <span class="block sm:inline"><%= error %></span>
-    </div>
-<% } %>
+ 
+            <% if (locals.error) { %>
+                <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                    <span class="block sm:inline"><%= error %></span>
+                </div>
+            <% } %>
 
             <!-- Login Form -->
             <form action="/auth/login" method="post" class="space-y-6">
@@ -30,10 +28,7 @@
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-700">User Type</label>
                     <div class="relative">
-                        <select name="Role" 
-                                id="role" 
-                                onchange="toggleAdminCode()"
-                                required 
+                        <select name="Role" id="role" required 
                                 class="w-full pl-12 pr-4 py-3 appearance-none border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 bg-white">
                             <option value="PATIENT" selected>Patient</option>
                             <option value="DOCTOR">Doctor</option>
@@ -43,23 +38,9 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
                         </svg>
                     </div>
-
-                    <!-- Admin code section -->
-                    <!-- <div id="adminCodeSection" class="hidden mt-4">
-                        <label class="block text-sm font-medium text-gray-700">Admin Code</label>
-                        <div class="relative">
-                            <input type="password" 
-                                name="adminCode" 
-                                id="adminCode" 
-                                class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
-                                placeholder="Enter admin verification code">
-                            <svg class="absolute left-4 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                            </svg>
-                        </div>
-                    </div> -->
                 </div>
 
+                <!-- normal loggeed in  -->
                 <div class="space-y-2">
                     <label class="block text-sm font-medium text-gray-700">Username</label>
                     <div class="relative">
@@ -117,3 +98,19 @@
     <script src="/javascripts/loginHelp.js"></script>
 </body>
 </html>
+
+
+<!-- Admin code section -->
+                    <!-- <div id="adminCodeSection" class="hidden mt-4">
+                        <label class="block text-sm font-medium text-gray-700">Admin Code</label>
+                        <div class="relative">
+                            <input type="password" 
+                                name="adminCode" 
+                                id="adminCode" 
+                                class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                                placeholder="Enter admin verification code">
+                            <svg class="absolute left-4 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                        </div>
+                    </div> -->

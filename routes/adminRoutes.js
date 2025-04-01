@@ -4,18 +4,18 @@ const { checkRole } = require('../middlware/dc_middleware')
 
 // User CRUD func import
 const {
-    getAdmin,
-    // deleteUser,
-    // deleteDoctor,
-    // deletePatient
+    getAdmin
 } = require('../controllers/adminAuth');
 
 router.get('/',checkRole(['admin']), getAdmin);
+module.exports = router;
+
 // router.delete('/delete-user/:id', deleteUser);
 
 // router.delete('/delete-doctor/:id', deleteDoctor);
 // router.delete('/delete-patient/:id', deletePatient);
 
-module.exports = router;
 
-
+// deleteUser,
+    // deleteDoctor,
+    // deletePatient

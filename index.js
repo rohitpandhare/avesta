@@ -77,8 +77,6 @@ app.get("/search-patient", async (req, res) => {
     }
 });
 
-
-
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err);

@@ -5,11 +5,11 @@ const { checkRole } = require('../middlware/dc_middleware')
 // User CRUD func import
 const {  
     getPatients,
-	getPatientProfile
+	// getPatientProfile
 } = require('../controllers/patientAuth');
 
 router.get('/',checkRole(['patient']), getPatients);
-router.post('/profile', getPatientProfile);
+// router.post('/profile', getPatientProfile);
 
 
 module.exports = router;

@@ -2,7 +2,6 @@ function toggleExtraFields() {
     const role = document.getElementById('role').value;
     const doctorFields = document.getElementById('doctorFields');
     const patientFields = document.getElementById('patientFields');
-    // const adminFields = document.getElementById('adminFields');
 
     // Hide all fields first
     [doctorFields, patientFields].forEach(field => 
@@ -30,14 +29,7 @@ function toggleExtraFields() {
         });
     }
 
-    // } else if (role === 'ADMIN') {
-    //     adminFields.classList.remove('hidden');
-    //     adminFields.querySelectorAll('.role-specific-field').forEach(field => {
-    //         field.disabled = false;
-    //         field.required = true;
-    //     });
-    // }
-}
+   
 
 function handleSpecialty() {
     const specialty = document.getElementById('Specialty');
@@ -61,3 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('role').addEventListener('change', toggleExtraFields);
     document.getElementById('Specialty')?.addEventListener('change', handleSpecialty);
 });
+
+}
+
+// extras related to admin code 
+// const adminFields = document.getElementById('adminFields');
+ // } else if (role === 'ADMIN') {
+    //     adminFields.classList.remove('hidden');
+    //     adminFields.querySelectorAll('.role-specific-field').forEach(field => {
+    //         field.disabled = false;
+    //         field.required = true;
+    //     });
+    // }

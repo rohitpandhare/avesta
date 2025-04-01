@@ -1,32 +1,5 @@
 const { conPool } = require('../config/dbHandler')
 
-// async function getAdmin (req, res){
-//     try {
-//         // Fetch all required data in parallel
-//         const [userList, doctorList, patientList] = await all([
-//             conPool.query('SELECT UserID, Username, Email, Role, CreatedAt FROM user'),
-//             conPool.query('SELECT DoctorID, Name, Specialty, Phone, LicenseNumber, Qualifications FROM doctor'),
-//             conPool.query('SELECT PatientID, Name, Address, Phone, DOB, BloodGroup FROM patient')
-//         ]);
-
-//         res.render('users/admin', {
-//             user: req.session.user,
-//             userList: userList[0],
-//             doctorList: doctorList[0],
-//             patientList: patientList[0]
-//         });
-//     } catch (err) {
-//         console.error('Error fetching admin data:', err);
-//         res.status(500).render('users/admin', {
-//             user: req.session.user,
-//             userList: [],
-//             doctorList: [],
-//             patientList: [],
-//             error: 'Error loading data'
-//         });
-//     }
-// };
-
 async function getAdmin(req, res) {
     try {
         // Fetch all required data in parallel
@@ -98,6 +71,13 @@ async function getAdmin(req, res) {
     }
 }
 
+
+module.exports = {
+    getAdmin,
+    // deleteUser,
+    // deleteDoctor,
+    // deletePatient
+};
 
 // DELETE user
 // async function deleteUser (req, res) {
@@ -178,10 +158,3 @@ async function getAdmin(req, res) {
 //         res.status(500).json({ success: false, message: 'Error deleting patient' });
 //     }
 // };
-
-module.exports = {
-    getAdmin,
-    // deleteUser,
-    // deleteDoctor,
-    // deletePatient
-};

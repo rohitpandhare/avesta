@@ -77,35 +77,35 @@ async function getPatients (req, res) {
     }
 };
 
-async function getPatientProfile (req, res) {
-    const userId = req.session.user.UserID;
-    const { Name, Address, Phone, DOB, BloodGroup } = req.body;
+// async function getPatientProfile (req, res) {
+//     const userId = req.session.user.UserID;
+//     const { Name, Address, Phone, DOB, BloodGroup } = req.body;
 
-    try {
-        await conPool.query(
-            `UPDATE PATIENT SET 
-                Name = ?, 
-                Address = ?, 
-                Phone = ?, 
-                DOB = ?, 
-                BloodGroup = ?
-             WHERE UserID = ?`,
-            [Name, Address, Phone, DOB, BloodGroup, userId]
-        );
+//     try {
+//         await conPool.query(
+//             `UPDATE PATIENT SET 
+//                 Name = ?, 
+//                 Address = ?, 
+//                 Phone = ?, 
+//                 DOB = ?, 
+//                 BloodGroup = ?
+//              WHERE UserID = ?`,
+//             [Name, Address, Phone, DOB, BloodGroup, userId]
+//         );
 
-        // Update session
-        req.session.user.profileComplete = true;
-        res.redirect('/patient');
-    } catch (err) {
-        console.error(err);
-        res.render('dashboard/singup', { 
-            error: 'Failed to update profile',
-            formData: req.body
-        });
-    }
-};
+//         // Update session
+//         req.session.user.profileComplete = true;
+//         res.redirect('/patient');
+//     } catch (err) {
+//         console.error(err);
+//         res.render('dashboard/singup', { 
+//             error: 'Failed to update profile',
+//             formData: req.body
+//         });
+//     }
+// };
 
 module.exports ={
 	getPatients,
-	getPatientProfile
+	// getPatientProfile
 }

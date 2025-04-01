@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Prescription - DoctorSync</title>
-    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
     <link rel="stylesheet" href="/css/styles.css">
 
 </head>
@@ -29,6 +28,7 @@
 
                 <!-- Form -->
                 <div>
+                    <!-- we are using GET so -- we can easily redirect from patient ejs -->
                     <form action="/viewPres" method="GET" class="space-y-6">
                         <div>
                             <label class="block text-gray-700 text-sm font-semibold mb-2">
@@ -59,6 +59,7 @@
                         </div>
                     <% } %>
 
+                    <!-- pres section  -->
                     <% if (typeof prescription !== 'undefined' && prescription) { %>
                         <div class="mt-6 p-4 border-2 border-blue-100 rounded-lg">
                             <h3 class="font-semibold text-gray-800 mb-4">Prescription Details</h3>

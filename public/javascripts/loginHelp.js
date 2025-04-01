@@ -1,3 +1,39 @@
+// Form validation
+document.querySelector('form').addEventListener('submit', function(e) {
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const role = document.getElementById('role').value;
+    
+    // Basic validation
+    if (!username || !password || !role) {
+        e.preventDefault();
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+});
+
+document.addEventListener("DOMContentLoaded", function () {
+    const urlParams = new URLSearchParams(window.location.search);
+    const successMessage = urlParams.get('success');
+    if (successMessage) {
+        alert(successMessage); // Simple popup
+    }
+});
+
+
+// extra func inside the form validator --
+
+// const adminCode = document.getElementById('adminCode');
+  // Admin code validation
+    // if (role === 'ADMIN') {
+    //     if (!adminCode.value.trim()) {
+    //         e.preventDefault();
+    //         alert('Admin code is required');
+    //         adminCode.focus();
+    //         return;
+    //     }
+    // }   
 // Updated loginHelp.js
 // function toggleAdminCode() {
 //     const roleSelect = document.getElementById('role');
@@ -14,41 +50,9 @@
 //     }
 // }
 
-// Form validation
-document.querySelector('form').addEventListener('submit', function(e) {
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const role = document.getElementById('role').value;
-    // const adminCode = document.getElementById('adminCode');
 
-    // Basic validation
-    if (!username || !password || !role) {
-        e.preventDefault();
-        alert('Please fill in all required fields');
-        return;
-    }
-
-    // Admin code validation
-    // if (role === 'ADMIN') {
-    //     if (!adminCode.value.trim()) {
-    //         e.preventDefault();
-    //         alert('Admin code is required');
-    //         adminCode.focus();
-    //         return;
-    //     }
-    // }
-});
 
 // Initialize admin code visibility on page load
 // document.addEventListener('DOMContentLoaded', function() {
 //     toggleAdminCode();
 // });
-
-
-document.addEventListener("DOMContentLoaded", function () {
-        const urlParams = new URLSearchParams(window.location.search);
-        const successMessage = urlParams.get('success');
-        if (successMessage) {
-            alert(successMessage); // Simple popup
-        }
-    });

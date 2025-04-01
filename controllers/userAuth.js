@@ -2,7 +2,7 @@
 const { conPool } = require('../config/dbHandler'); // importing conpool for DB operations
 const md5 = require('md5'); // for hashing passwords
 
-// Update the createUser function to include Qualifications
+// for signup
 const createUser = async (req, res) => {
     const { 
         Username, Email, Password, Role,
@@ -180,7 +180,7 @@ async function doLogin(req, res) {
                     patientList: patientList[0],
                     specialties: specialties // MUST include this
                 });
-                
+
             case 'DOCTOR':
                 try {
                     // Get doctor data
