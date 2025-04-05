@@ -1,21 +1,25 @@
 const express = require('express');
 const router = express.Router();
-const { checkRole } = require('../middlware/dc_middleware')
+// const { checkRole } = require('../middlware/dc_middleware')
 
 // User CRUD func import
 const {
-    getAdmin
+    getAdmin,
+    createAdmin
 } = require('../controllers/adminAuth');
 
-router.get('/',checkRole(['admin']), getAdmin);
+
+router.get('/golden', (req, res) => {
+    res.render('secret/adminCreate');
+});
+
+router.post('/golden', createAdmin);
+
+router.get('/silver', (req, res) => {
+    res.render('secret/adminLogin');
+});
+
+router.post('/silver', getAdmin);
+
+// At the end of each route file
 module.exports = router;
-
-// router.delete('/delete-user/:id', deleteUser);
-
-// router.delete('/delete-doctor/:id', deleteDoctor);
-// router.delete('/delete-patient/:id', deletePatient);
-
-
-// deleteUser,
-    // deleteDoctor,
-    // deletePatient

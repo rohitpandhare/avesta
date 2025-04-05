@@ -1,12 +1,53 @@
 const { conPool } = require('../config/dbHandler')
+const md5 = require('md5'); // for hashing passwords
 
 async function getAdmin(req, res) {
     try {
-        // Fetch all required data in parallel
+        const { Username, Password } = req.body;
+
+        // Basic validation
+        if (!Username || !Password) {
+            return res.render('secret/adminLogin', {
+                error: 'All fields are required'
+            });
+        }
+
+        const hashedPassword = md5(Password);
+
+        // Query to find user
+        const [users] = await conPool.query(
+            'SELECT * FROM user WHERE Username = ?',
+            [Username]
+        );
+        Role = 'admin';
+
+        if (!users.length || users[0].Password !== hashedPassword){
+            return res.render('secret/adminLogin', {
+                error: 'Invalid credentials'
+            });
+        }
+
+        // Set up base session
+        req.session.user = {
+            UserID: users[0].UserID,
+            Username: users[0].Username,
+            Role: Role
+        };
+
         const [userList, doctorList, patientList, prescriptionStats] = await Promise.all([
-            conPool.query('SELECT UserID, Username, Email, Role, CreatedAt FROM user'),
-            conPool.query('SELECT DoctorID, Name, Specialty, Phone, LicenseNumber, Qualifications FROM doctor'),
-            conPool.query('SELECT PatientID, Name, Address, Phone, DOB, BloodGroup FROM patient'),
+            conPool.query('SELECT * FROM user'),
+            conPool.query(`
+                SELECT d.*, u.Username
+                FROM doctor d
+                JOIN user u ON d.UserID = u.UserID
+                WHERE u.Role = 'DOCTOR'
+            `),
+            conPool.query(`
+                SELECT p.*, u.Username
+                FROM patient p
+                JOIN user u ON p.UserID = u.UserID
+                WHERE u.Role = 'PATIENT'
+            `),
             conPool.query(`
                 SELECT 
                     d.Specialty, 
@@ -20,11 +61,9 @@ async function getAdmin(req, res) {
                     d.Specialty
             `)
         ]);
-
-        // Format the data for the template
+    
+        // Process specialties data (same as in getAdmin)
         const specialtyStats = {};
-        
-        // Initialize with all specialties from doctors
         doctorList[0].forEach(doctor => {
             const spec = doctor.Specialty || 'Other';
             if (!specialtyStats[spec]) {
@@ -36,8 +75,7 @@ async function getAdmin(req, res) {
             }
             specialtyStats[spec].doctorCount++;
         });
-
-        // Add prescription counts
+    
         prescriptionStats[0].forEach(row => {
             const spec = row.Specialty || 'Other';
             if (specialtyStats[spec]) {
@@ -45,39 +83,85 @@ async function getAdmin(req, res) {
                 specialtyStats[spec].completedPrescriptions = row.completed;
             }
         });
-
-        // Convert to array for easier templating
+    
         const specialties = Object.entries(specialtyStats)
             .map(([name, stats]) => ({ name, ...stats }))
             .sort((a, b) => b.doctorCount - a.doctorCount);
-
-        res.render('users/admin', {
+    
+        return res.render('users/admin', {
             user: req.session.user,
             userList: userList[0],
             doctorList: doctorList[0],
             patientList: patientList[0],
-            specialties: specialties
+            specialties: specialties // MUST include this
         });
+        
     } catch (err) {
-        console.error('Error fetching admin data:', err);
-        res.status(500).render('users/admin', {
-            user: req.session.user,
-            userList: [],
-            doctorList: [],
-            patientList: [],
-            specialties: [],
-            error: 'Error loading data'
+        console.error('Login error:', err);
+        return res.render('secret/adminLogin', {
+            error: 'Server error during login: ' + err.message
         });
     }
 }
 
+async function createAdmin (req,res){
+    const { 
+        Username, Email, Password
+    } = req.body;
 
+    // Base validation
+    if (!Username || !Email || !Password) {
+        return res.status(400).render('secret/adminCreate', {
+            error: "All fields are required"
+        });
+    }
+
+    const connection = await conPool.getConnection();
+    try {
+        await connection.beginTransaction();
+        const createdAt = new Date().toISOString().split('T')[0];
+        Role = 'admin';
+        // Insert into USER table
+        const [userResult] = await connection.query(
+            `INSERT INTO user (Username, Email, Password,Role,CreatedAt)
+             VALUES (?, ?, ?, ?,?)`,
+            [Username, Email, md5(Password),Role, createdAt]
+        );
+        const userId = userResult.insertId;
+
+        await connection.commit();
+
+        req.session.user = {
+            UserID: userId,
+            Username,
+            Role
+        };
+
+        res.redirect(`/silver`);
+
+    } catch (err) {
+        await connection.rollback();
+        console.error("Signup error:", err);
+        
+        const errorMessage = err.code === 'ER_DUP_ENTRY' 
+            ? "Username or email already exists" 
+            : "Registration failed";
+        
+        res.status(400).render('secret/adminCreate', { 
+            error: errorMessage
+        });
+    } finally {
+        connection.release();
+    }
+}
 module.exports = {
     getAdmin,
+    createAdmin
     // deleteUser,
     // deleteDoctor,
     // deletePatient
 };
+
 
 // DELETE user
 // async function deleteUser (req, res) {

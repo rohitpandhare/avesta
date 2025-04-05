@@ -48,7 +48,7 @@ const authlinks = require('./routes/auth');
 app.use('/auth', authlinks);
 
 const adminLinks = require('./routes/adminRoutes'); 
-app.use('/admin', adminLinks);
+app.use('/', adminLinks);
 
 const doctorLinks = require('./routes/doctorRoutes'); 
 app.use('/doctor', doctorLinks);
