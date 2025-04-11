@@ -57,6 +57,9 @@ const patientLinks = require('./routes/patientRoutes');
 const { conPool } = require('./config/dbHandler');
 app.use('/patient', patientLinks);
 
+app.get("/testPres", (req, res) => {
+    res.render("testPres");
+});
 
 app.get("/search-patient", async (req, res) => {
     const searchQuery = req.query.query;  // Changed from req.query.name to req.query.query

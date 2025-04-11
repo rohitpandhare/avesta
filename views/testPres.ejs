@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dose Reminder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 20px;
+            padding: 0;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        h2 {
+            font-size: 22px;
+            margin-top: 30px;
+            margin-bottom: 5px;
+        }
+        .patient-name {
+            text-align: left;
+            margin: 20px 0;
+            font-size: 18px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        .note {
+            font-style: italic;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 14px;
+        }
+        .checkbox-group {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>YOURDAILY</h1>
+    <h2>DOSEREMINDER</h2>
+    
+    <div class="patient-name">Name: <strong>John Doe</strong></div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Medicine Name</th>
+                <th>Before/After Food</th>
+                <th>Morning/Afternoon/Evening</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Paracetamol 500mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med1-before" name="med1-food">
+                        <label for="med1-before">Before</label>
+                        <input type="checkbox" id="med1-after" name="med1-food">
+                        <label for="med1-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med1-morning" name="med1-time">
+                        <label for="med1-morning">Morning</label>
+                        <input type="checkbox" id="med1-afternoon" name="med1-time">
+                        <label for="med1-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med1-evening" name="med1-time">
+                        <label for="med1-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Amoxicillin 250mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med2-before" name="med2-food">
+                        <label for="med2-before">Before</label>
+                        <input type="checkbox" id="med2-after" name="med2-food">
+                        <label for="med2-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med2-morning" name="med2-time">
+                        <label for="med2-morning">Morning</label>
+                        <input type="checkbox" id="med2-afternoon" name="med2-time">
+                        <label for="med2-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med2-evening" name="med2-time">
+                        <label for="med2-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Cetirizine 10mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med3-before" name="med3-food">
+                        <label for="med3-before">Before</label>
+                        <input type="checkbox" id="med3-after" name="med3-food">
+                        <label for="med3-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med3-morning" name="med3-time">
+                        <label for="med3-morning">Morning</label>
+                        <input type="checkbox" id="med3-afternoon" name="med3-time">
+                        <label for="med3-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med3-evening" name="med3-time">
+                        <label for="med3-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Ibuprofen 400mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med4-before" name="med4-food">
+                        <label for="med4-before">Before</label>
+                        <input type="checkbox" id="med4-after" name="med4-food">
+                        <label for="med4-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med4-morning" name="med4-time">
+                        <label for="med4-morning">Morning</label>
+                        <input type="checkbox" id="med4-afternoon" name="med4-time">
+                        <label for="med4-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med4-evening" name="med4-time">
+                        <label for="med4-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Omeprazole 20mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med5-before" name="med5-food">
+                        <label for="med5-before">Before</label>
+                        <input type="checkbox" id="med5-after" name="med5-food">
+                        <label for="med5-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med5-morning" name="med5-time">
+                        <label for="med5-morning">Morning</label>
+                        <input type="checkbox" id="med5-afternoon" name="med5-time">
+                        <label for="med5-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med5-evening" name="med5-time">
+                        <label for="med5-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Atorvastatin 10mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med6-before" name="med6-food">
+                        <label for="med6-before">Before</label>
+                        <input type="checkbox" id="med6-after" name="med6-food">
+                        <label for="med6-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med6-morning" name="med6-time">
+                        <label for="med6-morning">Morning</label>
+                        <input type="checkbox" id="med6-afternoon" name="med6-time">
+                        <label for="med6-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med6-evening" name="med6-time">
+                        <label for="med6-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Metformin 500mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med7-before" name="med7-food">
+                        <label for="med7-before">Before</label>
+                        <input type="checkbox" id="med7-after" name="med7-food">
+                        <label for="med7-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med7-morning" name="med7-time">
+                        <label for="med7-morning">Morning</label>
+                        <input type="checkbox" id="med7-afternoon" name="med7-time">
+                        <label for="med7-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med7-evening" name="med7-time">
+                        <label for="med7-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Losartan 50mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med8-before" name="med8-food">
+                        <label for="med8-before">Before</label>
+                        <input type="checkbox" id="med8-after" name="med8-food">
+                        <label for="med8-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med8-morning" name="med8-time">
+                        <label for="med8-morning">Morning</label>
+                        <input type="checkbox" id="med8-afternoon" name="med8-time">
+                        <label for="med8-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med8-evening" name="med8-time">
+                        <label for="med8-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Levothyroxine 50mcg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med9-before" name="med9-food">
+                        <label for="med9-before">Before</label>
+                        <input type="checkbox" id="med9-after" name="med9-food">
+                        <label for="med9-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med9-morning" name="med9-time">
+                        <label for="med9-morning">Morning</label>
+                        <input type="checkbox" id="med9-afternoon" name="med9-time">
+                        <label for="med9-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med9-evening" name="med9-time">
+                        <label for="med9-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td>Sertraline 50mg</td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med10-before" name="med10-food">
+                        <label for="med10-before">Before</label>
+                        <input type="checkbox" id="med10-after" name="med10-food">
+                        <label for="med10-after">After</label>
+                    </div>
+                </td>
+                <td>
+                    <div class="checkbox-group">
+                        <input type="checkbox" id="med10-morning" name="med10-time">
+                        <label for="med10-morning">Morning</label>
+                        <input type="checkbox" id="med10-afternoon" name="med10-time">
+                        <label for="med10-afternoon">Afternoon</label>
+                        <input type="checkbox" id="med10-evening" name="med10-time">
+                        <label for="med10-evening">Evening</label>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <h2>Don't stop medication because now you feel fine</h2>
+    <p class="note">Please follow doctor prescription.</p>
+    
+    <div class="footer">
+        Customer Care: 1860500 0101<br>
+        www.apolicpharmacy.in
+    </div>
+</body>
+</html>

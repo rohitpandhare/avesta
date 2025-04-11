@@ -35,20 +35,68 @@ router.get('/test-prescription', (req, res) => {
 });
 
 router.post('/test-prescription', async (req, res) => {
+    const connection = await conPool.getConnection();
     try {
-        const { PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID } = req.body;
-
-        await conPool.query(
+        await connection.beginTransaction();
+        
+        const { PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID, medicines } = req.body;
+        
+        // 1. Insert the prescription header
+        const [prescriptionResult] = await connection.query(
             `INSERT INTO PRESCRIPTION 
-            (PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID) 
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID]
+            (PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID) 
+            VALUES (?, ?, ?, ?, ?)`,
+            [PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID || null]
         );
-
-        res.render('testPrescription', { success: 'Prescription added successfully!' });
+        
+        const prescriptionId = prescriptionResult.insertId;
+        
+        // 2. Insert each medicine with timing information
+        for (const medicine of medicines) {
+            await connection.query(
+                `INSERT INTO PRESCRIPTION_MEDICINE 
+                (PrescriptionID, MedicineName, Dosage, Instructions, BeforeFood, AfterFood, 
+                 Morning, Afternoon, Evening, Night, FrequencyPerDay, DurationDays) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    prescriptionId,
+                    medicine.MedicineName,
+                    medicine.Dosage,
+                    medicine.Instructions || null,
+                    medicine.BeforeFood === 'true' ? 1 : 0,
+                    medicine.AfterFood === 'true' ? 1 : 0,
+                    medicine.Morning === 'true' ? 1 : 0,
+                    medicine.Afternoon === 'true' ? 1 : 0,
+                    medicine.Evening === 'true' ? 1 : 0,
+                    medicine.Night === 'true' ? 1 : 0,
+                    medicine.FrequencyPerDay || 1,
+                    medicine.DurationDays || 7
+                ]
+            );
+        }
+        
+        await connection.commit();
+        res.render('testPrescription', { 
+            success: 'Prescription added successfully!',
+            // Keep form values for better UX
+            originalValues: {
+                PatientID,
+                DoctorID,
+                DiagnosisNotes,
+                Status,
+                GlobalReferenceID
+            }
+        });
     } catch (err) {
+        await connection.rollback();
         console.error('Error:', err);
-        res.render('testPrescription', { error: 'Error adding prescription: ' + err.message });
+        res.render('testPrescription', { 
+            error: 'Error adding prescription: ' + err.message,
+            // Return submitted values to maintain form state
+            originalValues: req.body
+        });
+    } finally {
+        connection.release();
     }
 });
 
