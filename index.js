@@ -3,6 +3,8 @@ const session = require('express-session');
 const path = require('path');
 const cors = require('cors');
 
+const bodyParser = require('body-parser');
+
 const app = express();
 const port = 3000;
 
@@ -10,6 +12,7 @@ const port = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(bodyParser.json());
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -54,12 +57,16 @@ const doctorLinks = require('./routes/doctorRoutes');
 app.use('/doctor', doctorLinks);
 
 const patientLinks = require('./routes/patientRoutes'); 
-const { conPool } = require('./config/dbHandler');
 app.use('/patient', patientLinks);
 
 app.get("/testPres", (req, res) => {
     res.render("testPres");
 });
+
+const otpLinks = require('./routes/otpRoutes'); 
+app.use('/', otpLinks);
+
+const { conPool } = require('./config/dbHandler');
 
 app.get("/search-patient", async (req, res) => {
     const searchQuery = req.query.query;  // Changed from req.query.name to req.query.query
@@ -78,6 +85,11 @@ app.get("/search-patient", async (req, res) => {
         console.error("Error fetching patients:", error);
         res.status(500).json({ error: "Internal Server Error" });
     }
+});
+
+
+app.get("/testLogin", async (req, res) => {
+    res.render("testLogin");
 });
 
 // Error handling middleware

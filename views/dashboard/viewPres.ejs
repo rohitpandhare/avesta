@@ -9,6 +9,19 @@
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16 items-center">
+                <a href="/" class="text-2xl font-bold text-blue-600 tracking-tight">DoctorSync</a>
+                <ul class="flex space-x-6">
+                    <li><a href="/findDr" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">Find Doctors</a></li>
+                    <li><a href="/viewPres" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">View Prescription</a></li>
+                    <li><a href="/login" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">Login</a></li>
+                    <!-- <li><a href="/signup" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">Register</a></li> -->
+                </ul>
+            </div>
+        </div>
+    </nav>
     <div class="max-w-4xl mx-auto px-4 py-12">
         <div class="text-center mb-12 space-y-4">
             <div class="flex justify-center items-center space-x-3">
@@ -18,14 +31,8 @@
         </div>
 
         <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-            <div class="grid md:grid-cols-2 gap-10 items-center">
-                <div class="hidden md:block">
-                    <img src="https://cdn-icons-png.flaticon.com/512/5996/5996831.png" 
-                         alt="Medical prescription" 
-                         class="w-full h-64 object-contain"
-                         style="filter: hue-rotate(15deg)">
-                </div>
-
+            <div class="grid gap-10 items-center">
+            
                 <!-- Form -->
                 <div>
                     <!-- we are using GET so -- we can easily redirect from patient ejs -->
@@ -86,6 +93,15 @@
             </div>
         </div>
     </div>
-    
+
+    <footer class="bg-gray-800 text-white ">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="text-center text-gray-400">
+                    <p>&copy; 2025 DoctorSync. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
 </body>
 </html>

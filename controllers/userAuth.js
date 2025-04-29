@@ -1,6 +1,10 @@
 // Importing required modules
 const { conPool } = require('../config/dbHandler'); // importing conpool for DB operations
 const md5 = require('md5'); // for hashing passwords
+// authController.js
+const speakeasy = require('speakeasy');
+const nodemailer = require('nodemailer');
+
 
 // for signup
 const createUser = async (req, res) => {
@@ -79,7 +83,7 @@ const createUser = async (req, res) => {
 // User login 
 async function doLogin(req, res) {
     try {
-        const { Username, Password, Role, adminCode } = req.body;
+        const { Username, Password, Role } = req.body;
 
         // Basic validation
         if (!Username || !Password || !Role) {
@@ -87,13 +91,6 @@ async function doLogin(req, res) {
                 error: 'All fields are required'
             });
         }
-
-        // Admin code validation
-        // if (Role === 'ADMIN' && adminCode !== '007') {
-        //     return res.render('dashboard/login', {
-        //         error: 'Invalid admin code'
-        //     });
-        // }
 
         const hashedPassword = md5(Password);
 
@@ -419,9 +416,76 @@ function logout(req, res){
     });
 };
 
+
+// OTP Configuration
+const OTP_CONFIG = {
+    step: 300, // 5-minute validity
+    digits: 6,
+    encoding: 'base32'
+};
+
+// Generate OTP
+function generateOTP() {
+    const secret = speakeasy.generateSecret({ length: 20 });
+    const token = speakeasy.totp({
+        secret: secret.base32,
+        ...OTP_CONFIG
+    });
+    return { otp: token, secret: secret.base32 };
+}
+
+// Verify OTP
+function verifyOTP(token, secret) {
+    return speakeasy.totp.verify({
+        secret: secret,
+        token: token,
+        ...OTP_CONFIG
+    });
+}
+
+// Email Transport
+const emailTransport = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: 'connect.doctorsync@gmail.com',
+        pass: 'dklp rsru tpys agki'
+    }
+});
+
+// Send OTP Email
+async function sendOTPEmail(email, otp) {
+    try {
+        await emailTransport.sendMail({
+            from: '"OTP Service" <connect.doctorsync@gmail.com>',
+            to: email,
+            subject: 'Your Verification Code',
+            text: `Your verification code is: ${otp}\nThis code expires in 5 minutes.`,
+            html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #1a365d;">DoctorSync Verification</h2>
+                    <p style="font-size: 16px;">
+                        Your secure verification code is:
+                        <strong style="font-size: 24px; letter-spacing: 2px;">${otp}</strong>
+                    </p>
+                    <p style="color: #718096; font-size: 14px;">
+                        This code will expire in 5 minutes. If you didn't request this, 
+                        please contact support immediately.
+                    </p>
+                </div>
+            `
+        });
+    } catch (error) {
+        console.error('Email send error:', error);
+        throw new Error('Failed to send verification email');
+    }
+}
+
 module.exports = {
     createUser,
     doLogin,
     resetPass,
-    logout
+    logout,
+    generateOTP,
+    verifyOTP,
+    sendOTPEmail
 };
