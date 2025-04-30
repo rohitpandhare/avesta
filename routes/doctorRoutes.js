@@ -26,32 +26,32 @@ router.delete('/deleteRecord/:id',deleteRecord)
 router.delete('/deletePres/:id',deletePres) 
 
 
-const { conPool } = require('../config/dbHandler');
+// const { conPool } = require('../config/dbHandler');
 
-function ensureAuthenticated(req, res, next) {
-    if (req.session.user && req.session.user.role.toLowerCase() === 'doctor') {
-        return next();
-    }
-    res.redirect('/login');
-}
+// function ensureAuthenticated(req, res, next) {
+//     if (req.session.user && req.session.user.role.toLowerCase() === 'doctor') {
+//         return next();
+//     }
+//     res.redirect('/login');
+// }
 
-router.get('/dashboard', ensureAuthenticated, async (req, res) => {
-    try {
-        // Get doctor data
-        const [doctorData] = await conPool.query(
-            'SELECT * FROM doctor WHERE UserID = ?',
-            [req.session.user.id]
-        );
+// router.get('/dashboard', ensureAuthenticated, async (req, res) => {
+//     try {
+//         // Get doctor data
+//         const [doctorData] = await conPool.query(
+//             'SELECT * FROM doctor WHERE UserID = ?',
+//             [req.session.user.id]
+//         );
 
-        res.render('users/doctor', {
-            user: req.session.user,
-            doctor: doctorData[0]
-        });
-    } catch (error) {
-        console.error('Doctor dashboard error:', error);
-        res.status(500).render('error', { message: 'Failed to load doctor dashboard' });
-    }
-});
+//         res.render('users/doctor', {
+//             user: req.session.user,
+//             doctor: doctorData[0]
+//         });
+//     } catch (error) {
+//         console.error('Doctor dashboard error:', error);
+//         res.status(500).render('error', { message: 'Failed to load doctor dashboard' });
+//     }
+// });
 
 
 module.exports = router;

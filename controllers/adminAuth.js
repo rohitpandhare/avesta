@@ -154,13 +154,96 @@ async function createAdmin (req,res){
         connection.release();
     }
 }
+
+// async function getAdminDashboard(req, res) {
+//     try {
+//         if (!req.session.user || req.session.user.Role !== 'admin') {
+//             return res.redirect('/auth/login'); // or '/silver'
+//         }
+
+//         const [userList, doctorList, patientList, prescriptionStats] = await Promise.all([
+//             conPool.query('SELECT * FROM user'),
+//             conPool.query(`
+//                 SELECT d.*, u.Username
+//                 FROM doctor d
+//                 JOIN user u ON d.UserID = u.UserID
+//                 WHERE u.Role = 'DOCTOR'
+//             `),
+//             conPool.query(`
+//                 SELECT p.*, u.Username
+//                 FROM patient p
+//                 JOIN user u ON p.UserID = u.UserID
+//                 WHERE u.Role = 'PATIENT'
+//             `),
+//             conPool.query(`
+//                 SELECT 
+//                     d.Specialty, 
+//                     SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
+//                     SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
+//                 FROM 
+//                     prescription p
+//                 JOIN 
+//                     doctor d ON p.DoctorID = d.DoctorID
+//                 GROUP BY 
+//                     d.Specialty
+//             `)
+//         ]);
+
+//         const specialtyStats = {};
+//         doctorList[0].forEach(doctor => {
+//             const spec = doctor.Specialty || 'Other';
+//             if (!specialtyStats[spec]) {
+//                 specialtyStats[spec] = {
+//                     doctorCount: 0,
+//                     activePrescriptions: 0,
+//                     completedPrescriptions: 0
+//                 };
+//             }
+//             specialtyStats[spec].doctorCount++;
+//         });
+
+//         prescriptionStats[0].forEach(row => {
+//             const spec = row.Specialty || 'Other';
+//             if (specialtyStats[spec]) {
+//                 specialtyStats[spec].activePrescriptions = row.active;
+//                 specialtyStats[spec].completedPrescriptions = row.completed;
+//             }
+//         });
+
+//         const specialties = Object.entries(specialtyStats)
+//             .map(([name, stats]) => ({ name, ...stats }))
+//             .sort((a, b) => b.doctorCount - a.doctorCount);
+
+//         return res.render('users/admin', {
+//             user: req.session.user,
+//             userList: userList[0],
+//             doctorList: doctorList[0],
+//             patientList: patientList[0],
+//             specialties
+//         });
+//     } catch (err) {
+//         console.error('Admin dashboard error:', err);
+//         return res.render('users/admin', {
+//             user: req.session.user,
+//             userList: [],
+//             doctorList: [],
+//             patientList: [],
+//             specialties: [],
+//             error: 'Error loading dashboard: ' + err.message
+//         });
+//     }
+// }
+
 module.exports = {
     getAdmin,
-    createAdmin
-    // deleteUser,
-    // deleteDoctor,
-    // deletePatient
+    createAdmin,
+    // getAdminDashboard
 };
+
+
+// deleteUser,
+// deleteDoctor,
+// deletePatient
 
 
 // DELETE user

@@ -30,8 +30,8 @@
                         <select name="Role" id="role" required 
                                 class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 bg-white">
                             <option value="PATIENT" selected>Patient</option>
-                            <option value="DOCTOR">Medical Practitioner</option>
-                            <option value="ADMIN">Administrator</option>
+                            <option value="DOCTOR">Doctor</option>
+                            <option value="ADMIN">Admin</option>
                         </select>
                     </div>
                 </div>
@@ -87,6 +87,7 @@
         </div>
     </div>
 
+    
     <script>
         document.getElementById('requestOtpBtn').addEventListener('click', async () => {
             const username = document.getElementById('username').value.trim();
@@ -162,6 +163,28 @@
             statusEl.textContent = message;
             statusEl.className = `text-center text-${color}-600 text-sm`;
         }
+
+        // ✅ NEW: Form validation + success popup
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password')?.value?.trim(); // In case password exists
+            const role = document.getElementById('role').value;
+
+            if (!username || (!otp && !password) || !role) {
+                e.preventDefault();
+                alert('Please fill in all required fields');
+                return;
+            }
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const successMessage = urlParams.get('success');
+            if (successMessage) {
+                alert(successMessage); // Simple popup
+            }
+        });
     </script>
+
 </body>
 </html>

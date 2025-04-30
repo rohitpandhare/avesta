@@ -9,7 +9,6 @@ function generateReferenceId() {
     return `${prefix}${uniqueId}`;
 }
 
-
 async function generatePrescription() {
     const connection = await conPool.getConnection();
     try {

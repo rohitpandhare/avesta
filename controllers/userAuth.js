@@ -416,7 +416,6 @@ function logout(req, res){
     });
 };
 
-
 // OTP Configuration
 const OTP_CONFIG = {
     step: 300, // 5-minute validity

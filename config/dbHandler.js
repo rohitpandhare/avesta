@@ -11,7 +11,6 @@ const conPool = myDB.createPool({ //creating conpool connection - so all the fun
     queueLimit: 0
 });
 
-
 conPool.on('error', (err) => { // when some error occur - log the err
     console.error('Database pool error:', err);
 });

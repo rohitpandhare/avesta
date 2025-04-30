@@ -63,8 +63,8 @@ app.get("/testPres", (req, res) => {
     res.render("testPres");
 });
 
-const otpLinks = require('./routes/otpRoutes'); 
-app.use('/', otpLinks);
+// const otpLinks = require('./routes/otpRoutes'); 
+// app.use('/', otpLinks);
 
 const { conPool } = require('./config/dbHandler');
 
@@ -91,6 +91,7 @@ app.get("/search-patient", async (req, res) => {
 app.get("/testLogin", async (req, res) => {
     res.render("testLogin");
 });
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {

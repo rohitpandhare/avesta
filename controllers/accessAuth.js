@@ -1,6 +1,7 @@
 const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 
+//Using the speakeasy library to generate OTPs
 // OTP generator function
 function generateOTP() {
     const otp = speakeasy.totp({
@@ -16,6 +17,7 @@ function generateSecret(){
     return speakeasy.generateSecret({ length: 20 }).base32;
 }
 
+// Using the nodemailer library to send OTPs via email
 // Email sender function
 async function sendOTPEmail(email, otp) {
     let transporter = nodemailer.createTransport({

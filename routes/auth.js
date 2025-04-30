@@ -1,6 +1,5 @@
 const express = require('express');
 const router = express.Router();
-
 const { conPool } = require('../config/dbHandler'); // importing conpool for DB operations
 
 // User CRUD func import
@@ -8,12 +7,12 @@ const {
     doLogin,
     createUser,
     resetPass,
-    logout
+    logout,
 } = require('../controllers/userAuth');
 
 const { generateOTP, sendOTPEmail, verifyOTP } = require('../controllers/userAuth');
 
-// Temporary OTP storage (use Redis in production)
+// Temporary OTP storage 
 const otpStore = new Map();
 
 // Request OTP endpoint
@@ -119,27 +118,26 @@ router.post('/verify-otp', async (req, res) => {
             Role: role,
             ...profileData  // Spread profile data
         };
+        req.session.loggedIn = true;  // ✅ very important
 
-        // Clean up OTP store
-        otpStore.delete(username);
+     // Clean up OTP store
+     otpStore.delete(username);
 
-        // Unified redirect handling
-        switch(role.toLowerCase()) {
-            case 'admin':
-                return res.render('users/admin', { 
-                    user: req.session.user,
-                    userList: [],  // Provide empty lists initially
-                    doctorList: [],
-                    patientList: [],
-                    specialties: []
-                });
-            case 'doctor':
-                return res.redirect('/doctor/dashboard');
-            case 'patient':
-                return res.redirect('/patient/dashboard');
-            default:
-                return res.redirect('/');
-        }
+     // JSON response expected by frontend
+     let redirectUrl = '/';
+     switch (role.toLowerCase()) {
+         case 'admin':
+             redirectUrl = '/admin';  
+             break;
+         case 'doctor':
+             redirectUrl = 'users/doctor';
+             break;
+         case 'patient':
+             redirectUrl = 'users/patient';
+             break;
+     }
+     return res.json({ success: true, redirectUrl });
+
 
     } catch (error) {
         console.error('Verification error:', error);
@@ -147,12 +145,10 @@ router.post('/verify-otp', async (req, res) => {
     }
 });
 
-
 router.get('/logout', logout);
 router.post('/login', doLogin);
 router.post('/signup', createUser);
 router.post('/reset', resetPass);
-
 
 module.exports = router;
 

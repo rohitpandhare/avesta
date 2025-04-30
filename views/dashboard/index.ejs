@@ -24,6 +24,7 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- header texts -->
         <div class="text-center mb-8">
             <h2 class="text-4xl font-bold text-gray-900 mb-4 tracking-tight">Welcome to DoctorSync</h2>
             <h4 class="text-2xl text-blue-600 mb-8 font-semibold">Sync Your Health</h4>
@@ -33,6 +34,7 @@
             </p>
         </div>
 
+        <!-- mid content  -->
         <div class="mb-20">
             <h3 class="text-3xl font-bold text-gray-900 mb-8 text-center">Why Choose DoctorSync?</h3>
 
@@ -51,30 +53,6 @@
 
     </main>
 
-    <form id="otpForm" class="max-w-md mx-auto p-6 bg-white rounded-lg shadow-md">
-        <div class="mb-4">
-            <label for="email" class="block text-gray-700 mb-2">Enter Email</label>
-            <input type="email" name="email" id="email" required 
-                   class="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-        </div>
-        
-        <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
-            Generate OTP
-        </button>
-        
-        <div id="otpSection" class="hidden mt-4">
-            <label for="otp" class="block text-gray-700 mb-2">Enter OTP</label>
-            <input type="text" name="otp" id="otp" 
-                   class="w-full border border-gray-300 rounded-lg p-2 mb-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <button type="button" id="verifyOtpBtn" class="w-full bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
-                Verify OTP
-            </button>
-        </div>
-        
-        <div id="message" class="mt-4 text-center"></div>
-    </form>
-
-
     <footer class="bg-gray-800 text-white ">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid md:grid-cols-3 gap-8">
@@ -84,73 +62,6 @@
             </div>
         </div>
     </footer>
-
-
-    <script>
-        document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
-    const otp = document.getElementById('otp').value;
-    if (!otp) {
-        messageDiv.textContent = 'OTP is required';
-        messageDiv.classList.add('text-red-600');
-        return;
-    }
-    // rest of your verification code
-});
-
-        document.getElementById('otpForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('email').value;
-            const messageDiv = document.getElementById('message');
-            messageDiv.textContent = '';
-            messageDiv.className = 'mt-4 text-center';
-            
-            try {
-                const response = await fetch('/generate-otp', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ email })
-                });
-                
-                const data = await response.json();
-                if (response.ok) {
-                    document.getElementById('otpSection').classList.remove('hidden');
-                    messageDiv.textContent = 'OTP sent to your email!';
-                    messageDiv.classList.add('text-green-600');
-                    
-                    // Handle OTP verification
-                    document.getElementById('verifyOtpBtn').addEventListener('click', async () => {
-                        const otp = document.getElementById('otp').value;
-                        const verifyResponse = await fetch('/verify-otp', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({ email, otp })
-                        });
-                        
-                        const verifyData = await verifyResponse.json();
-                        if (verifyData.verified) {
-                            messageDiv.textContent = 'OTP verified successfully!';
-                            messageDiv.classList.add('text-green-600');
-                            // Redirect or perform next action
-                        } else {
-                            messageDiv.textContent = verifyData.error || 'Invalid OTP';
-                            messageDiv.classList.add('text-red-600');
-                        }
-                    });
-                } else {
-                    messageDiv.textContent = data.error || 'Failed to send OTP';
-                    messageDiv.classList.add('text-red-600');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                messageDiv.textContent = 'An error occurred';
-                messageDiv.classList.add('text-red-600');
-            }
-        });
-        </script>
+    
 </body>
-
 </html>
