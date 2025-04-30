@@ -2,110 +2,26 @@ const express = require('express');
 const router = express.Router();
 
 const { conPool } = require('../config/dbHandler');
-// const { verifyOTP } = require('../controllers/userAuth');
 
 // Admin controller functions
 const {
-    getAdmin,
     createAdmin,
+    createAdminWithOTP, 
+    requestAdminOTP, 
+    verifyAdminOTP
     // getAdminDashboard
 } = require('../controllers/adminAuth');
 
-// OTP store (in-memory for dev)
-const otpStore = new Map();
-
 // Admin creation & login views
 router.get('/golden', (req, res) => res.render('secret/adminCreate'));
-router.post('/golden', createAdmin);
+// router.post('/golden', createAdmin);
 
-router.get('/silver', (req, res) => res.render('secret/adminLogin'));
-router.post('/silver', getAdmin);
+// OTP request endpoint
+router.post('/golden/request-otp', requestAdminOTP);
 
-// NEW: Admin dashboard route (used after OTP redirect)
-// router.get('/users/admin', getAdminDashboard);
+// OTP verification + final creation
+router.post('/golden/verify-otp', verifyAdminOTP);
 
-// OTP verification (expects JSON response)
-// router.post('/verify-otp', async (req, res) => {
-//     const { username, role, otp } = req.body;
-
-//     try {
-//         const storedData = otpStore.get(username);
-//         if (!storedData || storedData.role !== role) {
-//             return res.status(400).json({ error: 'Invalid verification request' });
-//         }
-
-//         if (Date.now() > storedData.expires) {
-//             otpStore.delete(username);
-//             return res.status(401).json({ error: 'Verification code expired' });
-//         }
-
-//         const isValid = verifyOTP(otp, storedData.secret);
-//         if (!isValid) {
-//             return res.status(401).json({ error: 'Invalid verification code' });
-//         }
-
-//         const [users] = await conPool.query(
-//             'SELECT * FROM user WHERE Username = ? AND Role = ?', 
-//             [username, role]
-//         );
-
-//         if (!users.length) {
-//             return res.status(404).json({ error: 'User profile not found' });
-//         }
-
-//         const user = users[0];
-//         let profileData = {};
-
-//         // Fetch role-specific profile data
-//         if (role === 'PATIENT') {
-//             const [patientData] = await conPool.query(
-//                 'SELECT * FROM patient WHERE UserID = ?',
-//                 [user.UserID]
-//             );
-//             if (patientData.length) profileData = patientData[0];
-//         } else if (role === 'DOCTOR') {
-//             const [doctorData] = await conPool.query(
-//                 'SELECT * FROM doctor WHERE UserID = ?',
-//                 [user.UserID]
-//             );
-//             if (doctorData.length) profileData = doctorData[0];
-//         } else if (role === 'ADMIN') {
-//             profileData = { AdminID: user.UserID }; // placeholder if needed
-//         }
-
-//         // Store session
-//         req.session.user = {
-//             UserID: user.UserID,
-//             Username: user.Username,
-//             Email: user.Email,
-//             Role: role,
-//             ...profileData
-//         };
-
-//         // Clean up OTP store
-//         otpStore.delete(username);
-
-//         // Respond with JSON (frontend expects JSON, not HTML)
-//         let redirectUrl = '/';
-//         switch (role.toLowerCase()) {
-//             case 'admin':
-//                 redirectUrl = '/users/admin';
-//                 break;
-//             case 'doctor':
-//                 redirectUrl = '/doctor/dashboard';
-//                 break;
-//             case 'patient':
-//                 redirectUrl = '/patient/dashboard';
-//                 break;
-//         }
-
-//         return res.json({ success: true, redirectUrl });
-
-//     } catch (error) {
-//         console.error('Verification error:', error);
-//         return res.status(500).json({ error: 'Verification failed' });
-//     }
-// });
 router.get('/admin', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
         return res.redirect('/login');
@@ -167,6 +83,5 @@ router.get('/admin', async (req, res) => {
         specialties
     });
 });
-
 
 module.exports = router;

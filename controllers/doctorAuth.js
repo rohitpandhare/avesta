@@ -580,37 +580,9 @@ async function addMedRecords (req,res) {
 };
 
 
-// async function getDocProfile (req, res){
-//     const userId = req.session.user.UserID;
-//     const { Name, Specialty, LicenseNumber, Qualifications, Phone } = req.body;
-
-//     try {
-//         const [result] = await conPool.query(
-//             `UPDATE DOCTOR SET 
-//                 Name = ?, 
-//                 Specialty = ?, 
-//                 LicenseNumber = ?, 
-//                 Qualifications = ?, 
-//                 Phone = ?
-//              WHERE UserID = ?`,
-//             [Name, Specialty, LicenseNumber, Qualifications, Phone, userId]
-//         );
-
-//         // Update session
-//         req.session.user.profileComplete = true;
-//         res.redirect('/login');
-//     } catch (err) {
-//         console.error(err);
-//         res.render('dashboard/index', { 
-//             error: 'Failed to update profile',
-//             formData: req.body
-//         });
-//     }
-// };
 
 module.exports ={
     getDoctor,
-    // getDocProfile,
     addPatient,
     addPrescription,
     addMedRecords,

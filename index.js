@@ -88,8 +88,8 @@ app.get("/search-patient", async (req, res) => {
 });
 
 
-app.get("/testLogin", async (req, res) => {
-    res.render("testLogin");
+app.get("/adminLogin", async (req, res) => {
+    res.render("secret/adminLogin");
 });
 
 
