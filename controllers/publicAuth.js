@@ -72,8 +72,7 @@ async function viewCreatedPres (req, res){
             SELECT 
                 p.PrescriptionID, 
                 p.DateIssued, 
-                p.DiagnosisNotes, 
-                p.Medicines, 
+                p.DiagnosisNotes,  
                 p.Status, 
                 p.GlobalReferenceID, 
                 d.Name as DoctorName

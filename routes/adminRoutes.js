@@ -8,7 +8,10 @@ const {
     createAdmin,
     createAdminWithOTP, 
     requestAdminOTP, 
-    verifyAdminOTP
+    verifyAdminOTP,
+    deleteUser,
+    deleteDoctor,
+    deletePatient
     // getAdminDashboard
 } = require('../controllers/adminAuth');
 
@@ -83,5 +86,10 @@ router.get('/admin', async (req, res) => {
         specialties
     });
 });
+
+
+router.delete('/delete-user/:id', deleteUser);
+router.delete('/delete-doctor/:id', deleteDoctor);
+router.delete('/delete-patient/:id', deletePatient);
 
 module.exports = router;

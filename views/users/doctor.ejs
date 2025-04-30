@@ -382,7 +382,7 @@
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date Issued</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Patient Name</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis Notes</th>
-                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Medicines</th>
+                        <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Medicines</th> -->
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Reference ID</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Delete</th>
@@ -401,7 +401,7 @@
                             </td>
                             <td class="px-6 py-4"><%= prescription.PatientName || 'N/A' %></td>
                             <td class="px-6 py-4 max-w-xs"><%= prescription.DiagnosisNotes || 'N/A' %></td>
-                            <td class="px-6 py-4 max-w-xs whitespace-pre-line"><%= prescription.Medicines || 'N/A' %></td>
+                            <!-- <td class="px-6 py-4 max-w-xs whitespace-pre-line"><%= prescription.Medicines || 'N/A' %></td> -->
                             <td class="px-6 py-4">
                               <span class="px-2 py-1 text-xs font-medium rounded-full <%= prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
                                 <%= prescription.Status %>
@@ -461,11 +461,11 @@
                     <!-- Right Column -->
                     <div class="space-y-6">
                       <!-- Medicines -->
-                      <div>
+                      <!-- <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Medicines</label>
                         <textarea name="Medicines" required 
                                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"></textarea>
-                      </div>
+                      </div> -->
 
                       <!-- Status and Date -->
                       <div class="grid grid-cols-2 gap-4">

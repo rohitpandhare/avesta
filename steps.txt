@@ -12,3 +12,20 @@
 const { faker } = require('@faker-js/faker');
 
 npm install express body-parser speakeasy nodemailer
+
+
+-- ALTER TABLE doctorsync_dbx.user ADD COLUMN Flag TINYINT(1) DEFAULT 0;
+-- ALTER TABLE doctorsync_dbx.doctor ADD COLUMN Flag TINYINT(1) DEFAULT 0;
+-- ALTER TABLE doctorsync_dbx.patient ADD COLUMN Flag TINYINT(1) DEFAULT 0;
+
+
+-- To drop the specific check constraint for patient table
+-- ALTER TABLE doctorsync_dbx.patient 
+-- DROP CHECK chk_patient_age;
+
+-- To drop the specific check constraint for doctor table
+-- ALTER TABLE doctorsync_dbx.doctor 
+-- DROP CHECK doctor_chk_1;
+
+ALTER TABLE doctorsync_dbx.patient 
+DROP CHECK patient_chk_1;

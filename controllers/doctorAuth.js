@@ -361,7 +361,7 @@ async function addPrescription(req, res) {
             patientName,
             DateIssued,
             DiagnosisNotes,
-            Medicines,
+            // Medicines,
             Status
         } = req.body;
 
@@ -390,10 +390,10 @@ async function addPrescription(req, res) {
         }
 
         // Validate required fields (PatientID, DiagnosisNotes, Medicines, Status)
-        checkRequiredFields(['PatientID', 'DiagnosisNotes', 'Medicines', 'Status'], req.body);
+        checkRequiredFields(['PatientID', 'DiagnosisNotes', 'Status'], req.body);
 
         // Add validation
-        if (!PatientID || !DateIssued || !DiagnosisNotes || !Medicines || !Status) {
+        if (!PatientID || !DateIssued || !DiagnosisNotes || !Status) {
             throw new Error('All required fields must be filled');
         }
 
@@ -403,9 +403,9 @@ async function addPrescription(req, res) {
         // Insert into database
         await conPool.query(
             `INSERT INTO prescription
-            (PatientID, DoctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID)
-            VALUES (?, ?, ?, ?, ?, ?, ?)`,
-            [PatientID, doctorID, DateIssued, DiagnosisNotes, Medicines, Status, GlobalReferenceID]
+            (PatientID, DoctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID)
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [PatientID, doctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID]
         );
 
        //get updated data
