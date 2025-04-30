@@ -60,7 +60,7 @@ async function viewPrescriptions(req, res){
 };
 
 // Handle Prescription Lookup
-async function viewCreatedPres (req, res){
+async function viewCreatedPres(req, res) {
     try {
         const refId = req.query.refId;
 
@@ -68,6 +68,7 @@ async function viewCreatedPres (req, res){
             return res.render('dashboard/viewPres', { error: 'Please enter a prescription reference ID' });
         }
 
+        // Fetch prescription details including patient name
         const [prescriptions] = await conPool.query(`
             SELECT 
                 p.PrescriptionID, 
@@ -75,9 +76,11 @@ async function viewCreatedPres (req, res){
                 p.DiagnosisNotes,  
                 p.Status, 
                 p.GlobalReferenceID, 
-                d.Name as DoctorName
+                d.Name as DoctorName,
+                pt.Name as PatientName
             FROM PRESCRIPTION p
             JOIN DOCTOR d ON p.DoctorID = d.DoctorID
+            JOIN PATIENT pt ON p.PatientID = pt.PatientID
             WHERE p.GlobalReferenceID = ?
         `, [refId]);
 
@@ -87,14 +90,31 @@ async function viewCreatedPres (req, res){
             });
         }
 
-        res.render('dashboard/viewPres', { prescription: prescriptions[0] });
+        // Fetch associated medicines
+        const [medicines] = await conPool.query(`
+            SELECT 
+                MedicineName, 
+                Dosage, 
+                Instructions, 
+                BeforeFood, 
+                AfterFood
+            FROM PRESCRIPTION_MEDICINE
+            WHERE PrescriptionID = ?
+        `, [prescriptions[0].PrescriptionID]);
+
+        res.render('dashboard/viewPres', { 
+            prescription: prescriptions[0],
+            medicines: medicines
+        });
     } catch (err) {
         console.error('Error fetching prescription:', err);
         res.render('dashboard/viewPres', { 
             error: 'Database error, please try again later' 
         });
     }
-};
+}
+
+
 
 module.exports = {
     findDoctor,

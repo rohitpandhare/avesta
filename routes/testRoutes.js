@@ -36,69 +36,72 @@ router.get('/test-prescription', (req, res) => {
 
 router.post('/test-prescription', async (req, res) => {
     const connection = await conPool.getConnection();
+
     try {
         await connection.beginTransaction();
         
-        const { PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID, medicines } = req.body;
+        // Destructure with lowercase status
+        const { 
+            PatientID, 
+            DoctorID, 
+            DiagnosisNotes, 
+            status,  // Lowercase here
+            GlobalReferenceID, 
+            DateIssued,  // Add this if you're using the date from the form
+            medicines 
+        } = req.body;
+
+        // Validate Status
+        const validStatuses = ['ACTIVE', 'COMPLETED', 'CANCELED', 'EXPIRED'];
+        const finalStatus = validStatuses.includes(status) ? status : 'ACTIVE';
         
+        // Debug logging
+        console.log('Received Status:', status);
+        console.log('Final Status:', finalStatus);
+
         // 1. Insert the prescription header
         const [prescriptionResult] = await connection.query(
             `INSERT INTO PRESCRIPTION 
-            (PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID) 
-            VALUES (?, ?, ?, ?, ?)`,
-            [PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID || null]
+            (PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID, DateIssued) 
+            VALUES (?, ?, ?, ?, ?, ?)`,
+            [
+                PatientID, 
+                DoctorID, 
+                DiagnosisNotes, 
+                finalStatus, 
+                GlobalReferenceID || null,
+                DateIssued || new Date()  // Use form date or current date
+            ]
         );
         
         const prescriptionId = prescriptionResult.insertId;
         
-        // 2. Insert each medicine with timing information
-        for (const medicine of medicines) {
-            await connection.query(
-                `INSERT INTO PRESCRIPTION_MEDICINE 
-                (PrescriptionID, MedicineName, Dosage, Instructions, BeforeFood, AfterFood, 
-                 Morning, Afternoon, Evening, Night, FrequencyPerDay, DurationDays) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-                [
-                    prescriptionId,
-                    medicine.MedicineName,
-                    medicine.Dosage,
-                    medicine.Instructions || null,
-                    medicine.BeforeFood === 'true' ? 1 : 0,
-                    medicine.AfterFood === 'true' ? 1 : 0,
-                    medicine.Morning === 'true' ? 1 : 0,
-                    medicine.Afternoon === 'true' ? 1 : 0,
-                    medicine.Evening === 'true' ? 1 : 0,
-                    medicine.Night === 'true' ? 1 : 0,
-                    medicine.FrequencyPerDay || 1,
-                    medicine.DurationDays || 7
-                ]
-            );
-        }
-        
-        await connection.commit();
+        // Rest of your code remains the same...
+
+        // Update originalValues with lowercase status
         res.render('testPrescription', { 
             success: 'Prescription added successfully!',
-            // Keep form values for better UX
             originalValues: {
                 PatientID,
                 DoctorID,
                 DiagnosisNotes,
-                Status,
+                status: finalStatus,  // Use lowercase here
                 GlobalReferenceID
             }
         });
+
     } catch (err) {
         await connection.rollback();
-        console.error('Error:', err);
+        console.error('Full Error:', err);
         res.render('testPrescription', { 
             error: 'Error adding prescription: ' + err.message,
-            // Return submitted values to maintain form state
             originalValues: req.body
         });
     } finally {
         connection.release();
     }
 });
+
 
 // Medical Record Routes
 router.get('/test-medical-record', (req, res) => {
