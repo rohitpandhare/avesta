@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Prescription - <%= prescription.GlobalReferenceID %></title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body, html {
+        margin: 0;
+        padding: 0;
+        background: white;
+      }
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        box-sizing: border-box;
+        page-break-after: always;
+      }
+      table, th, td {
+        border: 1px solid #000;
+        border-collapse: collapse;
+      }
+      th, td {
+        padding: 6px;
+      }
+    }
+    .page {
+      width: 210mm;
+      min-height: 297mm;
+      padding: 20mm;
+      background: white;
+      margin: auto;
+    }
+  </style>
+</head>
+<body class="text-gray-900 text-sm font-sans">
+
+<div class="page shadow-md border border-gray-300 print:border-none">
+  
+  
+  <!-- Logo and Tagline -->
+<div class="mb-6 flex items-center justify-between border-b-2 border-gray-700 pb-1">
+  <div>
+    <a href="/" class="text-3xl font-bold text-blue-700 tracking-tight no-underline">DoctorSync</a>
+    <p class="text-sm text-gray-600 -mt-1">Sync your health</p>
+  </div>
+
+  <div class="text-right text-xs text-gray-500 ">
+    <p>Prescription ID: <%= prescription.GlobalReferenceID %></p>
+    <p>Generated on: <%= new Date().toLocaleDateString() %></p>
+  </div>
+</div>
+  <!-- Doctor & Patient Info -->
+  <div class="flex justify-between mb-4">
+    <div>
+      <p class="font-semibold text-lg"><%= prescription.DoctorName %></p>
+      <p class="text-sm">License: <%= prescription.DoctorLicense || 'Not specified' %></p>
+    </div>
+    <div class="text-right">
+      <p class="text-sm"><strong>Patient:</strong> <%= prescription.PatientName %></p>
+      <p class="text-sm"><strong>Date:</strong> <%= new Date(prescription.DateIssued).toLocaleDateString() %></p>
+    </div>
+  </div>
+
+  <!-- Diagnosis -->
+  <% if (prescription.DiagnosisNotes) { %>
+    <div class="border border-gray-300 p-3 mb-5">
+      <p class="font-semibold mb-1">Diagnosis:</p>
+      <p><%= prescription.DiagnosisNotes %></p>
+    </div>
+  <% } %>
+
+  <!-- Medications -->
+  <% if (medicines && medicines.length > 0) { %>
+    <div>
+      <p class="font-semibold mb-2">Medications:</p>
+      <table class="w-full table-fixed border border-black text-sm">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="w-1/4 p-2 border border-black text-left">Medicine</th>
+            <th class="w-1/4 p-2 border border-black text-left">Dosage</th>
+            <th class="w-1/4 p-2 border border-black text-left">Instructions</th>
+            <th class="w-1/4 p-2 border border-black text-left">Timing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% medicines.forEach(function(med) { %>
+            <tr class="align-top">
+              <td class="p-2 border border-black text-left align-top">
+                <strong><%= med.MedicineName %></strong><br />
+                <span class="text-xs"><%= med.BeforeFood ? 'Before food' : 'After food' %></span>
+              </td>
+              <td class="p-2 border border-black text-left align-top"><%= med.Dosage %></td>
+              <td class="p-2 border border-black text-left align-top"><%= med.Instructions %></td>
+              <td class="p-2 border border-black text-left align-top">
+                <% if (med.Morning) { %>Morning<br><% } %>
+                <% if (med.Afternoon) { %>Afternoon<br><% } %>
+                <% if (med.Evening) { %>Evening<% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+      
+    </div>
+  <% } else { %>
+    <p class="text-red-600 mb-6">No medications prescribed.</p>
+  <% } %>
+
+  <!-- Footer -->
+  <div class="border-t border-gray-300 pt-3 text-sm text-center">
+    <p>Status: <strong><%= prescription.Status %></strong></p>
+    <% if (prescription.ValidityDays) { %>
+      <p>Valid for <%= prescription.ValidityDays %> days</p>
+    <% } %>
+    <!-- <p class="text-xs mt-1">Generated on <%= new Date().toLocaleDateString() %></p> -->
+  </div>
+</div>
+
+
+<!-- Hidden on print -->
+<div class="no-print fixed bottom-6 right-6 flex gap-3">
+  <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded">Print</button>
+  <button onclick="downloadPDF()" class="px-4 py-2 bg-gray-700 text-white rounded">Save as PDF</button>
+</div>
+
+<!-- PDF Script -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+  const { jsPDF } = window.jspdf;
+  function downloadPDF() {
+    const element = document.querySelector('.page');
+    html2canvas(element).then(canvas => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = 210;
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save("Prescription_<%= prescription.GlobalReferenceID %>.pdf");
+    });
+  }
+</script>
+</body>
+</html>

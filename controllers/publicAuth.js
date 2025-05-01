@@ -59,67 +59,66 @@ async function viewPrescriptions(req, res){
     res.render('dashboard/viewPres');
 };
 
-// Handle Prescription Lookup
-async function viewCreatedPres(req, res) {
-    try {
-        const refId = req.query.refId;
+// // Handle Prescription Lookup
+// async function viewCreatedPres(req, res) {
+//     try {
+//         const refId = req.query.refId;
 
-        if (!refId) {
-            return res.render('dashboard/viewPres', { error: 'Please enter a prescription reference ID' });
-        }
+//         if (!refId) {
+//             return res.render('dashboard/viewPres', { error: 'Please enter a prescription reference ID' });
+//         }
 
-        // Fetch prescription details including patient name
-        const [prescriptions] = await conPool.query(`
-            SELECT 
-                p.PrescriptionID, 
-                p.DateIssued, 
-                p.DiagnosisNotes,  
-                p.Status, 
-                p.GlobalReferenceID, 
-                d.Name as DoctorName,
-                pt.Name as PatientName
-            FROM PRESCRIPTION p
-            JOIN DOCTOR d ON p.DoctorID = d.DoctorID
-            JOIN PATIENT pt ON p.PatientID = pt.PatientID
-            WHERE p.GlobalReferenceID = ?
-        `, [refId]);
+//         // Fetch prescription details including patient name
+//         const [prescriptions] = await conPool.query(`
+//             SELECT 
+//                 p.PrescriptionID, 
+//                 p.DateIssued, 
+//                 p.DiagnosisNotes,  
+//                 p.Status, 
+//                 p.GlobalReferenceID, 
+//                 p.ValidityDays,
+//                 d.Name as DoctorName,
+//                 pt.Name as PatientName
+//             FROM PRESCRIPTION p
+//             JOIN DOCTOR d ON p.DoctorID = d.DoctorID
+//             JOIN PATIENT pt ON p.PatientID = pt.PatientID
+//             WHERE p.GlobalReferenceID = ?
+//         `, [refId]);
 
-        if (prescriptions.length === 0) {
-            return res.render('dashboard/viewPres', { 
-                error: 'No prescription found with this reference ID' 
-            });
-        }
+//         if (prescriptions.length === 0) {
+//             return res.render('dashboard/viewPres', { 
+//                 error: 'No prescription found with this reference ID' 
+//             });
+//         }
 
-        // Fetch associated medicines
-        const [medicines] = await conPool.query(`
-            SELECT 
-                MedicineName, 
-                Dosage, 
-                Instructions, 
-                BeforeFood, 
-                AfterFood
-            FROM PRESCRIPTION_MEDICINE
-            WHERE PrescriptionID = ?
-        `, [prescriptions[0].PrescriptionID]);
+//         // Fetch associated medicines
+//         const [medicines] = await conPool.query(`
+//             SELECT 
+//                 MedicineName, 
+//                 Dosage, 
+//                 Instructions, 
+//                 BeforeFood, 
+//                 AfterFood
+//             FROM PRESCRIPTION_MEDICINE
+//             WHERE PrescriptionID = ?
+//         `, [prescriptions[0].PrescriptionID]);
 
-        res.render('dashboard/viewPres', { 
-            prescription: prescriptions[0],
-            medicines: medicines
-        });
-    } catch (err) {
-        console.error('Error fetching prescription:', err);
-        res.render('dashboard/viewPres', { 
-            error: 'Database error, please try again later' 
-        });
-    }
-}
-
-
+//         res.render('dashboard/viewPres', { 
+//             prescription: prescriptions[0],
+//             medicines: medicines
+//         });
+//     } catch (err) {
+//         console.error('Error fetching prescription:', err);
+//         res.render('dashboard/viewPres', { 
+//             error: 'Database error, please try again later' 
+//         });
+//     }
+// }
 
 module.exports = {
     findDoctor,
     findPerticularDoctor,
     viewPrescriptions,
-    viewCreatedPres
+    // viewCreatedPres
 };
 

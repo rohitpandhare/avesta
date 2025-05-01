@@ -5,76 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>View Prescription - DoctorSync</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <style>
-        .medicine-row {
-            display: grid;
-            grid-template-columns: 2fr 1fr 1fr;
-            gap: 10px;
-            padding: 10px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .medicine-row:last-child {
-            border-bottom: none;
-        }
-        .medicine-details {
-            display: flex;
-            flex-direction: column;
-        }
-
-        @media print {
-            body, html { margin:0; padding:0 }
-            #prescription-print { 
-                width:100%; 
-                padding:0;
-                box-shadow:none;
-                position:absolute;
-                top:0;
-                left:0
-            }
-            .no-print { display:none }
-        }
-        /* Tight PDF styling */
-        #prescription-print {
-            width:190mm;
-            min-height:277mm;
-            margin:0 auto 20px;
-            padding:10mm;
-            background:white;
-            box-sizing:border-box
-        }
-        .prescription-header {
-            border-bottom:1px solid #2563eb;
-            padding-bottom:5px;
-            margin-bottom:8px
-        }
-        .medicine-table {
-            width:100%;
-            border-collapse:collapse;
-            margin:5px 0
-        }
-        .medicine-table th, .medicine-table td {
-            padding:4px;
-            border:1px solid #ddd;
-            vertical-align:top
-        }
-        .medicine-table th {
-            background-color:#f8fafc;
-        }
-
-        #downloadPdfBtn {
-            background-color: #4F46E5; /* Indigo-700 */
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
-            border: none;
-            cursor: pointer;
-            font-size: 16px;
-            margin-top: 20px;
-        }
-    </style>
 </head>
 
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
     <nav class="bg-white shadow-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between h-16 items-center">
@@ -83,160 +17,64 @@
                     <li><a href="/findDr" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">Find Doctors</a></li>
                     <li><a href="/viewPres" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">View Prescription</a></li>
                     <li><a href="/login" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">Login</a></li>
-                    <!-- <li><a href="/signup" class="text-gray-600 hover:text-blue-600 transition-colors duration-200 font-medium">Register</a></li> -->
                 </ul>
             </div>
         </div>
     </nav>
 
-    <!-- guide for user  -->
-    <div class="max-w-4xl mx-auto px-4 py-12">
-        <div class="text-center mb-12 space-y-4">
+    <!-- Main Section -->
+    <div class="w-full max-w-4xl mx-auto p-8">
+        <div class="text-center mb-12 space-y-2">
             <h1 class="text-4xl font-bold text-gray-800">View Prescription</h1>
-            <p class="text-gray-600 text-lg">Enter your prescription reference ID (Format: RXxxxxxx)</p>
+            <p class="text-gray-600 text-lg">Enter your prescription reference ID below</p>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-xl p-8 md:p-12">
-            <form action="/viewPres" method="GET" class="space-y-6">
+        <!-- Form Box -->
+        <div class="bg-white rounded-xl shadow-lg p-10 mb-8">
+            <form id="prescriptionForm" target="_blank" class="space-y-6" onsubmit="openPrintView(event)">
                 <div>
                     <label class="block text-gray-700 text-sm font-semibold mb-2">
                         Prescription Reference ID
                     </label>
-                    <input type="text" 
-                           name="refId" 
-                           placeholder="Enter RX followed by 6 digits"
+                    <input type="text"
+                           name="refId"
+                           placeholder="e.g. RX123456"
                            required
                            pattern="RX[0-9]{6}"
                            title="Please enter valid format: RX followed by 6 digits"
-                           class="w-full px-4 py-3 rounded-lg border-2 border-blue-100 
-                                  focus:border-blue-500 focus:ring-2 focus:ring-blue-200
-                                  placeholder-gray-400 transition-all duration-200">
+                           class="w-full px-4 py-3 rounded-lg border-2 border-blue-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder-gray-400 transition-all duration-200">
                 </div>
-                <button type="submit" 
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold
-                               py-3 px-6 rounded-lg transition-all duration-200
-                               transform hover:scale-[1.02] shadow-lg hover:shadow-xl">
+                <button type="submit"
+                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg hover:shadow-xl">
                     View Prescription
                 </button>
             </form>
-
-            <% if (typeof error !== 'undefined') { %>
-                <div class="mt-4 p-3 bg-red-100 text-red-700 rounded-lg">
-                    <%= error %>
-                </div>
-            <% } %>
-
-                        
-            <% if (prescription.DiagnosisNotes) { %>
-                <div style="margin:5px 0; padding:5px; background:#f8fafc; border-radius:3px">
-                    <strong>Diagnosis:</strong> <%= prescription.DiagnosisNotes %>
-                </div>
-            <% } %>
-            
-            <h3 class="font-semibold text-blue-600" style="margin:8px 0 5px">MEDICATION</h3>
-            <% if (medicines && medicines.length > 0) { %>
-                <table class="medicine-table">
-                    <thead>
-                        <tr>
-                            <th>Medicine</th>
-                            <th style="width:15%">Dosage</th>
-                            <th style="width:20%">Frequency</th>
-                            <th style="width:25%">Instructions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <% medicines.forEach(function(med) { %>
-                            <tr>
-                                <td>
-                                    <div><%= med.MedicineName %></div>
-                                    <small style="color:#666"><%= med.BeforeFood ? 'Before food' : 'After food' %></small>
-                                </td>
-                                <td><%= med.Dosage %></td>
-                                <td>
-                                    <%= med.FrequencyPerDay || '1' %> times/day<br>
-                                    <% if (med.Morning || med.Afternoon || med.Evening) { %>
-                                        <small>
-                                            <% if (med.Morning) { %>Morning <% } %>
-                                            <% if (med.Afternoon) { %>Afternoon <% } %>
-                                            <% if (med.Evening) { %>Evening<% } %>
-                                        </small>
-                                    <% } %>
-                                </td>
-                                <td><%= med.Instructions %></td>
-                            </tr>
-                        <% }); %>
-                    </tbody>
-                </table>
-            <% } else { %>
-                <p style="text-align:center; color:#666; margin:10px 0">No medications prescribed</p>
-            <% } %>
-            
-            <div style="margin-top:10px; padding-top:5px; border-top:1px solid #eee; text-align:center; font-size:12px; color:#666">
-                Status: <span style="font-weight:bold; color: <%= prescription.Status === 'ACTIVE' ? 'green' : (prescription.Status === 'COMPLETED' ? 'blue' : '#666') %>">
-                    <%= prescription.Status %>
-                </span>
-                <% if (prescription.ValidityDays) { %>
-                    | Valid for: <strong><%= prescription.ValidityDays %> days</strong>
-                <% } %>
-            </div>
-        </div>
-    <% } %>
-
         </div>
     </div>
-    
-    <footer class="bg-gray-800 text-white ">
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-            <div class="grid md:grid-cols-3 gap-8">
-                <div class="text-center text-gray-400">
-                    <p>&copy; 2025 DoctorSync. All rights reserved.</p>
-                </div>
+            <div class="text-center text-gray-400">
+                <p>&copy; 2025 DoctorSync. All rights reserved.</p>
             </div>
         </div>
     </footer>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Script -->
     <script>
-        const { jsPDF } = window.jspdf;
-        
-        document.getElementById('downloadPdfBtn')?.addEventListener('click', async () => {
-            const element = document.getElementById('prescription-print');
-            const buttons = document.querySelectorAll('.no-print button');
-            buttons.forEach(btn => btn.disabled = true);
-            
-            try {  // THIS WAS MISSING
-                const pdf = new jsPDF({
-                    orientation: 'portrait',
-                    unit: 'mm',
-                    format: 'a4'
-                });
-                
-                const canvas = await html2canvas(element, {
-                    scale: 2,
-                    useCORS: true,
-                    allowTaint: true,
-                    logging: false
-                });
-                
-                const imgData = canvas.toDataURL('image/png');
-                const imgWidth = 210;
-                const imgHeight = (canvas.height * imgWidth) / canvas.width;
-                
-                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-                pdf.save(`Prescription_${'<%= prescription.GlobalReferenceID %>'}.pdf`);
-            } catch (error) {  // THIS WAS MISSING
-                console.error('PDF generation error:', error);
-                alert('Error generating PDF. Please try again.');
-            } finally {  // THIS WAS MISSING
-                buttons.forEach(btn => btn.disabled = false);
+        function openPrintView(event) {
+            event.preventDefault();
+            const input = document.querySelector('input[name="refId"]');
+            const refId = input.value.trim();
+
+            if (!/^RX\d{6}$/.test(refId)) {
+                alert("Please enter valid format: RX followed by 6 digits");
+                return;
             }
-        });
-        
-        document.getElementById('printBtn')?.addEventListener('click', () => {
-            window.print();
-        });
+
+            window.open(`/printPrescription/${refId}`, '_blank');
+        }
     </script>
-    
 </body>
 </html>
