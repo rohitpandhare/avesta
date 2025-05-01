@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Prescription - <%= prescription.GlobalReferenceID %></title>
+  <title>Prescription - <%= prescription.GLOBALREFERENCEID %></title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
   <style>
     @media print {
@@ -16,7 +16,7 @@
       .page {
         width: 210mm;
         min-height: 297mm;
-        padding: 20mm;
+        padding: 15mm;
         box-sizing: border-box;
         page-break-after: always;
       }
@@ -25,107 +25,127 @@
         border-collapse: collapse;
       }
       th, td {
-        padding: 6px;
+        padding: 8px;
       }
     }
     .page {
       width: 210mm;
       min-height: 297mm;
-      padding: 20mm;
+      padding: 15mm;
       background: white;
       margin: auto;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      border: 1px solid #e5e7eb;
+    }
+    .table-row-even {
+      background-color: #f9fafb;
+    }
+    .no-print button:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+      transition: all 0.2s ease;
     }
   </style>
 </head>
-<body class="text-gray-900 text-sm font-sans">
+<body class="text-gray-900 font-sans">
 
-<div class="page shadow-md border border-gray-300 print:border-none">
-  
-  
+<div class="page print:border-none">
+
   <!-- Logo and Tagline -->
-<div class="mb-6 flex items-center justify-between border-b-2 border-gray-700 pb-1">
-  <div>
-    <a href="/" class="text-3xl font-bold text-blue-700 tracking-tight no-underline">DoctorSync</a>
-    <p class="text-sm text-gray-600 -mt-1">Sync your health</p>
+  <div class="mb-8 flex items-center justify-between border-b-2 border-gray-700 pb-2">
+    <div>
+      <a href="/" class="text-3xl font-bold text-blue-700 tracking-tight no-underline">DoctorSync</a>
+      <p class="text-base text-gray-600 -mt-1">Sync your health</p>
+    </div>
+    <div class="text-right text-sm text-gray-500">
+      <p><strong>Prescription ID:</strong> <%= prescription.GLOBALREFERENCEID %></p>
+    </div>
   </div>
 
-  <div class="text-right text-xs text-gray-500 ">
-    <p>Prescription ID: <%= prescription.GlobalReferenceID %></p>
-    <p>Generated on: <%= new Date().toLocaleDateString() %></p>
-  </div>
-</div>
   <!-- Doctor & Patient Info -->
-  <div class="flex justify-between mb-4">
+  <div class="flex justify-between mb-6">
     <div>
-      <p class="font-semibold text-lg"><%= prescription.DoctorName %></p>
-      <p class="text-sm">License: <%= prescription.DoctorLicense || 'Not specified' %></p>
+      <p class="font-semibold text-lg"><span class="text-gray-600">Prescribed by:</span> <%= prescription.DoctorName || 'Unknown Doctor' %></p>
+      <p class="text-sm text-gray-600">License: <%= prescription.LicenseNumber || 'Not specified' %></p>
+      <p class="text-sm text-gray-600">Speciality: <%= prescription.Specialty || 'Not specified' %></p>
+      <p class="text-sm text-gray-600">Contact: <%= prescription.Phone || 'Not specified' %></p>
     </div>
     <div class="text-right">
-      <p class="text-sm"><strong>Patient:</strong> <%= prescription.PatientName %></p>
-      <p class="text-sm"><strong>Date:</strong> <%= new Date(prescription.DateIssued).toLocaleDateString() %></p>
+      <p class="text-sm"><strong>Patient:</strong> <%= prescription.PatientName || 'Unknown Patient' %></p>
+      <p class="text-sm"><strong>Date:</strong> <%= new Date(prescription.DATEISSUED).toLocaleDateString() %></p>
     </div>
   </div>
 
   <!-- Diagnosis -->
-  <% if (prescription.DiagnosisNotes) { %>
-    <div class="border border-gray-300 p-3 mb-5">
-      <p class="font-semibold mb-1">Diagnosis:</p>
-      <p><%= prescription.DiagnosisNotes %></p>
-    </div>
-  <% } %>
+  <div class="border border-gray-300 p-4 mb-6 rounded-md">
+    <div>
+      <span class="font-semibold text-base">Diagnosis:<span/>
+      <span class="font-normal"><%= prescription.DIAGNOSISNOTES || 'No diagnosis provided' %><span/>
+      </div>
+  </div>
 
   <!-- Medications -->
   <% if (medicines && medicines.length > 0) { %>
-    <div>
-      <p class="font-semibold mb-2">Medications:</p>
+    <div class="mb-8">
+      <p class="font-semibold text-base mb-3">Medications:</p>
       <table class="w-full table-fixed border border-black text-sm">
         <thead>
           <tr class="bg-gray-100">
-            <th class="w-1/4 p-2 border border-black text-left">Medicine</th>
-            <th class="w-1/4 p-2 border border-black text-left">Dosage</th>
-            <th class="w-1/4 p-2 border border-black text-left">Instructions</th>
-            <th class="w-1/4 p-2 border border-black text-left">Timing</th>
+            <th class="w-2/12 p-2 border border-black text-left">Medicine</th>
+            <th class="w-2/12 p-2 border border-black text-left">Dosage</th>
+            <th class="w-4/12 p-2 border border-black text-left">Instructions</th>
+            <th class="w-4/12 p-2 border border-black text-left">Timing</th>
           </tr>
         </thead>
         <tbody>
-          <% medicines.forEach(function(med) { %>
-            <tr class="align-top">
+          <% medicines.forEach(function(med, index) { %>
+            <tr class="<%= index % 2 === 0 ? 'table-row-even' : '' %> align-top">
               <td class="p-2 border border-black text-left align-top">
                 <strong><%= med.MedicineName %></strong><br />
-                <span class="text-xs"><%= med.BeforeFood ? 'Before food' : 'After food' %></span>
+                <span class="text-xs">
+                  <%= med.BeforeFood == 1 ? 'Before food' : (med.AfterFood == 1 ? 'After food' : 'Not specified') %>
+                </span>
               </td>
-              <td class="p-2 border border-black text-left align-top"><%= med.Dosage %></td>
-              <td class="p-2 border border-black text-left align-top"><%= med.Instructions %></td>
               <td class="p-2 border border-black text-left align-top">
-                <% if (med.Morning) { %>Morning<br><% } %>
-                <% if (med.Afternoon) { %>Afternoon<br><% } %>
-                <% if (med.Evening) { %>Evening<% } %>
+                <%= med.Dosage %>
+              </td>
+              <td class="p-2 border border-black text-left align-top">
+                <%= med.Instructions || 'No instructions provided' %>
+              </td>
+              <td class="p-2 border border-black text-left align-top">
+                <% const timings = []; %>
+                <% if (med.Morning == 1) timings.push('Morning'); %>
+                <% if (med.Afternoon == 1) timings.push('Afternoon'); %>
+                <% if (med.Evening == 1) timings.push('Evening'); %>
+                <% if (med.Night == 1) timings.push('Night'); %>
+                <%= timings.length > 0 ? timings.join(' | ') : 'Not specified' %>
               </td>
             </tr>
           <% }); %>
         </tbody>
       </table>
-      
     </div>
   <% } else { %>
-    <p class="text-red-600 mb-6">No medications prescribed.</p>
+    <p class="text-red-600 mb-8 text-sm">No medications prescribed.</p>
   <% } %>
 
   <!-- Footer -->
-  <div class="border-t border-gray-300 pt-3 text-sm text-center">
-    <p>Status: <strong><%= prescription.Status %></strong></p>
-    <% if (prescription.ValidityDays) { %>
-      <p>Valid for <%= prescription.ValidityDays %> days</p>
-    <% } %>
-    <!-- <p class="text-xs mt-1">Generated on <%= new Date().toLocaleDateString() %></p> -->
+  <div class="border-t border-gray-300 text-center text-sm">
+    <p><strong>Status:</strong> <%= prescription.STATUS %></p>
+    <p><strong>Valid for:</strong> <%= prescription.VALIDITYDAYS || 'Not specified' %> days</p>
+    <p class="text-xs text-gray-500 mt-2">Generated on <%= new Date().toLocaleDateString() %></p>
+    <br>
+    <div class="mt-6 text-right">
+      <p class="text-sm text-gray-600">Doctor's Signature: _____________________________</p>
+      <p class="text-sm text-gray-600 mt-1">Date: <%= new Date().toLocaleDateString() %></p>
+    </div>
   </div>
 </div>
 
-
 <!-- Hidden on print -->
 <div class="no-print fixed bottom-6 right-6 flex gap-3">
-  <button onclick="window.print()" class="px-4 py-2 bg-blue-600 text-white rounded">Print</button>
-  <button onclick="downloadPDF()" class="px-4 py-2 bg-gray-700 text-white rounded">Save as PDF</button>
+  <button onclick="window.print()" class="px-5 py-2 bg-blue-600 text-white rounded-lg shadow-md">Print</button>
+  <button onclick="downloadPDF()" class="px-5 py-2 bg-gray-700 text-white rounded-lg shadow-md">Save as PDF</button>
 </div>
 
 <!-- PDF Script -->
@@ -142,7 +162,7 @@
       const pdfWidth = 210;
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save("Prescription_<%= prescription.GlobalReferenceID %>.pdf");
+      pdf.save("Prescription_<%= prescription.GLOBALREFERENCEID %>.pdf");
     });
   }
 </script>

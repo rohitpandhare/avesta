@@ -382,7 +382,7 @@
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date Issued</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Patient Name</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis Notes</th>
-                        <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Medicines</th> -->
+                        <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Medicines</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Reference ID</th>
                         <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Delete</th>
@@ -401,7 +401,7 @@
                             </td>
                             <td class="px-6 py-4"><%= prescription.PatientName || 'N/A' %></td>
                             <td class="px-6 py-4 max-w-xs"><%= prescription.DiagnosisNotes || 'N/A' %></td>
-                            <!-- <td class="px-6 py-4 max-w-xs whitespace-pre-line"><%= prescription.Medicines || 'N/A' %></td> -->
+                            <td class="px-6 py-4 max-w-xs whitespace-pre-line"><%= medData. name|| 'N/A' %></td>
                             <td class="px-6 py-4">
                               <span class="px-2 py-1 text-xs font-medium rounded-full <%= prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
                                 <%= prescription.Status %>
@@ -456,17 +456,7 @@
                         <textarea name="DiagnosisNotes" required 
                                   class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"></textarea>
                       </div>
-                    </div>
-
-                    <!-- Right Column -->
-                    <div class="space-y-6">
-                      <!-- Medicines -->
-                      <!-- <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Medicines</label>
-                        <textarea name="Medicines" required 
-                                  class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"></textarea>
-                      </div> -->
-
+                      
                       <!-- Status and Date -->
                       <div class="grid grid-cols-2 gap-4">
                         <div>
@@ -484,6 +474,79 @@
                                 class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                       </div>
+                    </div>
+
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+
+                      <div id="medicine-container">
+                        <!-- First medicine entry with defaults checked -->
+                        <div class="medicine-entry" data-medicine-index="0">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Medicine Name</label>
+                                    <div class="relative">
+                                        <input type="text" id="medName" name="medicines[0][MedicineName]" required 
+                                               class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                               autocomplete="off">
+                                        <div id="suggestMed" class="absolute z-10 bg-white border border-gray-300 w-full rounded-md mt-1 hidden shadow-lg max-h-60 overflow-y-auto"></div>
+                                    </div>
+                                    <input type="hidden" id="hiddenMed" name="medicines[0][MedicineID]">
+                                  </div>
+                            
+                                <div>
+                                    <label class="block mb-1">Dosage</label>
+                                    <input type="text" name="medicines[0][Dosage]" required class="w-full border p-2 rounded">
+                                </div>
+                            </div>
+                    
+                            <div class="mt-3">
+                                <label class="block mb-1">Instructions</label>
+                                <textarea name="medicines[0][Instructions]" class="w-full border p-2 rounded"></textarea>
+                            </div>
+                    
+                            <div class="mt-3">
+                                <label class="block mb-1">Take Medicine</label>
+                                <div class="food-checkboxes">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="med0-before" name="medicines[0][BeforeFood]" value="true">
+                                        <label for="med0-before" class="ml-2">Before Food</label>
+                                    </div>
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="med0-after" name="medicines[0][AfterFood]" value="true" checked>
+                                        <label for="med0-after" class="ml-2">After Food</label>
+                                    </div>
+                                </div>
+                            </div>
+                    
+                            <div class="mt-3">
+                                <label class="block mb-1">Timing</label>
+                                <div class="timing-checkboxes">
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="med0-morning" name="medicines[0][Morning]" value="true" checked>
+                                        <label for="med0-morning" class="ml-2">Morning</label>
+                                    </div>
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="med0-afternoon" name="medicines[0][Afternoon]" value="true">
+                                        <label for="med0-afternoon" class="ml-2">Afternoon</label>
+                                    </div>
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="med0-evening" name="medicines[0][Evening]" value="true" checked>
+                                        <label for="med0-evening" class="ml-2">Evening</label>
+                                    </div>
+                                    <div class="checkbox-group">
+                                        <input type="checkbox" id="med0-night" name="medicines[0][Night]" value="true">
+                                        <label for="med0-night" class="ml-2">Night</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="add-medicine" class="mt-4 bg-blue-100 text-blue-600 p-2 rounded hover:bg-blue-200">
+                        + Add Another Medicine
+                    </button>  
+
                     </div>
                   </div>
 
@@ -648,6 +711,99 @@ document.addEventListener('DOMContentLoaded', () => {
         
     });
     
+</script>
+
+
+<script>
+  document.getElementById('add-medicine').addEventListener('click', function() {
+      const container = document.getElementById('medicine-container');
+      const index = container.children.length;
+      const newMedicine = container.firstElementChild.cloneNode(true);
+      
+      // Update all attributes and names with new index
+      newMedicine.setAttribute('data-medicine-index', index);
+      newMedicine.querySelectorAll('[name]').forEach(el => {
+          el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
+          el.id = el.id.replace(/\d+/, index);
+          if (el.type === 'checkbox' && !el.name.includes('BeforeFood')) {
+              el.checked = el.name.includes('Morning') || 
+                              el.name.includes('Evening') || 
+                              el.name.includes('AfterFood');
+          }
+      });
+      
+      // Clear input values except checkboxes
+      newMedicine.querySelectorAll('input[type="text"], textarea').forEach(el => {
+          el.value = '';
+      });
+      
+      container.appendChild(newMedicine);
+  });
+
+  function setupMedSearch(inputId, suggestionsId, hiddenId) {
+    const input = document.getElementById(inputId);
+    const suggestions = document.getElementById(suggestionsId);
+    const hiddenInput = document.getElementById(hiddenId);
+    let selectedMedicine = null;
+
+    input.addEventListener("input", function() {
+        let query = this.value.trim();
+
+        // If the input value matches the selected medicine, don't show suggestions
+        if (selectedMedicine && query === selectedMedicine) {
+            suggestions.classList.add("hidden");
+            return;
+        }
+
+        // Reset selectedMedicine if the user modifies the input
+        selectedMedicine = null;
+
+        if (query.length < 2) {
+            suggestions.classList.add("hidden");
+            return;
+        }
+
+        fetch(`/search-med?query=${query}`)
+            .then(response => response.json())
+            .then(data => {
+                suggestions.innerHTML = "";
+                if (data.length === 0) {
+                    suggestions.innerHTML = "<div class='p-2 text-gray-500'>No medicines found</div>";
+                    suggestions.classList.remove("hidden");
+                } else {
+                    data.forEach(medicine => {
+                        let div = document.createElement("div");
+                        div.classList.add("p-2", "cursor-pointer", "hover:bg-gray-100");
+                        div.innerText = medicine.name;
+                        div.onclick = function() {
+                            input.value = medicine.name;
+                            hiddenInput.value = medicine.id; // Store the medicine ID
+                            selectedMedicine = medicine.name;
+                            suggestions.classList.add("hidden");
+                        };
+                        suggestions.appendChild(div);
+                    });
+                    suggestions.classList.remove("hidden");
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching medicines:", error);
+                suggestions.innerHTML = "<div class='p-2 text-red-500'>Error fetching suggestions</div>";
+                suggestions.classList.remove("hidden");
+            });
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!input.contains(event.target) && !suggestions.contains(event.target)) {
+            suggestions.classList.add("hidden");
+        }
+    });
+}
+
+// Initialize all search inputs
+document.addEventListener('DOMContentLoaded', function() {
+    setupMedSearch('medName', 'suggestMed', 'hiddenMed');
+});
 </script>
 
 </body>

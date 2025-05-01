@@ -345,14 +345,184 @@ function generateReferenceId() {
     return `${prefix}${uniqueId}`;
 }
 
+// async function addPrescription(req, res) {
+//     // let doctorData;
+    
+//     try {
+//         // Get doctor details
+//         const {doctorID} = await getDocID(req.session.user.UserID);
+
+//          // Set default date if not provided
+//          if (!req.body.DateIssued) {
+//             req.body.DateIssued = new Date().toISOString().split('T')[0];
+//         }
+
+//         const {
+//             PatientID,
+//             patientName,
+//             DateIssued,
+//             DiagnosisNotes,
+//             medicines,
+//             // Medicines,
+//             Status
+//         } = req.body;
+
+        
+//          // If PatientID is missing, fetch from database using patient name
+//          if (!PatientID || PatientID.trim() === "") {
+//             const [patient] = await conPool.query(
+//                 "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
+//                 [patientName.trim()]
+//             );
+
+//             if (patient.length === 0) {
+//                 throw new Error("Patient not found");
+//             }
+//             PatientID = patient[0].PatientID;
+//         }
+
+//         // Validate patient exists
+//         const [patientExists] = await conPool.query(
+//             'SELECT PatientID FROM patient WHERE PatientID = ?',
+//             [PatientID]
+//         );
+        
+//         if (!patientExists.length) {
+//             throw new Error('Patient not found');
+//         }
+
+//         // Validate required fields (PatientID, DiagnosisNotes, Medicines, Status)
+//         checkRequiredFields(['PatientID', 'DiagnosisNotes', 'Status'], req.body);
+
+//         // Add validation
+//         if (!PatientID || !DateIssued || !DiagnosisNotes || !Status) {
+//             throw new Error('All required fields must be filled');
+//         }
+
+//         // Generate GlobalReferenceID
+//         const GlobalReferenceID = generateReferenceId();
+
+//         // Insert into database
+//         const prescriptionResult =  await conPool.query(
+//             `INSERT INTO prescription
+//             (PatientID, DoctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID)
+//             VALUES (?, ?, ?, ?, ?, ?)`,
+//             [PatientID, doctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID]
+//         );
+
+//        //get updated data
+//        const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
+
+
+//        const prescriptionId = prescriptionResult.insertId;
+//          // 2. Insert medicines into prescription_medicines (if provided)
+//          if (medicines && Array.isArray(medicines)) {
+//             for (const med of medicines) {
+//                 // Ensure required fields are present
+//                 if (!med.MedicineName || !med.Dosage) {
+//                     throw new Error("MedicineName and Dosage are required for each medicine");
+//                 }
+
+//                 // Convert checkbox values to 1/0 (tinyint(1))
+//                 const beforeFood = med.BeforeFood === 'true' ? 1 : 0;
+//                 const afterFood = med.AfterFood === 'true' ? 1 : 0;
+//                 const morning = med.Morning === 'true' ? 1 : 0;
+//                 const afternoon = med.Afternoon === 'true' ? 1 : 0;
+//                 const evening = med.Evening === 'true' ? 1 : 0;
+//                 const night = med.Night === 'true' ? 1 : 0;
+
+//                 await connection.query(
+//                     `INSERT INTO prescription_medicine 
+//                     (PrescriptionID, MedicineName, Dosage, Instructions, BeforeFood, AfterFood, Morning, Afternoon, Evening, Night) 
+//                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+//                     [
+//                         prescriptionId,
+//                         med.MedicineName,
+//                         med.Dosage,
+//                         med.Instructions || null,
+//                         beforeFood,
+//                         afterFood,
+//                         morning,
+//                         afternoon,
+//                         evening,
+//                         night
+//                     ]
+//                 );
+//             }
+//         }
+
+//         await connection.commit();
+
+//         console.log("Received data:", req.body);
+
+//         res.render('users/doctor', {
+//             success: 'Prescription added successfully!',
+//             prescriptions,
+//             doctorPatients,
+//             medicalRecords,
+//             user: req.session.user,
+//             DoctorID: doctorID,  // Pass DoctorID directly
+//             doctorRelationships: [],
+//             PatientID: PatientID,
+//             DiagnosisNotes,
+//             status: finalStatus,
+//             GlobalReferenceID
+//         });
+//         // Clear flash messages
+//         delete req.session.success;
+//         delete req.session.error;
+
+//         console.log("Received data:", req.body);
+
+//     } catch (err) {
+//         console.error('Error:', err);
+        
+//         try {        
+//             // Get doctor details
+//             const {doctorID} = await getDocID(req.session.user.UserID);      
+//             //get updated data
+//             const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
+
+//             console.log("Received data:", req.body);
+
+//             res.render('users/doctor', {
+//                 error: 'Error adding prescription: ' + err.message,
+//                 prescriptions,
+//                 doctorPatients,
+//                 medicalRecords,
+//                 user: req.session.user,
+//                 DoctorID: doctorID,  // Pass DoctorID directly
+//                 doctorRelationships: []
+//             });
+//             // Clear flash messages
+//             delete req.session.success;
+//             delete req.session.error;
+
+//         } catch (fetchError) {
+//             res.render('users/doctor', {
+//                 error: 'Error: ' + err.message,
+//                 prescriptions: [],
+//                 doctorPatients: [],
+//                 medicalRecords: [],
+//                 user: req.session.user,
+//                 doctorID: null,
+//                 doctorRelationships: []
+//             });
+//             // Clear flash messages
+//             delete req.session.success;
+//             delete req.session.error;
+//         }
+//     }
+// }
+
 async function addPrescription(req, res) {
-    // let doctorData;
+    let connection;
     try {
         // Get doctor details
-        const {doctorID} = await getDocID(req.session.user.UserID);
+        const { doctorID } = await getDocID(req.session.user.UserID);
 
-         // Set default date if not provided
-         if (!req.body.DateIssued) {
+        // Set default date if not provided
+        if (!req.body.DateIssued) {
             req.body.DateIssued = new Date().toISOString().split('T')[0];
         }
 
@@ -361,57 +531,126 @@ async function addPrescription(req, res) {
             patientName,
             DateIssued,
             DiagnosisNotes,
-            // Medicines,
+            medicines,
             Status
         } = req.body;
 
-        
-         // If PatientID is missing, fetch from database using patient name
-         if (!PatientID || PatientID.trim() === "") {
+        // Validate PatientID
+        if (!PatientID || typeof PatientID !== 'string' || PatientID.trim() === "") {
+            if (!patientName || typeof patientName !== 'string' || patientName.trim() === "") {
+                throw new Error("Patient name is required if PatientID is not provided");
+            }
             const [patient] = await conPool.query(
                 "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
                 [patientName.trim()]
             );
-
             if (patient.length === 0) {
                 throw new Error("Patient not found");
             }
-            PatientID = patient[0].PatientID;
+            req.body.PatientID = patient[0].PatientID;
+        } else {
+            req.body.PatientID = PatientID.trim();
         }
 
         // Validate patient exists
         const [patientExists] = await conPool.query(
             'SELECT PatientID FROM patient WHERE PatientID = ?',
-            [PatientID]
+            [req.body.PatientID]
         );
-        
         if (!patientExists.length) {
             throw new Error('Patient not found');
         }
 
-        // Validate required fields (PatientID, DiagnosisNotes, Medicines, Status)
-        checkRequiredFields(['PatientID', 'DiagnosisNotes', 'Status'], req.body);
+        // Validate required fields
+        checkRequiredFields(['DiagnosisNotes', 'Status'], req.body);
 
-        // Add validation
-        if (!PatientID || !DateIssued || !DiagnosisNotes || !Status) {
+        // Validate Status
+        const allowedStatuses = ['ACTIVE', 'COMPLETED', 'CANCELED', 'EXPIRED'];
+        if (!allowedStatuses.includes(Status)) {
+            throw new Error(`Status must be one of: ${allowedStatuses.join(', ')}`);
+        }
+
+        // Additional validation
+        if (!req.body.PatientID || !DateIssued || !DiagnosisNotes || !Status) {
             throw new Error('All required fields must be filled');
+        }
+
+        // Validate medicines
+        if (!medicines || !Array.isArray(medicines) || medicines.length === 0) {
+            throw new Error('At least one medicine is required');
+        }
+
+        for (const med of medicines) {
+            if (!med.MedicineName || !med.Dosage) {
+                throw new Error("MedicineName and Dosage are required for each medicine");
+            }
+            // Ensure at least one timing is selected
+            const timings = ['Morning', 'Afternoon', 'Evening', 'Night'];
+            const hasTiming = timings.some(timing => med[timing] === 'true');
+            if (!hasTiming) {
+                throw new Error(`At least one timing must be selected for medicine: ${med.MedicineName}`);
+            }
         }
 
         // Generate GlobalReferenceID
         const GlobalReferenceID = generateReferenceId();
 
-        // Insert into database
-        await conPool.query(
-            `INSERT INTO prescription
+        // Start transaction
+        connection = await conPool.getConnection();
+        await connection.beginTransaction();
+
+        // Insert into PRESCRIPTION table
+        const [prescriptionResult] = await connection.query(
+            `INSERT INTO PRESCRIPTION
             (PatientID, DoctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID)
             VALUES (?, ?, ?, ?, ?, ?)`,
-            [PatientID, doctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID]
+            [req.body.PatientID, doctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID]
         );
 
-       //get updated data
-       const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
+        const prescriptionId = prescriptionResult.insertId;
 
-        console.log("Received data:", req.body);
+        // Insert medicines into prescription_medicines
+        for (const med of medicines) {
+            const beforeFood = med.BeforeFood === 'true' ? 1 : 0;
+            const afterFood = med.AfterFood === 'true' ? 1 : 0;
+            const morning = med.Morning === 'true' ? 1 : 0;
+            const afternoon = med.Afternoon === 'true' ? 1 : 0;
+            const evening = med.Evening === 'true' ? 1 : 0;
+            const night = med.Night === 'true' ? 1 : 0;
+
+            await connection.query(
+                `INSERT INTO prescription_medicine
+                (PrescriptionID, MedicineName, Dosage, Instructions, BeforeFood, AfterFood, Morning, Afternoon, Evening, Night) 
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [
+                    prescriptionId,
+                    med.MedicineName,
+                    med.Dosage,
+                    med.Instructions || null,
+                    beforeFood,
+                    afterFood,
+                    morning,
+                    afternoon,
+                    evening,
+                    night
+                ]
+            );
+        }
+
+        await connection.commit();
+
+        // Fetch updated data
+        const { prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
+        const [medData] = await conPool.query('SELECT * FROM medicines_data');
+
+
+        // Fetch medicines for the newly created prescription
+        const [prescriptionMedicines] = await conPool.query(
+            `SELECT * FROM prescription_medicine WHERE PrescriptionID = ?`,
+            [prescriptionId]
+        );
+
+        console.log("Prescription added:", { prescriptionId, GlobalReferenceID, medicines: prescriptionMedicines });
 
         res.render('users/doctor', {
             success: 'Prescription added successfully!',
@@ -419,25 +658,25 @@ async function addPrescription(req, res) {
             doctorPatients,
             medicalRecords,
             user: req.session.user,
-            DoctorID: doctorID,  // Pass DoctorID directly
-            doctorRelationships: []
+            DoctorID: doctorID,
+            doctorRelationships: [],
+            PatientID: req.body.PatientID,
+            DiagnosisNotes,
+            Status, // Fixed: Replaced finalStatus with Status
+            GlobalReferenceID,
+            medData,
+            newPrescriptionMedicines: prescriptionMedicines // Pass medicines for display
         });
-        // Clear flash messages
-        delete req.session.success;
-        delete req.session.error;
-
-        console.log("Received data:", req.body);
 
     } catch (err) {
-        console.error('Error:', err);
-        
-        try {        
-            // Get doctor details
-            const {doctorID} = await getDocID(req.session.user.UserID);      
-            //get updated data
-            const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
+        if (connection) {
+            await connection.rollback();
+        }
+        console.error('Error adding prescription:', err);
 
-            console.log("Received data:", req.body);
+        try {
+            const { doctorID } = await getDocID(req.session.user.UserID);
+            const { prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
 
             res.render('users/doctor', {
                 error: 'Error adding prescription: ' + err.message,
@@ -445,12 +684,9 @@ async function addPrescription(req, res) {
                 doctorPatients,
                 medicalRecords,
                 user: req.session.user,
-                DoctorID: doctorID,  // Pass DoctorID directly
+                DoctorID: doctorID,
                 doctorRelationships: []
             });
-            // Clear flash messages
-            delete req.session.success;
-            delete req.session.error;
 
         } catch (fetchError) {
             res.render('users/doctor', {
@@ -462,10 +698,13 @@ async function addPrescription(req, res) {
                 doctorID: null,
                 doctorRelationships: []
             });
-            // Clear flash messages
-            delete req.session.success;
-            delete req.session.error;
         }
+    } finally {
+        if (connection) {
+            connection.release();
+        }
+        delete req.session.success;
+        delete req.session.error;
     }
 }
 

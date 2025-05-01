@@ -30,8 +30,18 @@ router.post('/test-doctor-patient', async (req, res) => {
 });
 
 // Prescription Routes
-router.get('/test-prescription', (req, res) => {
-    res.render('testPrescription');
+router.get('/test-prescription', async (req, res) => {
+    try{
+        const [medData] = await conPool.query('SELECT * FROM medicines_data');
+        res.render('testPrescription', {
+            medData
+        });
+    }
+    catch (err) {
+        console.error('Error fetching records:', err);
+        res.status(500).send('Error fetching records: ' + err.message);
+    }
+
 });
 
 router.post('/test-prescription', async (req, res) => {
@@ -39,25 +49,39 @@ router.post('/test-prescription', async (req, res) => {
 
     try {
         await connection.beginTransaction();
-        
-        // Destructure with lowercase status
+
+        // Destructure with lowercase medicines
         const { 
             PatientID, 
             DoctorID, 
             DiagnosisNotes, 
-            status,  // Lowercase here
+            status, 
             GlobalReferenceID, 
-            DateIssued,  // Add this if you're using the date from the form
-            medicines 
+            DateIssued, 
+            medicines // Use lowercase to match form data
         } = req.body;
+
+        // Validate and convert types
+        const patientId = parseInt(PatientID, 10);
+        const doctorId = parseInt(DoctorID, 10);
+        if (isNaN(patientId) || isNaN(doctorId)) {
+            throw new Error("PatientID and DoctorID must be valid integers");
+        }
 
         // Validate Status
         const validStatuses = ['ACTIVE', 'COMPLETED', 'CANCELED', 'EXPIRED'];
         const finalStatus = validStatuses.includes(status) ? status : 'ACTIVE';
-        
+
+        // Convert DateIssued to a MySQL-compatible timestamp
+        const dateIssued = DateIssued ? new Date(DateIssued).toISOString().slice(0, 19).replace('T', ' ') : new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+        // Validate GlobalReferenceID length
+        if (GlobalReferenceID && GlobalReferenceID.length > 50) {
+            throw new Error("GlobalReferenceID must not exceed 50 characters");
+        }
+
         // Debug logging
-        console.log('Received Status:', status);
-        console.log('Final Status:', finalStatus);
+        console.log('Received Data:', { patientId, doctorId, DiagnosisNotes, finalStatus, GlobalReferenceID, dateIssued, medicines });
 
         // 1. Insert the prescription header
         const [prescriptionResult] = await connection.query(
@@ -65,27 +89,63 @@ router.post('/test-prescription', async (req, res) => {
             (PatientID, DoctorID, DiagnosisNotes, Status, GlobalReferenceID, DateIssued) 
             VALUES (?, ?, ?, ?, ?, ?)`,
             [
-                PatientID, 
-                DoctorID, 
+                patientId, 
+                doctorId, 
                 DiagnosisNotes, 
                 finalStatus, 
                 GlobalReferenceID || null,
-                DateIssued || new Date()  // Use form date or current date
+                dateIssued
             ]
         );
-        
-        const prescriptionId = prescriptionResult.insertId;
-        
-        // Rest of your code remains the same...
 
-        // Update originalValues with lowercase status
+        const prescriptionId = prescriptionResult.insertId;
+
+        // 2. Insert medicines into prescription_medicines (if provided)
+        if (medicines && Array.isArray(medicines)) {
+            for (const med of medicines) {
+                // Ensure required fields are present
+                if (!med.MedicineName || !med.Dosage) {
+                    throw new Error("MedicineName and Dosage are required for each medicine");
+                }
+
+                // Convert checkbox values to 1/0 (tinyint(1))
+                const beforeFood = med.BeforeFood === 'true' ? 1 : 0;
+                const afterFood = med.AfterFood === 'true' ? 1 : 0;
+                const morning = med.Morning === 'true' ? 1 : 0;
+                const afternoon = med.Afternoon === 'true' ? 1 : 0;
+                const evening = med.Evening === 'true' ? 1 : 0;
+                const night = med.Night === 'true' ? 1 : 0;
+
+                await connection.query(
+                    `INSERT INTO prescription_medicine 
+                    (PrescriptionID, MedicineName, Dosage, Instructions, BeforeFood, AfterFood, Morning, Afternoon, Evening, Night) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                    [
+                        prescriptionId,
+                        med.MedicineName,
+                        med.Dosage,
+                        med.Instructions || null,
+                        beforeFood,
+                        afterFood,
+                        morning,
+                        afternoon,
+                        evening,
+                        night
+                    ]
+                );
+            }
+        }
+
+        await connection.commit();
+
+        // Render success
         res.render('testPrescription', { 
             success: 'Prescription added successfully!',
             originalValues: {
-                PatientID,
-                DoctorID,
+                PatientID: patientId,
+                DoctorID: doctorId,
                 DiagnosisNotes,
-                status: finalStatus,  // Use lowercase here
+                status: finalStatus,
                 GlobalReferenceID
             }
         });
@@ -144,7 +204,21 @@ router.get('/test-view-all', async (req, res) => {
     }
 });
 
+router.get('/test-med',async(req,res)=>{
 
+    try {
+        // Fetch all records from all three tables
+        const [medData] = await conPool.query('SELECT * FROM medicines_data');
+    
+        res.render('testMed', {
+           medData
+        });
+    } catch (err) {
+        console.error('Error fetching records:', err);
+        res.status(500).send('Error fetching records: ' + err.message);
+    }
+
+});
 
 module.exports = router;
 

@@ -63,9 +63,6 @@ app.get("/testPres", (req, res) => {
     res.render("testPres");
 });
 
-// const otpLinks = require('./routes/otpRoutes'); 
-// app.use('/', otpLinks);
-
 const { conPool } = require('./config/dbHandler');
 
 app.get("/search-patient", async (req, res) => {
@@ -87,6 +84,24 @@ app.get("/search-patient", async (req, res) => {
     }
 });
 
+app.get("/search-med", async (req, res) => {
+    const searchQuery = req.query.query;  // Changed from req.query.name to req.query.query
+    
+    if (!searchQuery) {
+        return res.json([]);
+    }
+
+    try {
+        const [medicines] = await conPool.query(
+            "SELECT name FROM medicines_data WHERE name LIKE ? LIMIT 10",
+            [`%${searchQuery}%`]
+        );
+        res.json(medicines);
+    } catch (error) {
+        console.error("Error fetching medicines:", error);
+        res.status(500).json({ error: "Internal Server Error" });
+    }
+});
 
 app.get("/adminLogin", async (req, res) => {
     res.render("secret/adminLogin");

@@ -29,3 +29,6 @@ npm install express body-parser speakeasy nodemailer
 
 ALTER TABLE doctorsync_dbx.patient 
 DROP CHECK patient_chk_1;
+
+
+* ejslint views/dashboard/viewPres.ejs
