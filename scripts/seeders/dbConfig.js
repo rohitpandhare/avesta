@@ -5,7 +5,7 @@ const conPool = myDB.createPool({ //creating conpool connection - so all the fun
     host: 'localhost',
     user: 'root',
     password: 'root',
-    database: "doctorsync_db", //created DB
+    database: "doctorsync_dbx", //created DB
     debug: false,
     waitForConnections: true,
     queueLimit: 0
