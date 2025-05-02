@@ -19,6 +19,7 @@ npm install express body-parser speakeasy nodemailer
 -- ALTER TABLE doctorsync_dbx.patient ADD COLUMN Flag TINYINT(1) DEFAULT 0;
 ALTER TABLE doctorsync_dbx.doctor_patient ADD COLUMN Flag TINYINT(1) DEFAULT 0;
 ALTER TABLE doctorsync_dbx.medical_record ADD COLUMN Flag TINYINT(1) DEFAULT 0;
+ALTER TABLE doctorsync_dbx.prescription ADD COLUMN Flag TINYINT(1) DEFAULT 0;
 
 
 -- To drop the specific check constraint for patient table

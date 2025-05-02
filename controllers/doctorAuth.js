@@ -9,7 +9,7 @@ async function updateData(DoctorID) {
           pat.Name AS PatientName
       FROM prescription p
       LEFT JOIN patient pat ON p.PatientID = pat.PatientID
-      WHERE p.DoctorID = ?
+      WHERE p.flag = 0 AND p.DoctorID = ?
       ORDER BY p.DateIssued DESC`,
       [DoctorID]
     );
@@ -99,11 +99,10 @@ async function deleteRelation(req, res) {
 // DELETE medicalRecords
 async function deleteRecord(req, res) {
     try {
-
         const RecordID = req.params.id; // get id manually
 
         // Attempt to delete the relationship
-        const [result] = await conPool.query('DELETE FROM medical_record WHERE RecordID = ?', [RecordID]);
+        const [result] = await conPool.query('UPDATE medical_record SET flag = 1 WHERE RecordID = ?', [RecordID]);
 
         // Send JSON response
         res.status(result.affectedRows > 0 ? 200 : 404).json({
@@ -125,13 +124,7 @@ async function deleteRecord(req, res) {
 // DELETE medicalRecords
 async function deletePres(req, res) {
     try {
-        // const { doctorID } = await getDocID(req.session.user.UserID);
-        // const { prescriptions } = await updateData(doctorID);
-        // const PatientID = prescriptions[0]?.PatientID;
-
-        // if (!PatientID) {
-        //     throw new Error('No prescription found to delete.');
-        // }
+        
         const PrescriptionID = req.params.id;
         
         // First verify the prescription exists and belongs to this doctor
@@ -144,18 +137,18 @@ async function deletePres(req, res) {
             return res.status(404).json({ error: 'Prescription not found' });
         }
 
-        // Attempt to delete the relationship
-        const [result] = await conPool.query('DELETE FROM prescription WHERE PrescriptionID = ?', [PrescriptionID]);
+      // Attempt to delete the relationship
+      const [result] = await conPool.query('UPDATE prescription SET flag = 1 WHERE PrescriptionID = ?', [PrescriptionID]);
 
         // Send JSON response
-        // res.status(result.affectedRows > 0 ? 200 : 404).json({
-        //     success: result.affectedRows > 0,
-        //     message: result.affectedRows > 0 ? 'Prescription Deleted successfully!' : 'Patient not found!'
-        // });
-        res.json({ 
-            success: true,
-            message: 'Prescription deleted successfully'
+        res.status(result.affectedRows > 0 ? 200 : 404).json({
+            success: result.affectedRows > 0,
+            message: result.affectedRows > 0 ? 'Prescription Deleted successfully!' : 'Patient not found!'
         });
+        // res.json({ 
+        //     success: true,
+        //     message: 'Prescription deleted successfully'
+        // });
 
     } catch (err) {
         console.error(err);
@@ -217,7 +210,7 @@ async function getDoctor(req, res) {
     }
   }
 
-  async function addPatient(req, res) {
+async function addPatient(req, res) {
     try {
         // Get doctor details
         const { doctorID } = await getDocID(req.session.user.UserID);
@@ -338,6 +331,7 @@ if (existingRelation.length > 0) {
         }
     }
 }
+
 // Helper function to generate reference ID
 function generateReferenceId() {
     const prefix = 'RX';
@@ -465,6 +459,40 @@ async function addMedRecords (req,res) {
             throw new Error('Patient not found');
         }
 
+        // Check if relationship already exists
+        const [existingRelation] = await conPool.query(
+            'SELECT * FROM medical_record WHERE DoctorID = ? AND PatientID = ?',
+            [doctorID, PatientID]
+        );
+
+        if (existingRelation.length > 0) {
+            // Check if the existing relationship is soft-deleted (flag = 1)
+            const [existingRelationFlag] = await conPool.query(
+                'SELECT flag FROM medical_record WHERE DoctorID = ? AND PatientID = ?',
+                [doctorID, PatientID]
+            );
+
+            if (existingRelationFlag[0].flag === 1) {
+                // Update the existing relationship
+                await conPool.query(
+                'UPDATE medical_record SET flag = 0, Diagnosis = ?, Symptoms = ?, Treatments = ?, RecordDate = ?, Notes = ?, UpdatedBy = ? WHERE DoctorID = ? AND PatientID = ?',
+                    [Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy, doctorID, PatientID]
+                );
+                console.log('Updated existing relationship');
+            } else {
+                throw new Error('Records already exists and is active');
+            }
+        } else {
+            // Insert the new relationship
+               await conPool.query(
+            `INSERT INTO medical_record 
+            (PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            [PatientID, doctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy]
+        );
+            console.log('Inserted new relationship');
+        }
+            
         // Validate required fields (PatientID, Diagnosis, Symptoms, Treatments, Notes, UpdatedBy)
         checkRequiredFields(['PatientID', 'Diagnosis', 'Symptoms', 'Treatments', 'Notes', 'UpdatedBy'], req.body);
 
@@ -473,12 +501,12 @@ async function addMedRecords (req,res) {
             throw new Error('All required fields must be filled');
         }
          
-         await conPool.query(
-            `INSERT INTO medical_record 
-            (PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [PatientID, doctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy]
-        );
+        //  await conPool.query(
+        //     `INSERT INTO medical_record 
+        //     (PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy) 
+        //     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        //     [PatientID, doctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy]
+        // );
 
         //get updated data
         const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
@@ -538,8 +566,6 @@ async function addMedRecords (req,res) {
         }
     }
 };
-
-
 
 module.exports ={
     getDoctor,
