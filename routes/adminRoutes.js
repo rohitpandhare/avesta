@@ -5,8 +5,6 @@ const { conPool } = require('../config/dbHandler');
 
 // Admin controller functions
 const {
-    createAdmin,
-    createAdminWithOTP, 
     requestAdminOTP, 
     verifyAdminOTP,
     deleteUser,
@@ -17,7 +15,6 @@ const {
 
 // Admin creation & login views
 router.get('/golden', (req, res) => res.render('secret/adminCreate'));
-// router.post('/golden', createAdmin);
 
 // OTP request endpoint
 router.post('/golden/request-otp', requestAdminOTP);
@@ -87,7 +84,7 @@ router.get('/admin', async (req, res) => {
     });
 });
 
-
+// Admin dashboard
 router.delete('/delete-user/:id', deleteUser);
 router.delete('/delete-doctor/:id', deleteDoctor);
 router.delete('/delete-patient/:id', deletePatient);

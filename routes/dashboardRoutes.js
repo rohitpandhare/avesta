@@ -17,9 +17,9 @@ router.get('/', (req, res) => {
 });
 
 router.get('/login', (req, res) => {
-    if (req.session.user) {
-        return res.redirect('/dashboard');
-    }
+    // if (req.session.user) {
+    //     return res.redirect('/dashboard');
+    // }
     res.render('dashboard/login');
 });
 

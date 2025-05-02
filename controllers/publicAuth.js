@@ -59,6 +59,13 @@ async function viewPrescriptions(req, res){
     res.render('dashboard/viewPres');
 };
 
+module.exports = {
+    findDoctor,
+    findPerticularDoctor,
+    viewPrescriptions,
+    // viewCreatedPres
+};
+
 // // Handle Prescription Lookup
 // async function viewCreatedPres(req, res) {
 //     try {
@@ -114,11 +121,4 @@ async function viewPrescriptions(req, res){
 //         });
 //     }
 // }
-
-module.exports = {
-    findDoctor,
-    findPerticularDoctor,
-    viewPrescriptions,
-    // viewCreatedPres
-};
 

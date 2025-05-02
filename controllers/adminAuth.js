@@ -275,7 +275,6 @@ async function deleteDoctor (req, res) {
     }
 };
 
-
 // DELETE patient
 async function deletePatient (req, res) {
     const patientId = req.params.id;

@@ -74,3 +74,8 @@ async function generatePrescription() {
         connection.release();
     }
 };
+
+module.exports = {  
+    generatePrescription,
+    generateReferenceId
+};

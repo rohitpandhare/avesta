@@ -70,6 +70,7 @@
       <p class="text-sm text-gray-600">Speciality: <%= prescription.Specialty || 'Not specified' %></p>
       <p class="text-sm text-gray-600">Contact: <%= prescription.Phone || 'Not specified' %></p>
     </div>
+
     <div class="text-right">
       <p class="text-sm"><strong>Patient:</strong> <%= prescription.PatientName || 'Unknown Patient' %></p>
       <p class="text-sm"><strong>Date:</strong> <%= new Date(prescription.DATEISSUED).toLocaleDateString() %></p>
@@ -97,6 +98,7 @@
             <th class="w-4/12 p-2 border border-black text-left">Timing</th>
           </tr>
         </thead>
+
         <tbody>
           <% medicines.forEach(function(med, index) { %>
             <tr class="<%= index % 2 === 0 ? 'table-row-even' : '' %> align-top">
@@ -135,6 +137,7 @@
     <p><strong>Valid for:</strong> <%= prescription.VALIDITYDAYS || 'Not specified' %> days</p>
     <p class="text-xs text-gray-500 mt-2">Generated on <%= new Date().toLocaleDateString() %></p>
     <br>
+
     <div class="mt-6 text-right">
       <p class="text-sm text-gray-600">Doctor's Signature: _____________________________</p>
       <p class="text-sm text-gray-600 mt-1">Date: <%= new Date().toLocaleDateString() %></p>
@@ -151,6 +154,7 @@
 <!-- PDF Script -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script>
   const { jsPDF } = window.jspdf;
   function downloadPDF() {

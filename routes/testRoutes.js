@@ -162,7 +162,6 @@ router.post('/test-prescription', async (req, res) => {
     }
 });
 
-
 // Medical Record Routes
 router.get('/test-medical-record', (req, res) => {
     res.render('testMedicalRecord');

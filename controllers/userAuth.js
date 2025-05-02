@@ -5,7 +5,6 @@ const md5 = require('md5'); // for hashing passwords
 const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 
-
 // for signup
 const createUser = async (req, res) => {
     const { 

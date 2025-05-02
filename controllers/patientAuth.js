@@ -77,7 +77,6 @@ async function getPatients (req, res) {
     }
 };
 
-
 module.exports ={
 	getPatients,
 }

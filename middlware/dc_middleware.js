@@ -61,5 +61,4 @@ const checkRole = (roles = []) => {
     };
 };
 
-
 module.exports = { chkLogin, checkProfileComplete, checkAuth, checkRole };
