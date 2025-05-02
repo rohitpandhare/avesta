@@ -4,6 +4,7 @@
 4) creating folders - views ,routes, controllers,middleware 
 5) npm install faker @faker-js/faker mysql2
 
+npm run seed 
 
 // Old import
 // const faker = require('faker');
