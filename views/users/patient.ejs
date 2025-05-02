@@ -292,7 +292,7 @@
             button.addEventListener("click", function () {
                 const refId = this.getAttribute("data-refid");
                 if (refId) {
-                    window.location.href = `/viewPres?refId=${refId}`;
+                    window.location.href = `/printPrescription/${refId}`;
                 }
             });
         });
