@@ -95,7 +95,7 @@ async function getAdmin(req, res) {
             userList: userList[0],
             doctorList: doctorList[0],
             patientList: patientList[0],
-            specialties: specialties // MUST include this
+            specialties: specialties 
         });
         
     } catch (err) {

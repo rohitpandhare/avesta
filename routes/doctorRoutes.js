@@ -16,7 +16,7 @@ const {
 router.get('/',checkRole(['doctor']), getDoctor);
 
 router.post('/addPatient', addPatient);
-router.post('/addPres', checkRole(['doctor']),addPrescription);
+router.post('/addPres', addPrescription);
 router.post('/addMedRec', addMedRecords);
 
 router.delete('/deleteRelation/:id',deleteRelation)
