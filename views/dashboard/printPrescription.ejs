@@ -6,31 +6,60 @@
   <title>Prescription - <%= prescription.GLOBALREFERENCEID %></title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
   <style>
+    /* body {
+    background-image: url('/images/bg1.png');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-attachment: fixed;  
+  } */
+  .page {
+  border: 1px solid #e5e7eb;
+}
     @media print {
-      .no-print { display: none !important; }
-      body, html {
-        margin: 0;
-        padding: 0;
-        background: white;
-      }
-      .page {
-        width: 210mm;
-        min-height: 297mm;
-        padding: 15mm;
-        box-sizing: border-box;
-        page-break-after: always;
-      }
-      table, th, td {
-        border: 1px solid #000;
-        border-collapse: collapse;
-      }
-      th, td {
-        padding: 8px;
-      }
+    .no-print {
+      display: none !important;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      background: white;
     }
     .page {
       width: 210mm;
-      min-height: 297mm;
+      padding: 20mm; /* Increased padding for better spacing around content */
+      box-sizing: border-box;
+      page-break-after: always;
+      border: 1px solid #d1d5db;
+    }
+    table {
+      border: 1px solid #000;
+      border-collapse: separate; /* Changed to separate for better spacing */
+      border-spacing: 0 5px; /* Add space between rows */
+      width: 100%;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px 12px; /* Increased padding for better spacing */
+      vertical-align: top; /* Ensure text is aligned at the top of the cell */
+      text-align: left;
+    }
+    th {
+      background-color: #1e3a8a; /* Dark blue background */
+      color: white; /* White text color for header */
+      font-weight: bold;
+    }
+    .table-row-even {
+      background-color: #f9fafb;
+    }
+    .no-print button:hover {
+      opacity: 0.9;
+      transform: scale(1.05);
+      transition: all 0.2s ease;
+    }
+  }
+    .page {
+      width: 210mm;
+      /* min-height: 297mm; */
       padding: 15mm;
       background: white;
       margin: auto;
@@ -50,22 +79,26 @@
 <body class="text-gray-900 font-sans">
 
 <div class="page print:border-none">
-
   <!-- Logo and Tagline -->
   <div class="mb-8 flex items-center justify-between border-b-2 border-gray-700 pb-2">
     <div>
       <a href="/" class="text-3xl font-bold text-blue-700 tracking-tight no-underline">DoctorSync</a>
       <p class="text-base text-gray-600 -mt-1">Sync your health</p>
+      
+    </div>
+    <div>
+      <p><strong>Prescription ID:</strong> <%= prescription.GLOBALREFERENCEID %></p>
     </div>
     <div class="text-right text-sm text-gray-500">
-      <p><strong>Prescription ID:</strong> <%= prescription.GLOBALREFERENCEID %></p>
+      <span><strong>Status:</strong> <%= prescription.STATUS %><span/> <br>
+      <span><strong>Valid for:</strong> <%= prescription.VALIDITYDAYS || 'Not specified' %> days<span/>
     </div>
   </div>
 
   <!-- Doctor & Patient Info -->
   <div class="flex justify-between mb-6">
     <div>
-      <p class="font-semibold text-lg"><span class="text-gray-600">Prescribed by:</span> <%= prescription.DoctorName || 'Unknown Doctor' %></p>
+      <p class="font-semibold text-lg"><span class="text-gray-600">Prescribed by:</span> Dr. <%= prescription.DoctorName || 'Unknown Doctor' %></p>
       <p class="text-sm text-gray-600">License: <%= prescription.LicenseNumber || 'Not specified' %></p>
       <p class="text-sm text-gray-600">Speciality: <%= prescription.Specialty || 'Not specified' %></p>
       <p class="text-sm text-gray-600">Contact: <%= prescription.Phone || 'Not specified' %></p>
@@ -85,42 +118,38 @@
       </div>
   </div>
 
-  <!-- Medications -->
+ <!-- Medications -->
   <% if (medicines && medicines.length > 0) { %>
-    <div class="mb-8">
-      <p class="font-semibold text-base mb-3">Medications:</p>
-      <table class="w-full table-fixed border border-black text-sm">
+    <div class="mb-6">
+      <p class="font-semibold text-base mb-2">Medications:</p>
+      <table class="w-full border border-black text-xs table-auto">
         <thead>
-          <tr class="bg-gray-100">
-            <th class="w-2/12 p-2 border border-black text-left">Medicine</th>
-            <th class="w-2/12 p-2 border border-black text-left">Dosage</th>
-            <th class="w-4/12 p-2 border border-black text-left">Instructions</th>
-            <th class="w-4/12 p-2 border border-black text-left">Timing</th>
+          <tr class="bg-blue-900 text-white">
+            <th class="w-3/4 px-2 py-1 border border-black text-center">Medication</th>
+            <th class="w-1/4 px-2 py-1 border border-black text-center">Timing</th>
           </tr>
         </thead>
 
         <tbody>
           <% medicines.forEach(function(med, index) { %>
-            <tr class="<%= index % 2 === 0 ? 'table-row-even' : '' %> align-top">
-              <td class="p-2 border border-black text-left align-top">
-                <strong><%= med.MedicineName %></strong><br />
-                <span class="text-xs">
+            <tr class="<%= index % 2 === 0 ? 'bg-white' : 'bg-blue-100' %> align-top">
+              <td class="px-2 py-1 border border-black align-top">
+                <strong>💊 <%= med.MedicineName %></strong>
+                <span class="text-[11px]"><strong>| Dosage:</strong> <%= med.Dosage %></span>
+                <br>
+                <span class="text-[11px]"><strong>Method:</strong>
                   <%= med.BeforeFood == 1 ? 'Before food' : (med.AfterFood == 1 ? 'After food' : 'Not specified') %>
                 </span>
+              <span class="text-[11px]"><strong>| Instructions:</strong> <%= med.Instructions || 'No instructions provided' %></span>
               </td>
-              <td class="p-2 border border-black text-left align-top">
-                <%= med.Dosage %>
-              </td>
-              <td class="p-2 border border-black text-left align-top">
-                <%= med.Instructions || 'No instructions provided' %>
-              </td>
-              <td class="p-2 border border-black text-left align-top">
+
+              <td class="px-2 py-1 border border-black align-top text-[11px]">
                 <% const timings = []; %>
                 <% if (med.Morning == 1) timings.push('Morning'); %>
                 <% if (med.Afternoon == 1) timings.push('Afternoon'); %>
                 <% if (med.Evening == 1) timings.push('Evening'); %>
                 <% if (med.Night == 1) timings.push('Night'); %>
-                <%= timings.length > 0 ? timings.join(' | ') : 'Not specified' %>
+                <%= timings.length > 0 ? timings.join('/') : 'Not specified' %>
               </td>
             </tr>
           <% }); %>
@@ -133,15 +162,9 @@
 
   <!-- Footer -->
   <div class="border-t border-gray-300 text-center text-sm">
-    <p><strong>Status:</strong> <%= prescription.STATUS %></p>
-    <p><strong>Valid for:</strong> <%= prescription.VALIDITYDAYS || 'Not specified' %> days</p>
     <p class="text-xs text-gray-500 mt-2">Generated on <%= new Date().toLocaleDateString() %></p>
     <br>
 
-    <div class="mt-6 text-right">
-      <p class="text-sm text-gray-600">Doctor's Signature: _____________________________</p>
-      <p class="text-sm text-gray-600 mt-1">Date: <%= new Date().toLocaleDateString() %></p>
-    </div>
   </div>
 </div>
 

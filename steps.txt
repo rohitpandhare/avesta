@@ -36,3 +36,22 @@ DROP CHECK patient_chk_1;
 
 
 * ejslint views/dashboard/viewPres.ejs
+
+ALTER TABLE doctorsync_dbx.medical_record ADD COLUMN Flag TINYINT(1) DEFAULT 0;
+
+
+ALTER TABLE doctorsync_dbx.prescription_medicine
+DROP CHECK prescription_medicine_chk_1
+
+
+DROP TABLE doctorsync_dbx.admin_activity;
+
+CREATE TABLE doctorsync_dbx.admin_activity (
+    ActivityID INT AUTO_INCREMENT PRIMARY KEY,
+    AdminUserID INT NOT NULL,
+    ActionPerformed VARCHAR(100) NOT NULL,
+    Description TEXT,
+    TargetType ENUM('USER', 'DOCTOR', 'PATIENT') NOT NULL,
+    TargetID INT NOT NULL,
+    ActivityTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

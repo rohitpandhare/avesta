@@ -91,56 +91,57 @@
                 </div>
             </header>
 
-            <!-- Stats Section -->
-            <section id="dashboard" class="mb-12 w-full">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div class="stat-card">
-                        <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Users</h3>
-                        <p class="text-3xl font-bold text-blue-600"><%= userList?.length || 0 %></p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Doctors</h3>
-                        <p class="text-3xl font-bold text-green-600"><%= doctorList?.length || 0 %></p>
-                    </div>
-                    <div class="stat-card">
-                        <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Patients</h3>
-                        <p class="text-3xl font-bold text-yellow-600"><%= patientList?.length || 0 %></p>
-                    </div>
+            <!-- Patients Section -->
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Patient Management</h2>
+                <div class="bg-white rounded-lg shadow overflow-hidden w-full">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left">PatientID</th>
+                                <th class="text-left">Name</th>
+                                <th class="text-left">Address</th>
+                                <th class="text-left">Phone</th>
+                                <th class="text-left">DOB</th>
+                                <th class="text-left">Blood Group</th>
+                                <th class="text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% 
+                            const activePat = patientList?.filter(patient => patient.Flag === 0); 
+                            if (activePat?.length > 0) { 
+                            %>
+
+                            <% activePat.forEach(patient => { %>
+                                    <tr>
+                                        <td><%= patient.PatientID %></td>
+                                        <td><%= patient.Name %></td>
+                                        <td><%= patient.Address %></td>
+                                        <td><%= patient.Phone %></td>
+                                        <td><%= new Date(patient.DOB).toLocaleDateString('en-GB').split('/').join('-') %></td>
+                                        <td><%= patient.BloodGroup %></td>
+                                        <td>
+                                            <button onclick="deleteItem('patient', '<%= patient.PatientID %>')" 
+                                                    class="btn btn-danger">
+                                                Deactivate
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">No patients available</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
                 </div>
-            
-                <!-- Doctor Specialties Table -->
-                <section id="doctor-stats " class="mb-12 w-full">
-                   <div class="stat-card">
-                       <h3 class="text-lg font-semibold mb-4 text-gray-700">Doctor Specialties</h3>
-                       <div class="overflow-x-auto">
-                           <table class="data-table w-full">
-                               <thead>
-                                   <tr>
-                                       <th class="text-left">Specialty</th>
-                                       <th class="text-left">Doctors</th>
-                                       <th class="text-left">Active Prescriptions</th>
-                                       <th class="text-left">Completed Prescriptions</th>
-                                   </tr>
-                               </thead>
-                               <tbody>
-                                   <% specialties.forEach(specialty => { %>
-                                       <tr>
-                                           <td><%= specialty.name %></td>
-                                           <td><%= specialty.doctorCount %></td>
-                                           <td><%= specialty.activePrescriptions %></td>
-                                           <td><%= specialty.completedPrescriptions %></td>
-                                       </tr>
-                                   <% }); %>
-                               </tbody>
-                           </table>
-                       </div>
-                   </div>
-               </section>
-            </section>
+        
         </main>
 
     </div>
 
+    
     <script>
         // Initialize Feather Icons
         feather.replace();

@@ -46,7 +46,7 @@ router.post('/request-otp', async (req, res) => {
 
         await sendOTPEmail(user.Email, otp);
         
-        res.json({ success: true });
+        res.json({ success: true, email: user.Email });
     } catch (error) {
         console.error('OTP request error:', error);
         res.status(500).json({ error: 'Failed to process request' });

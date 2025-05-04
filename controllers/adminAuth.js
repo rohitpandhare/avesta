@@ -243,6 +243,11 @@ async function deleteUser(req, res) {
         );
 
         if (result.affectedRows > 0) {
+             // Insert log into admin_activity table
+             await conPool.query(
+                'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+                [req.session.user.UserID, 'DEACTIVATE', 'Admin deactivated user', 'USER', userId]
+            );
             return res.status(200).json({ success: true, message: 'User soft deleted' });
         } else {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -264,6 +269,10 @@ async function deleteDoctor (req, res) {
         );
 
         if (result.affectedRows > 0) {
+            await conPool.query(
+                'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+                [req.session.user.UserID, 'DEACTIVATE', 'Admin deactivated doctor', 'DOCTOR', doctorId]
+            );
             return res.status(200).json({ success: true, message: 'User soft deleted' });
         } else {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -286,6 +295,11 @@ async function deletePatient (req, res) {
         );
 
         if (result.affectedRows > 0) {
+            // Insert log into admin_activity table
+            await conPool.query(
+                'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+                [req.session.user.UserID, 'DEACTIVATE', 'Admin deactivated patient', 'PATIENT', patientId]
+            );
             return res.status(200).json({ success: true, message: 'User soft deleted' });
         } else {
             return res.status(404).json({ success: false, message: 'User not found' });
@@ -298,13 +312,39 @@ async function deletePatient (req, res) {
 };
 
 
+async function reviveUser(req, res) {
+    const userId = req.params.id;
+
+    try {
+        const [result] = await conPool.query(
+            'UPDATE user SET Flag = 0 WHERE UserID = ?',
+            [userId]
+        );
+
+        if (result.affectedRows > 0) {
+             // Insert log into admin_activity table
+             await conPool.query(
+                'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+                [req.session.user.UserID, 'ACTIVATE', 'Admin Activated user', 'USER', userId]
+            );
+            return res.status(200).json({ success: true, message: 'User soft deleted' });
+        } else {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+    } catch (err) {
+        console.error('DB delete error:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+}
+
 module.exports = {
     requestAdminOTP,
     verifyAdminOTP,
     getAdmin,
     deleteUser,
     deleteDoctor,
-    deletePatient
+    deletePatient,
+    reviveUser
 };
 
 

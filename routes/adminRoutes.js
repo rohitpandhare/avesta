@@ -9,7 +9,8 @@ const {
     verifyAdminOTP,
     deleteUser,
     deleteDoctor,
-    deletePatient
+    deletePatient,
+    reviveUser
     // getAdminDashboard
 } = require('../controllers/adminAuth');
 
@@ -26,20 +27,15 @@ router.get('/admin', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
         return res.redirect('/login');
     }
-
     const [userList] = await conPool.query('SELECT * FROM user');
+
     const [doctorList] = await conPool.query(`
         SELECT d.*, u.Username
         FROM doctor d
         JOIN user u ON d.UserID = u.UserID
         WHERE u.Role = 'DOCTOR'
     `);
-    const [patientList] = await conPool.query(`
-        SELECT p.*, u.Username
-        FROM patient p
-        JOIN user u ON p.UserID = u.UserID
-        WHERE u.Role = 'PATIENT'
-    `);
+
     const [prescriptionStats] = await conPool.query(`
         SELECT 
             d.Specialty, 
@@ -48,6 +44,13 @@ router.get('/admin', async (req, res) => {
         FROM prescription p
         JOIN doctor d ON p.DoctorID = d.DoctorID
         GROUP BY d.Specialty
+    `);
+
+    const [patientList] = await conPool.query(`
+        SELECT p.*, u.Username
+        FROM patient p
+        JOIN user u ON p.UserID = u.UserID
+        WHERE u.Role = 'PATIENT'
     `);
 
     const specialtyStats = {};
@@ -77,10 +80,91 @@ router.get('/admin', async (req, res) => {
 
     return res.render('users/admin', {
         user: req.session.user,
+        specialties,
         userList,
         doctorList,
+        prescriptionStats,
+        patientList
+    });
+});
+
+router.get('/admin/users', async (req, res) => {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/login');
+    }
+
+    const [userList] = await conPool.query('SELECT * FROM user');
+    return res.render('users/adminUsers', {
+        user: req.session.user,
+        userList
+    });
+});
+
+router.get('/admin/doc', async (req, res) => {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/login');
+    }
+
+    const [userList] = await conPool.query('SELECT * FROM user');
+
+    const [doctorList] = await conPool.query(`
+        SELECT d.*, u.Username
+        FROM doctor d
+        JOIN user u ON d.UserID = u.UserID
+        WHERE u.Role = 'DOCTOR'
+    `);
+
+    return res.render('users/adminDoc', {
+        user: req.session.user,
+        doctorList,
+        userList
+    });
+});
+
+router.get('/admin/pat', async (req, res) => {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/login');
+    }
+    const [userList] = await conPool.query('SELECT * FROM user');
+
+    const [patientList] = await conPool.query(`
+        SELECT p.*, u.Username
+        FROM patient p
+        JOIN user u ON p.UserID = u.UserID
+        WHERE u.Role = 'PATIENT'
+    `);
+
+    return res.render('users/adminPat', {
+        user: req.session.user,
         patientList,
-        specialties
+        userList
+    });
+});
+
+
+router.get('/admin/reviveUser', async (req, res) => {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/login');
+    }
+
+    const [userList] = await conPool.query('SELECT * FROM user where flag=1');
+    return res.render('users/reviveUser', {
+        user: req.session.user,
+        userList
+    });
+});
+
+
+// Route to view admin logs
+router.get('/admin/logs', async (req, res) => {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/login');
+    }
+
+    const [logs] = await conPool.query('SELECT * FROM admin_activity ORDER BY ActivityTimestamp DESC');
+    return res.render('users/logs', {
+        user: req.session.user,
+        logs
     });
 });
 
@@ -88,5 +172,9 @@ router.get('/admin', async (req, res) => {
 router.delete('/delete-user/:id', deleteUser);
 router.delete('/delete-doctor/:id', deleteDoctor);
 router.delete('/delete-patient/:id', deletePatient);
+
+
+
+router.put('/revive-user/:id', reviveUser);
 
 module.exports = router;
