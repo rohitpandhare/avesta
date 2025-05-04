@@ -679,6 +679,285 @@ async function addMedRecords (req,res) {
     }
 };
 
+
+// User routes
+async function getRel(req, res) {
+    try {
+      if (req.session.user && req.session.user.Role === 'DOCTOR') {
+        const { doctorID, doctorDetails } = await getDocID(req.session.user.UserID);
+  
+        // Get updated data
+        const { doctorPatients } = await updateData(doctorID);
+  
+        const userData = {
+          ...req.session.user,
+          doctorDetails
+        };
+  
+        res.render('users/doc/viewRel', {
+          user: userData,
+          DoctorID: doctorID,
+          doctorPatients,
+          success: req.session.success,
+          error: req.session.error,
+          doctorRelationships: []
+        });
+  
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+      }
+    } catch (err) {
+      console.error('Error loading doctor dashboard:', err);
+      res.render('users/doctor', {
+        user: {
+          ...req.session.user,
+          Username: req.session.user.Name || 'Doctor' // Fallback name
+        },
+        currentDoctorID: null,
+        doctorPatients: [],
+        error: 'Error loading dashboard: ' + err.message,
+        doctorRelationships: []
+      });
+      // Clear flash messages
+      delete req.session.success;
+      delete req.session.error;
+    }
+  }
+
+async function getRec(req, res) {
+    try {
+      if (req.session.user && req.session.user.Role === 'DOCTOR') {
+        const { doctorID, doctorDetails } = await getDocID(req.session.user.UserID);
+  
+        // Get updated data
+        const { medicalRecords } = await updateData(doctorID);
+  
+        const userData = {
+          ...req.session.user,
+          doctorDetails
+        };
+  
+        res.render('users/doc/viewRec', {
+          user: userData,
+          DoctorID: doctorID,
+          medicalRecords,
+          success: req.session.success,
+          error: req.session.error,
+          doctorRelationships: []
+        });
+  
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+      }
+    } catch (err) {
+      console.error('Error loading doctor dashboard:', err);
+      res.render('users/doctor', {
+        user: {
+          ...req.session.user,
+          Username: req.session.user.Name || 'Doctor' // Fallback name
+        },
+        currentDoctorID: null,
+        medicalRecords: [],
+        error: 'Error loading dashboard: ' + err.message,
+        doctorRelationships: []
+      });
+      // Clear flash messages
+      delete req.session.success;
+      delete req.session.error;
+    }
+  }
+
+async function getPres(req, res) {
+    try {
+      if (req.session.user && req.session.user.Role === 'DOCTOR') {
+        const { doctorID, doctorDetails } = await getDocID(req.session.user.UserID);
+  
+        // Get updated data
+        const { prescriptions } = await updateData(doctorID);
+  
+        const userData = {
+          ...req.session.user,
+          doctorDetails
+        };
+  
+        res.render('users/doc/viewPres', {
+          user: userData,
+          DoctorID: doctorID,
+          prescriptions,
+          success: req.session.success,
+          error: req.session.error,
+          doctorRelationships: []
+        });
+  
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+      }
+    } catch (err) {
+      console.error('Error loading doctor dashboard:', err);
+      res.render('users/doctor', {
+        user: {
+          ...req.session.user,
+          Username: req.session.user.Name || 'Doctor' // Fallback name
+        },
+        currentDoctorID: null,
+        prescriptions: [],
+        error: 'Error loading dashboard: ' + err.message,
+        doctorRelationships: []
+      });
+      // Clear flash messages
+      delete req.session.success;
+      delete req.session.error;
+    }
+  }
+
+async function addingPres(req,res) {
+      try {
+            if (req.session.user && req.session.user.Role === 'DOCTOR') {
+            const { doctorID, doctorDetails } =  getDocID(req.session.user.UserID);
+        
+            // Get updated data
+            const { prescriptions, medicalRecords, doctorPatients } = updateData(doctorID);
+        
+            const userData = {
+                ...req.session.user,
+                doctorDetails
+            };
+    
+            res.render('users/doc/addPres', {
+                user: userData,
+                DoctorID: doctorID,
+                prescriptions,
+                medicalRecords,
+                doctorPatients,
+                success: req.session.success,
+                error: req.session.error,
+                doctorRelationships: []
+            });
+        
+            // Clear flash messages
+            delete req.session.success;
+            delete req.session.error;
+            }
+        } catch (err) {
+            console.error('Error loading doctor dashboard:', err);
+            res.render('users/doctor', {
+            user: {
+                ...req.session.user,
+                Username: req.session.user.Name || 'Doctor' // Fallback name
+            },
+            currentDoctorID: null,
+            prescriptions: [],
+            medicalRecords: [],
+            doctorPatients: [],
+            error: 'Error loading dashboard: ' + err.message,
+            doctorRelationships: []
+            });
+            // Clear flash messages
+            delete req.session.success;
+            delete req.session.error;
+        }
+}
+
+async function addingRel(req,res) {
+    try {
+          if (req.session.user && req.session.user.Role === 'DOCTOR') {
+          const { doctorID, doctorDetails } =  getDocID(req.session.user.UserID);
+      
+          // Get updated data
+          const { prescriptions, medicalRecords, doctorPatients } = updateData(doctorID);
+      
+          const userData = {
+              ...req.session.user,
+              doctorDetails
+          };
+  
+          res.render('users/doc/addPat', {
+              user: userData,
+              DoctorID: doctorID,
+              prescriptions,
+              medicalRecords,
+              doctorPatients,
+              success: req.session.success,
+              error: req.session.error,
+              doctorRelationships: []
+          });
+      
+          // Clear flash messages
+          delete req.session.success;
+          delete req.session.error;
+          }
+      } catch (err) {
+          console.error('Error loading doctor dashboard:', err);
+          res.render('users/doctor', {
+          user: {
+              ...req.session.user,
+              Username: req.session.user.Name || 'Doctor' // Fallback name
+          },
+          currentDoctorID: null,
+          prescriptions: [],
+          medicalRecords: [],
+          doctorPatients: [],
+          error: 'Error loading dashboard: ' + err.message,
+          doctorRelationships: []
+          });
+          // Clear flash messages
+          delete req.session.success;
+          delete req.session.error;
+      }
+}
+
+async function addingRec(req,res) {
+    try {
+          if (req.session.user && req.session.user.Role === 'DOCTOR') {
+          const { doctorID, doctorDetails } =  getDocID(req.session.user.UserID);
+      
+          // Get updated data
+          const { prescriptions, medicalRecords, doctorPatients } = updateData(doctorID);
+      
+          const userData = {
+              ...req.session.user,
+              doctorDetails
+          };
+  
+          res.render('users/doc/addRec', {
+              user: userData,
+              DoctorID: doctorID,
+              prescriptions,
+              medicalRecords,
+              doctorPatients,
+              success: req.session.success,
+              error: req.session.error,
+              doctorRelationships: []
+          });
+      
+          // Clear flash messages
+          delete req.session.success;
+          delete req.session.error;
+          }
+      } catch (err) {
+          console.error('Error loading doctor dashboard:', err);
+          res.render('users/doctor', {
+          user: {
+              ...req.session.user,
+              Username: req.session.user.Name || 'Doctor' // Fallback name
+          },
+          currentDoctorID: null,
+          prescriptions: [],
+          medicalRecords: [],
+          doctorPatients: [],
+          error: 'Error loading dashboard: ' + err.message,
+          doctorRelationships: []
+          });
+          // Clear flash messages
+          delete req.session.success;
+          delete req.session.error;
+      }
+}
+
+
 module.exports ={
     getDoctor,
     addPatient,
@@ -686,5 +965,11 @@ module.exports ={
     addMedRecords,
     deleteRelation,
     deleteRecord,
-    deletePres
+    deletePres,
+    getRel,
+    getRec,
+    getPres,
+    addingPres,
+    addingRel,
+    addingRec
 }

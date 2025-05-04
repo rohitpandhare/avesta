@@ -7,9 +7,24 @@
     <link rel="stylesheet" href="/css/styles.css">
 
 </head>
-<body class="bg-gray-50 min-h-screen flex items-center justify-center py-12">
-    <div class="max-w-md w-full mx-4">
-        <div class="bg-white rounded-xl shadow-lg p-8">
+<body class="bg-gray-50 min-h-screen flex flex-col">
+  
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md w-full">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <a href="/" class="text-2xl font-bold text-blue-600 tracking-tight">DoctorSync</a>
+          <ul class="flex space-x-6">
+            <li><a href="/findDr" class="text-gray-600 hover:text-blue-600 font-medium transition">Find Doctors</a></li>
+            <li><a href="/viewPres" class="text-gray-600 hover:text-blue-600 font-medium transition">View Prescription</a></li>
+            <li><a href="/login" class="text-gray-600 hover:text-blue-600 font-medium transition">Login</a></li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-xl shadow-lg max-w-7xl w-full p-8">
             <!-- Header -->
             <div class="text-center mb-8">
                 <h2 class="text-3xl font-bold text-gray-900">Create Account</h2>
@@ -47,11 +62,6 @@
                             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
                     </div>
                     
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-                        <input type="password" name="Password" required
-                            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500">
-                    </div>
                 </div>
 
                 <!-- Extra Doctor Fields -->
@@ -184,6 +194,14 @@
             </div>
         </div>
     </div>
+
+      <!-- Footer -->
+  <footer class="bg-gray-800 text-white w-full">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-gray-400">
+      &copy; 2025 DoctorSync. All rights reserved.
+    </div>
+  </footer>
+ 
     
    <script src="/javascripts/signupHelp.js"></script>
 </body>

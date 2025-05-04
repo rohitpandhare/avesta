@@ -33,12 +33,12 @@ router.get('/printPrescription/:refId', async (req, res) => {
             FROM PRESCRIPTION p
             LEFT JOIN DOCTOR d ON p.DOCTORID = d.DoctorID
             LEFT JOIN PATIENT pt ON p.PATIENTID = pt.PatientID
-            WHERE p.GLOBALREFERENCEID = ?
+            WHERE p.STATUS = 'ACTIVE' AND p.GLOBALREFERENCEID = ?
         `, [refId]);
 
         if (prescriptions.length === 0) {
             return res.render('dashboard/viewPres', { 
-                error: 'No prescription found with this reference ID' 
+                error: 'No prescription found with this reference ID or it has been deactivated.' 
             });
         }
 
@@ -57,10 +57,11 @@ router.get('/printPrescription/:refId', async (req, res) => {
             WHERE PrescriptionID = ?
         `, [prescriptions[0].PRESCRIPTIONID]);
 
-        res.render('dashboard/printPrescription', { 
-            prescription: prescriptions[0],
-            medicines: medicines
-        });
+            res.render('dashboard/printPrescription', { 
+                prescription: prescriptions[0],
+                medicines: medicines
+            });
+     
     } catch (err) {
         console.error('Error fetching prescription:', err);
         res.render('dashboard/viewPres', { 

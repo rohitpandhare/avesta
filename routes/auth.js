@@ -6,11 +6,29 @@ const { conPool } = require('../config/dbHandler'); // importing conpool for DB 
 const {
     doLogin,
     createUser,
-    resetPass,
     logout,
 } = require('../controllers/userAuth');
 
 const { generateOTP, sendOTPEmail, verifyOTP } = require('../controllers/userAuth');
+
+
+// User CRUD func import
+const {  
+    getRel,
+    getRec,
+    getPres,
+    addingPres,
+    addingRel,
+    addingRec
+} = require('../controllers/doctorAuth');
+
+router.get('/login/getRelation', getRel);
+router.get('/login/getRecord', getRec);
+router.get('/login/getPrescription', getPres);
+
+router.get('/login/addPrescription', addingPres);
+router.get('/login/addRelation', addingRel);
+router.get('/login/addRecord', addingRec);
 
 // Temporary OTP storage 
 const otpStore = new Map();
@@ -148,7 +166,6 @@ router.post('/verify-otp', async (req, res) => {
 router.get('/logout', logout);
 router.post('/login', doLogin);
 router.post('/signup', createUser);
-router.post('/reset', resetPass);
 
 module.exports = router;
 

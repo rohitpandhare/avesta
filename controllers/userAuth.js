@@ -1,20 +1,18 @@
 // Importing required modules
 const { conPool } = require('../config/dbHandler'); // importing conpool for DB operations
-const md5 = require('md5'); // for hashing passwords
-// authController.js
 const speakeasy = require('speakeasy');
 const nodemailer = require('nodemailer');
 
 // for signup
 const createUser = async (req, res) => {
     const { 
-        Username, Email, Password, Role,
+        Username, Email, Role,
         Name, Phone, DOB, BloodGroup,
         LicenseNumber, Specialty, other_specialty, Qualifications
     } = req.body;
 
     // Base validation
-    if (!Username || !Email || !Password || !Role) {
+    if (!Username || !Email || !Role) {
         return res.status(400).render('dashboard/signup', {
             error: "All fields are required"
         });
@@ -27,9 +25,9 @@ const createUser = async (req, res) => {
 
         // Insert into USER table
         const [userResult] = await connection.query(
-            `INSERT INTO user (Username, Email, Password, Role, CreatedAt)
-             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [Username, Email, md5(Password), Role]
+            `INSERT INTO user (Username, Email, Role, CreatedAt)
+             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+            [Username, Email, Role]
         );
         const userId = userResult.insertId;
 
@@ -82,16 +80,14 @@ const createUser = async (req, res) => {
 // User login 
 async function doLogin(req, res) {
     try {
-        const { Username, Password, Role } = req.body;
+        const { Username, Role } = req.body;
 
         // Basic validation
-        if (!Username || !Password || !Role) {
+        if (!Username || !Role) {
             return res.render('dashboard/login', {
                 error: 'All fields are required'
             });
         }
-
-        const hashedPassword = md5(Password);
 
         // Query to find user
         const [users] = await conPool.query(
@@ -99,7 +95,7 @@ async function doLogin(req, res) {
             [Username]
         );
 
-        if (!users.length || users[0].Password !== hashedPassword || users[0].Role !== Role) {
+        if (!users.length || users[0].Role !== Role) {
             return res.render('dashboard/login', {
                 error: 'Invalid credentials'
             });
@@ -238,11 +234,6 @@ async function doLogin(req, res) {
                         });
                     });
 
-                    // // Debug log
-                    // console.log('Loaded prescriptions:', prescriptions[0]);
-                    // console.log('Loaded patients:', doctorPatients[0]);
-                    // console.log('Loaded records:', medicalRecords[0]);
-
                     return res.render('users/doctor', {
                         user: req.session.user,
                         prescriptions: prescriptions[0],
@@ -363,49 +354,6 @@ async function doLogin(req, res) {
     }
 }
 
-// Reset Password Route
-async function resetPass (req, res) {
-      try {
-            const { Username, newPassword, confirmPassword } = req.body;
-    
-            // Check if passwords match
-            if (newPassword !== confirmPassword) {
-                return res.status(400).render('dashboard/resetPass', {
-                    error: 'Passwords do not match'
-                });
-            }
-    
-            // Hash the password using md5
-            const hashedPassword = md5(newPassword);
-    
-            // Update password in database
-            const [result] = await conPool.query(
-                'UPDATE user SET Password = ? WHERE Username = ?',
-                [hashedPassword, Username]
-            );
-    
-            // Check if user was found and updated
-            if (result.affectedRows > 0) {
-                // res.redirect('/login');
-                // res.render('dashboard/login', {
-                //     success: 'Password Changed!'
-                // });
-                res.redirect('/login?success=Password Changed!');
-    
-            } else { 
-                res.status(404).render('dashboard/resetPass', {
-                    error: 'User not found'
-                });
-            }
-    
-        } catch (err) {
-            console.error('Password reset error:', err);
-            res.status(500).render('dashboard/resetPass', {
-                error: 'Error in resetting password'
-            });
-        }
-};
-
 function logout(req, res){
     req.session.destroy((err) => {
         if (err) {
@@ -481,7 +429,6 @@ async function sendOTPEmail(email, otp) {
 module.exports = {
     createUser,
     doLogin,
-    resetPass,
     logout,
     generateOTP,
     verifyOTP,

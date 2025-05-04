@@ -55,3 +55,6 @@ CREATE TABLE doctorsync_dbx.admin_activity (
     TargetID INT NOT NULL,
     ActivityTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+ALTER TABLE doctorsync_dbx.user DROP COLUMN password;

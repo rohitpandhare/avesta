@@ -25,7 +25,7 @@
 
   <!-- Centered login card -->
   <main class="flex-grow flex items-center justify-center px-4 py-12">
-    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 space-y-8">
+    <div class="w-full max-w-7xl bg-white rounded-2xl shadow-xl p-8 space-y-8">
       
       <!-- Header -->
       <div class="text-center">
@@ -67,30 +67,41 @@
             </svg>
           </div>
         </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700">Password</label>
-          <div class="relative mt-1">
-            <input type="password" name="Password" id="password" required 
-                   class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
-                   placeholder="Enter your password" />
-            <svg class="absolute left-4 top-3.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-            </svg>
-          </div>
+        
+          <!-- OTP Section -->
+          <div id="otpSection" class="hidden space-y-2">
+            <label class="block text-sm font-medium text-gray-700">Verification Code</label>
+            <div class="relative">
+                <input type="text" 
+                        name="otp" 
+                        id="otp" 
+                        required
+                        class="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                        placeholder="Enter 6-digit code from email">
+            </div>
         </div>
 
-        <button type="submit" 
-                class="w-full bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold py-4 rounded-xl transition-all shadow-md hover:shadow-lg">
-          Access Portal
-        </button>
-      </form>
+        <!-- Action Buttons -->
+        <div class="space-y-4">
+            <button type="button" id="requestOtpBtn" 
+                    class="w-full bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors">
+                Send Verification Code
+            </button>
+            
+            <button type="submit" id="verifyOtpBtn" 
+                    class="w-full hidden bg-green-600 px-4 py-3 rounded-xl hover:bg-green-700 transition-colors">
+                Verify & Continue
+            </button>
+        </div>
+
+        <!-- Status Messages -->
+        <div id="statusMessage" class="text-center text-sm"></div>
+
+        </form>
 
       <!-- Links -->
       <div class="text-center space-y-4 mt-8">
         <div class="flex justify-center gap-4">
-          <a href="/reset" class="text-base text-blue-600 hover:text-blue-800 font-medium">Forgot Password?</a>
-          <span class="text-gray-300">|</span>
           <a href="/signup" class="text-base text-blue-600 hover:text-blue-800 font-medium">Create Account</a>
         </div>
         <a href="/" class="inline-block text-sm text-gray-500 hover:text-gray-700">
@@ -106,7 +117,7 @@
       &copy; 2025 DoctorSync. All rights reserved.
     </div>
   </footer>
-
+   
   <script src="/javascripts/loginHelp.js"></script>
 </body>
 </html>
