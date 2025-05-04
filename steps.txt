@@ -56,5 +56,14 @@ CREATE TABLE doctorsync_dbx.admin_activity (
     ActivityTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
 ALTER TABLE doctorsync_dbx.user DROP COLUMN password;
+
+CREATE TABLE doctorsync_dbx.doctor_activity (
+    ActivityID INT AUTO_INCREMENT PRIMARY KEY,
+    DoctorID INT NOT NULL,
+    ActionPerformed VARCHAR(100) NOT NULL,
+    Description TEXT,
+    TargetType ENUM('PATIENT RELATION', 'RECORD', 'PRESCRIPTION') NOT NULL,
+    TargetID INT NOT NULL,
+    ActivityTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

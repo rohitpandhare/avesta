@@ -89,6 +89,14 @@
                   Prescriptions
                 </a>
               </li>
+              <li>
+                <a href="/doctor/logs" class="flex items-center px-3 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">
+                  <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H14" />
+                  </svg>
+                  Logs
+                </a>
+              </li>
             </ul>
           </div>
 
@@ -164,7 +172,7 @@
                   <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Treatments</th>
                   <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Notes</th>
                   <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Updated By</th>
-                  <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Delete Record</th>
+                  <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Activity</th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-200">
@@ -181,7 +189,7 @@
                       <td class="px-6 py-4 whitespace-nowrap">
                         <button onclick="deleteItem('<%= record.RecordID%>','record')" 
                                 class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                            Delete
+                                Deactivate
                         </button>
                     </td>
                     </tr>

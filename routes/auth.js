@@ -19,12 +19,14 @@ const {
     getPres,
     addingPres,
     addingRel,
-    addingRec
+    addingRec,
+    getOldPres
 } = require('../controllers/doctorAuth');
 
 router.get('/login/getRelation', getRel);
 router.get('/login/getRecord', getRec);
 router.get('/login/getPrescription', getPres);
+router.get('/login/revivePres', getOldPres)
 
 router.get('/login/addPrescription', addingPres);
 router.get('/login/addRelation', addingRel);

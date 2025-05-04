@@ -155,93 +155,120 @@
       <p class="text-blue-600 mt-1" id="page-description">Welcome back, <%= user?.Name || 'Doctor' %></p>
     </header>
 
+
       <div id="main-content" class="space-y-12">
 
-        <!-- add medical records  -->
-        <section class="space-y-6" id="records-section">
-        
-          <!-- add medical rec  -->
-          <div class="bg-white rounded-lg shadow-md p-6" id="addMedRec">
-            <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Medical Record</h3>
-            <form action="/doctor/addMedRec" method="POST" class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="hidden">
-                  <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            
-                <!-- Column 1 -->
-                  <div class="space-y-6">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Patient Name</label>
-                      <div class="relative">
-                      <input type="text" id="patientNameMedRec" name="patientName" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+        <h2 class="text-2xl font-semibold text-gray-800">Prescriptions</h2>
 
-                      <div id="suggestionsMedRec" class="absolute z-10 bg-white border border-gray-300 w-full rounded-md mt-1 hidden shadow-lg"></div>
-                      </div>
-                      <input type="hidden" id="patientIDHiddenMedRec" name="PatientID">
-                      </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Diagnosis</label>
-                      <input type="text" name="Diagnosis" required 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Symptoms</label>
-                      <textarea name="Symptoms" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"></textarea>
-                    </div>
-                  </div>
-
-                  <!-- Column 2 -->
-                  <div class="space-y-6">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Treatments</label>
-                      <textarea name="Treatments" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"></textarea>
-                    </div>
-
-                    <div class="hidden">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Record Date</label>
-                      <input type="date" name="RecordDate" required id="statics"
-                            value="<%= new Date().toISOString().split('T')[0] %>" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                      <textarea name="Notes" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
-                    </div>
-
-                    <div class="hidden">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Updated By</label>
-                      <select name="UpdatedBy" required id="statics"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="DOCTOR">DOCTOR</option>
-                        <option value="STAFF">STAFF</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Submit button outside the grid -->
-                <div class="mt-6">
-                  <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Submit
-                  </button>
-              </div>
-              </form>
+         <!-- View Prescriptions Table -->
+         <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto max-h-[500px]">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50 sticky top-0">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Date Issued</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Patient Name</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Diagnosis Notes</th>
+                            <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Medicines</th> -->
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Reference ID</th>
+                            <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Activity</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        <% if (prescriptions && prescriptions.length > 0) { %>
+                            <% prescriptions.forEach(prescription => { %>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <%= new Date(prescription.DateIssued).toLocaleDateString('en-US', { 
+                                            year: 'numeric', 
+                                            month: 'short', 
+                                            day: 'numeric' 
+                                        }) %>
+                                    </td>
+                                    <td class="px-6 py-4"><%= prescription.PatientName || 'N/A' %></td>
+                                    <td class="px-6 py-4 max-w-xs"><%= prescription.DiagnosisNotes || 'N/A' %></td>
+                               
+                              
+                                    <td class="px-6 py-4">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full <%= prescription.Status === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800' %>">
+                                            <%= prescription.Status %>
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 font-mono"><%= prescription.GlobalReferenceID %></td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button onclick="reviveItem('<%= prescription.PrescriptionID %>','prescription')" 
+                                                class="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition-colors">
+                                            Activate
+                                        </button>
+                                    </td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="7" class="px-6 py-4 text-center text-gray-500">No prescriptions found</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
           </div>
-              
-        </section>
-      
+          
       </div>
 
     </main>
   </div>
+  <script>
+    //common delete func
+function reviveItem(id, type) {
+    let confirmMessage;
+    let url;
 
-  <script src="/javascripts/doctorHelp.js"></script>
+    // Determine the URL and confirmation message based on the type
+    switch(type) {
+        case 'prescription':
+            confirmMessage = `Are you sure you want to activate this Prescription?`;
+            url = `/doctor/revivePres/${id}`;
+            break;
+        default:
+            console.error('Unknown type:', type);
+            return; // Exit if type is unknown
+    }
+
+    // Show confirmation dialog
+    if (!confirm(confirmMessage)) {
+        return; // Exit if the user cancels
+    }
+
+    // Perform the delete operation
+    fetch(url, {
+        method: 'PUT',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        credentials: 'include' // Ensure cookies are sent with the request
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(error => {
+                throw new Error(error.message || `An error occurred while deleting the ${type}s.`);
+            });
+        }
+        return response.json(); // Parse JSON response on success
+    })
+    .then(data => {
+        // Redirect instead of reload to prevent form resubmission
+        window.location.href = '/doctor?success=' + encodeURIComponent(data.message);
+    })
+    .catch(error => {
+        console.error('Error activating:', error);
+        alert(`Failed to activate: ${error.message}`);
+    });
+}
+
+  </script>
+    <script src="/javascripts/doctorHelp.js"></script>
+
 </body>
 </html>

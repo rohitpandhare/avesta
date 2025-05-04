@@ -157,91 +157,43 @@
 
       <div id="main-content" class="space-y-12">
 
-        <!-- add medical records  -->
-        <section class="space-y-6" id="records-section">
-        
-          <!-- add medical rec  -->
-          <div class="bg-white rounded-lg shadow-md p-6" id="addMedRec">
-            <h3 class="text-xl font-semibold text-gray-800 mb-6">Add Medical Record</h3>
-            <form action="/doctor/addMedRec" method="POST" class="space-y-6">
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div class="hidden">
-                  <input type="number" name="DoctorID" value="<%= user.DoctorID %>" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                </div>
-            
-                <!-- Column 1 -->
-                  <div class="space-y-6">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Patient Name</label>
-                      <div class="relative">
-                      <input type="text" id="patientNameMedRec" name="patientName" required class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-
-                      <div id="suggestionsMedRec" class="absolute z-10 bg-white border border-gray-300 w-full rounded-md mt-1 hidden shadow-lg"></div>
-                      </div>
-                      <input type="hidden" id="patientIDHiddenMedRec" name="PatientID">
-                      </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Diagnosis</label>
-                      <input type="text" name="Diagnosis" required 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Symptoms</label>
-                      <textarea name="Symptoms" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"></textarea>
-                    </div>
-                  </div>
-
-                  <!-- Column 2 -->
-                  <div class="space-y-6">
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Treatments</label>
-                      <textarea name="Treatments" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-32"></textarea>
-                    </div>
-
-                    <div class="hidden">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Record Date</label>
-                      <input type="date" name="RecordDate" required id="statics"
-                            value="<%= new Date().toISOString().split('T')[0] %>" 
-                            class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Notes</label>
-                      <textarea name="Notes" required 
-                                class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 h-24"></textarea>
-                    </div>
-
-                    <div class="hidden">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">Updated By</label>
-                      <select name="UpdatedBy" required id="statics"
-                              class="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        <option value="DOCTOR">DOCTOR</option>
-                        <option value="STAFF">STAFF</option>
-                      </select>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Submit button outside the grid -->
-                <div class="mt-6">
-                  <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition-colors focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Submit
-                  </button>
-              </div>
-              </form>
-          </div>
-              
+        <h2 class="text-2xl font-semibold text-gray-800">LOGS</h2>
+          <!-- Logs Section -->
+          <section id="logs" class="mb-12 w-full">
+            <h2 class="text-xl font-bold mb-4 text-gray-800">Doctor Activity Logs</h2>
+            <div class="bg-white rounded-lg shadow overflow-hidden w-full">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Timestamp</th>
+                            <th class="text-left">Doctor User</th>
+                            <th class="text-left">Action</th>
+                            <th class="text-left">Target Type</th>
+                            <th class="text-left">Target ID</th>
+                            <th class="text-left">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% logs.forEach(log => { %>
+                            <tr>
+                                <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
+                                <td><%= log.Doctorname %></td>
+                                <td><%= log.ActionPerformed %></td>
+                                <td><%= log.TargetType %></td>
+                                <td><%= log.TargetID %></td>
+                                <td><%= log.Description %></td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            </div>
         </section>
-      
+       
       </div>
 
     </main>
   </div>
 
-  <script src="/javascripts/doctorHelp.js"></script>
+    <script src="/javascripts/doctorHelp.js"></script>
 </body>
 </html>

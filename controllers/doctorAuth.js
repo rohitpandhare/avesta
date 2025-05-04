@@ -79,11 +79,16 @@ async function deleteRelation(req, res) {
         //trying to make the flag as 1 - inactive 
         const [result] = await conPool.query('UPDATE doctor_patient SET flag = 1 WHERE PatientID = ? AND DoctorID = ?', [PatientID, doctorID]);
 
-        // Send JSON response
-        res.status(result.affectedRows > 0 ? 200 : 404).json({
-            success: result.affectedRows > 0,
-            message: result.affectedRows > 0 ? 'Patient Deleted successfully!' : 'Patient not found!'
-        });
+        if (result.affectedRows > 0) {
+            // Insert log into admin_activity table
+            await conPool.query(
+               'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+               [doctorID, 'DEACTIVATE', 'Patient deactivated Relation', 'PATIENT RELATION', PatientID]
+           );
+           return res.status(200).json({ success: true, message: 'Patient Deleted successfully!' });
+       } else {
+           return res.status(404).json({ success: false, message: 'Patient not found!' });
+       }
 
     } catch (err) {
         console.error(err);
@@ -99,16 +104,22 @@ async function deleteRelation(req, res) {
 // DELETE medicalRecords
 async function deleteRecord(req, res) {
     try {
+        const { doctorID } = await getDocID(req.session.user.UserID);
         const RecordID = req.params.id; // get id manually
 
         // Attempt to delete the relationship
         const [result] = await conPool.query('UPDATE medical_record SET flag = 1 WHERE RecordID = ?', [RecordID]);
 
-        // Send JSON response
-        res.status(result.affectedRows > 0 ? 200 : 404).json({
-            success: result.affectedRows > 0,
-            message: result.affectedRows > 0 ? 'Medical Record Deleted successfully!' : 'Patient not found!'
-        });
+        if (result.affectedRows > 0) {
+            // Insert log into admin_activity table
+            await conPool.query(
+               'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+               [doctorID, 'DEACTIVATE', 'Record deactivated Relation', 'RECORD', RecordID]
+           );
+           return res.status(200).json({ success: true, message: 'Record Deleted successfully!' });
+       } else {
+           return res.status(404).json({ success: false, message: 'Record not found!' });
+       }
 
     } catch (err) {
         console.error(err);
@@ -121,10 +132,10 @@ async function deleteRecord(req, res) {
     }
 }
 
-// DELETE medicalRecords
+// DELETE pres
 async function deletePres(req, res) {
     try {
-        
+        const { doctorID } = await getDocID(req.session.user.UserID);
         const PrescriptionID = req.params.id;
         
         // First verify the prescription exists and belongs to this doctor
@@ -137,18 +148,21 @@ async function deletePres(req, res) {
             return res.status(404).json({ error: 'Prescription not found' });
         }
 
+        s = 'COMPLETED'
       // Attempt to delete the relationship
       const [result] = await conPool.query('UPDATE prescription SET flag = 1 WHERE PrescriptionID = ?', [PrescriptionID]);
+      await conPool.query('UPDATE prescription SET Status = ? WHERE PrescriptionID = ?', [s,PrescriptionID]);
 
-        // Send JSON response
-        res.status(result.affectedRows > 0 ? 200 : 404).json({
-            success: result.affectedRows > 0,
-            message: result.affectedRows > 0 ? 'Prescription Deleted successfully!' : 'Patient not found!'
-        });
-        // res.json({ 
-        //     success: true,
-        //     message: 'Prescription deleted successfully'
-        // });
+      if (result.affectedRows > 0) {
+        // Insert log into admin_activity table
+        await conPool.query(
+           'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+           [doctorID, 'DEACTIVATE', 'Prescription deactivated Relation', 'PRESCRIPTION', PrescriptionID]
+       );
+       return res.status(200).json({ success: true, message: 'Patient Deleted successfully!' });
+   } else {
+       return res.status(404).json({ success: false, message: 'Patient not found!' });
+   }
 
     } catch (err) {
         console.error(err);
@@ -227,6 +241,7 @@ async function addPatient(req, res) {
                 "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
                 [patientName.trim()]
             );
+            
 
             if (patient.length === 0) {
                 throw new Error("Patient not found");
@@ -245,28 +260,32 @@ async function addPatient(req, res) {
         }
 
       // Check if relationship already exists
-const [existingRelation] = await conPool.query(
-    'SELECT * FROM doctor_patient WHERE DoctorID = ? AND PatientID = ?',
-    [doctorID, PatientID]
-);
-
-if (existingRelation.length > 0) {
-    // Check if the existing relationship is soft-deleted (flag = 1)
-    const [existingRelationFlag] = await conPool.query(
-        'SELECT flag FROM doctor_patient WHERE DoctorID = ? AND PatientID = ?',
+    const [existingRelation] = await conPool.query(
+        'SELECT * FROM doctor_patient WHERE DoctorID = ? AND PatientID = ?',
         [doctorID, PatientID]
     );
 
-    if (existingRelationFlag[0].flag === 1) {
-        // Update the existing relationship
-        await conPool.query(
-            'UPDATE doctor_patient SET flag = 0, FirstConsultation = ?, ConsultationType = ?, TreatmentNotes = ? WHERE DoctorID = ? AND PatientID = ?',
-            [FirstConsultation, ConsultationType, TreatmentNotes, doctorID, PatientID]
+    if (existingRelation.length > 0) {
+        // Check if the existing relationship is soft-deleted (flag = 1)
+        const [existingRelationFlag] = await conPool.query(
+            'SELECT flag FROM doctor_patient WHERE DoctorID = ? AND PatientID = ?',
+            [doctorID, PatientID]
         );
-        console.log('Updated existing relationship');
-    } else {
-        throw new Error('Relationship already exists and is active');
-    }
+
+        if (existingRelationFlag[0].flag === 1) {
+            // Update the existing relationship
+            await conPool.query(
+                'UPDATE doctor_patient SET flag = 0, FirstConsultation = ?, ConsultationType = ?, TreatmentNotes = ? WHERE DoctorID = ? AND PatientID = ?',
+                [FirstConsultation, ConsultationType, TreatmentNotes, doctorID, PatientID]
+            );
+            await conPool.query(
+                'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+                [doctorID, 'ADD PATIENT', 'Existing Patient Activate Relation', 'PATIENT RELATION', PatientID]
+            );
+            console.log('Updated existing relationship');
+        } else {
+            throw new Error('Relationship already exists and is active');
+        }
 } else {
     // Insert the new relationship
     await conPool.query(
@@ -274,6 +293,11 @@ if (existingRelation.length > 0) {
         (DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes)
         VALUES (?, ?, ?, ?, ?)`,
         [doctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
+    );
+
+    await conPool.query(
+        'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+        [doctorID, 'ADD PATIENT', 'NEW Patient Activate Relation', 'PATIENT RELATION', PatientID]
     );
     console.log('Inserted new relationship');
 }
@@ -477,6 +501,10 @@ async function addPrescription(req, res) {
         );
 
         console.log("Prescription added:", { prescriptionId, GlobalReferenceID, medicines: prescriptionMedicines });
+        await conPool.query(
+            'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+            [doctorID, 'ADD PRESCRIPTON', 'NEW Prescription Activate Relation', 'PRESCRIPTION', prescriptionId]
+        );
 
         res.render('users/doctor', {
             success: 'Prescription added successfully!',
@@ -577,6 +605,8 @@ async function addMedRecords (req,res) {
             [doctorID, PatientID]
         );
 
+        // recordID = existingRelation.insertId
+
         if (existingRelation.length > 0) {
             // Check if the existing relationship is soft-deleted (flag = 1)
             const [existingRelationFlag] = await conPool.query(
@@ -590,36 +620,34 @@ async function addMedRecords (req,res) {
                 'UPDATE medical_record SET flag = 0, Diagnosis = ?, Symptoms = ?, Treatments = ?, RecordDate = ?, Notes = ?, UpdatedBy = ? WHERE DoctorID = ? AND PatientID = ?',
                     [Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy, doctorID, PatientID]
                 );
+
+                await conPool.query(
+                    'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+                    [doctorID, 'ADD Medical Record', 'Exsisting Record Activate Relation', 'RECORD', PatientID]
+                );
+
                 console.log('Updated existing relationship');
             } else {
                 throw new Error('Records already exists and is active');
             }
         } else {
             // Insert the new relationship
-               await conPool.query(
+            await conPool.query(
             `INSERT INTO medical_record 
             (PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-            [PatientID, doctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy]
+            [PatientID, doctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy],
+
+            await conPool.query(
+                'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+                [doctorID, 'ADD Medical Record', 'NEW Record Activate Relation', 'RECORD', PatientID]
+            )
+
+            
         );
             console.log('Inserted new relationship');
         }
-            
-        // Validate required fields (PatientID, Diagnosis, Symptoms, Treatments, Notes, UpdatedBy)
-        checkRequiredFields(['PatientID', 'Diagnosis', 'Symptoms', 'Treatments', 'Notes', 'UpdatedBy'], req.body);
-
-        // Add validation
-        if (!PatientID || !Diagnosis || !Symptoms || !Treatments || !RecordDate || !Notes || !UpdatedBy) {
-            throw new Error('All required fields must be filled');
-        }
-         
-        //  await conPool.query(
-        //     `INSERT INTO medical_record 
-        //     (PatientID, DoctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy) 
-        //     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        //     [PatientID, doctorID, Diagnosis, Symptoms, Treatments, RecordDate, Notes, UpdatedBy]
-        // );
-
+     
         //get updated data
         const {prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
         console.log("Received data:", req.body);
@@ -678,7 +706,6 @@ async function addMedRecords (req,res) {
         }
     }
 };
-
 
 // User routes
 async function getRel(req, res) {
@@ -957,7 +984,98 @@ async function addingRec(req,res) {
       }
 }
 
+async function getOldPres(req, res) {
+    try {
+      if (req.session.user && req.session.user.Role === 'DOCTOR') {
+        const { doctorID, doctorDetails } = await getDocID(req.session.user.UserID);
+  
+        // Get updated data
+        const [prescriptions] = await conPool.query(
+            `SELECT
+                p.*,
+                pat.Name AS PatientName
+            FROM prescription p
+            LEFT JOIN patient pat ON p.PatientID = pat.PatientID
+            WHERE p.flag = 1 AND p.DoctorID = ?
+            ORDER BY p.DateIssued DESC`,
+            [doctorID]
+          );
+  
+        const userData = {
+          ...req.session.user,
+          doctorDetails
+        };
+  
+        res.render('users/doc/viewPres', {
+          user: userData,
+          DoctorID: doctorID,
+          prescriptions,
+          success: req.session.success,
+          error: req.session.error,
+          doctorRelationships: []
+        });
+  
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+      }
+    } catch (err) {
+      console.error('Error loading doctor dashboard:', err);
+      res.render('users/doctor', {
+        user: {
+          ...req.session.user,
+          Username: req.session.user.Name || 'Doctor' // Fallback name
+        },
+        currentDoctorID: null,
+        prescriptions: [],
+        error: 'Error loading dashboard: ' + err.message,
+        doctorRelationships: []
+      });
+      // Clear flash messages
+      delete req.session.success;
+      delete req.session.error;
+    }
+  }
 
+async function revivePrescription(req, res) {
+    try {
+        const { doctorID } = await getDocID(req.session.user.UserID);
+        const PrescriptionID = req.params.id;
+        
+        // First verify the prescription exists and belongs to this doctor
+        const [prescription] = await conPool.query(
+            'SELECT * FROM prescription WHERE Flag = 1 AND PrescriptionID = ?',
+            [PrescriptionID]
+        );
+
+        if (!prescription.length) {
+            return res.status(404).json({ error: 'Prescription not found' });
+        }
+
+      // Attempt to delete the relationship
+      const [result] = await conPool.query('UPDATE prescription SET flag = 0 WHERE PrescriptionID = ?', [PrescriptionID]);
+
+      if (result.affectedRows > 0) {
+        // Insert log into admin_activity table
+        await conPool.query(
+           'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+           [doctorID, 'ACTIVATE', 'Prescription activated Relation', 'PRESCRIPTION', PrescriptionID]
+       );
+       return res.status(200).json({ success: true, message: 'Patient Deleted successfully!' });
+   } else {
+       return res.status(404).json({ success: false, message: 'Patient not found!' });
+   }
+
+    } catch (err) {
+        console.error(err);
+        // Send error response
+        res.status(500).json({ success: false, message: 'Error deleting Prescription' });
+    } finally {
+        // Clear flash messages
+        delete req.session.success;
+        delete req.session.error;
+    }
+}
 module.exports ={
     getDoctor,
     addPatient,
@@ -971,5 +1089,7 @@ module.exports ={
     getPres,
     addingPres,
     addingRel,
-    addingRec
+    addingRec,
+    getOldPres,
+    revivePrescription
 }
