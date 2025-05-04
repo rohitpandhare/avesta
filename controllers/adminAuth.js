@@ -268,6 +268,9 @@ async function deleteDoctor (req, res) {
             [doctorId]
         );
 
+        await conPool.query(
+            'UPDATE user SET Flag = 1 WHERE UserID = (SELECT UserID FROM doctor WHERE DoctorID = ?)',[doctorId])
+
         if (result.affectedRows > 0) {
             await conPool.query(
                 'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
@@ -294,6 +297,8 @@ async function deletePatient (req, res) {
             [patientId]
         );
 
+        await conPool.query('UPDATE user SET Flag = 1 WHERE UserID = (SELECT UserID FROM patient WHERE PatientID = ?)',[patientId])
+        
         if (result.affectedRows > 0) {
             // Insert log into admin_activity table
             await conPool.query(
@@ -311,7 +316,7 @@ async function deletePatient (req, res) {
     }
 };
 
-
+// REACTIVATE user
 async function reviveUser(req, res) {
     const userId = req.params.id;
 
@@ -327,7 +332,7 @@ async function reviveUser(req, res) {
                 'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
                 [req.session.user.UserID, 'ACTIVATE', 'Admin Activated user', 'USER', userId]
             );
-            return res.status(200).json({ success: true, message: 'User soft deleted' });
+            return res.status(200).json({ success: true, message: 'User Revived' });
         } else {
             return res.status(404).json({ success: false, message: 'User not found' });
         }

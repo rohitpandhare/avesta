@@ -10,16 +10,14 @@
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
-     <!-- Hamburger Menu -->
-     <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+    <!-- Hamburger Menu -->
+    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
         <div></div>
         <div></div>
         <div></div>
     </div>
 
-    <div class="flex h-screen"> 
-        <!-- div for whole content  -->
-
+    <div class="flex h-screen">
         <!-- Sidebar -->
         <aside class="sidebar flex flex-col h-full" id="sidebar">
             <span class="close-icon" id="close-icon" onclick="closeSidebar()">×</span>
@@ -29,9 +27,9 @@
                     <%= user?.Username?.split('@')[0] || 'Admin' %>
                     <br>
                 <span class="text-gray-600"> UserID: </span> <%= user?.UserID || '0' %>
-                </span> 
+                </span>
             </div>
-            
+
             <nav class="p-4 flex-1">
                 <ul class="space-y-2">
                     <li>
@@ -64,9 +62,15 @@
                             Logs
                         </a>
                     </li>
+                    <li>
+                        <a href="/admin/reviveUser" class="nav-item">
+                            <i data-feather="refresh-ccw" class="w-5 h-5 mr-3"></i>
+                            Revive User
+                        </a>
+                    </li>
                 </ul>
             </nav>
-            
+
             <!-- logout button at the bottom -->
             <div class="p-4 border-t border-gray-200">
                 <a href="/auth/logout" class="flex items-center px-4 py-2 bg-red-600 text-red-600 rounded-lg hover:bg-red-700 transition-colors text-xl">
@@ -86,84 +90,74 @@
                     <span class="text-gray-700">Welcome Admin,
                         <span class="text-blue-600">
                             <%= user?.Username?.split('@')[0] || 'Admin' %>
-                        </span> 
+                        </span>
                     </span>
                 </div>
             </header>
 
-                <h2 class="text-xl font-bold mb-4 text-gray-800">User Management</h2>
-                <div class="bg-white rounded-lg shadow overflow-hidden w-full">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th class="text-left">UserID</th>
-                                <th class="text-left">Username</th>
-                                <th class="text-left">Email</th>
-                                <th class="text-left">Role</th>
-                                <th class="text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% 
-                                const activeUsers = userList?.filter(user => user.Flag === 0); 
-                                if (activeUsers?.length > 0) { 
-                            %>
-                                <% activeUsers.forEach(user => { %>
-                                    <tr>
-                                        <td><%= user.UserID %></td>
-                                        <td><%= user.Username %></td>
-                                        <td><%= user.Email %></td>
-                                        <td><%= user.Role %></td>
-                                        <td>
-                                            <button onclick="ReviveItem('user', '<%= user.UserID %>')" 
-                                                    class="btn btn-danger">
-                                                Activate
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
+            <h2 class="text-xl font-bold mb-4 text-gray-800">User Management</h2>
+            <div class="bg-white rounded-lg shadow overflow-hidden w-full">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left">UserID</th>
+                            <th class="text-left">Username</th>
+                            <th class="text-left">Email</th>
+                            <th class="text-left">Role</th>
+                            <th class="text-left">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (userList && userList.length > 0) { %>
+                            <% userList.forEach(user => { %>
                                 <tr>
-                                    <td colspan="5" class="text-center py-4">No users available</td>
+                                    <td><%= user.UserID %></td>
+                                    <td><%= user.Username %></td>
+                                    <td><%= user.Email %></td>
+                                    <td><%= user.Role %></td>
+                                    <td>
+                                        <button onclick="ReviveItem('user', '<%= user.UserID %>')" class="btn btn-danger">
+                                            Activate
+                                        </button>
+                                    </td>
                                 </tr>
-                            <% } %>
-                        </tbody>
-                        
-                    </table>
-                </div>
-
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="5" class="text-center py-4">No users available</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
         </main>
-
     </div>
 
     <script>
         // Initialize Feather Icons
         feather.replace();
+
         // Sidebar functionality
         document.addEventListener('DOMContentLoaded', () => {
-        const sidebar = document.getElementById('sidebar');
-        const hamburger = document.getElementById('hamburger');
-        const closeIcon = document.getElementById('close-icon');
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = document.getElementById('hamburger');
+            const closeIcon = document.getElementById('close-icon');
 
-        const navItems = document.querySelectorAll('.nav-item');
-        const sections = document.querySelectorAll('main > section');
+            function toggleSidebar() {
+                sidebar.classList.toggle('open');
+            }
 
-        function toggleSidebar() {
-            sidebar.classList.toggle('open');
-        }
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+            }
 
-        function closeSidebar() {
-            sidebar.classList.remove('open');
-        }
+            hamburger.addEventListener('click', toggleSidebar);
+            closeIcon.addEventListener('click', closeSidebar);
+        });
 
-        hamburger.addEventListener('click', toggleSidebar);
-        closeIcon.addEventListener('click', closeSidebar);
-
-    });
-
-        // Delete functionality
+        // Revive functionality
         function ReviveItem(type, id) {
-            if (!confirm(`Are you sure you want to delete this ${type}?`)) {
+            if (!confirm(`Are you sure you want to revive this ${type}?`)) {
                 return;
             }
 
@@ -191,9 +185,7 @@
                 console.error(`Error Recovering ${type}:`, error);
                 alert(`Failed to Recover ${type}: ${error.message}`);
             });
-        } 
+        }
     </script>
 </body>
 </html>
-
-

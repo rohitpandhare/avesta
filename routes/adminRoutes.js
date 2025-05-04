@@ -11,7 +11,6 @@ const {
     deleteDoctor,
     deletePatient,
     reviveUser
-    // getAdminDashboard
 } = require('../controllers/adminAuth');
 
 // Admin creation & login views
@@ -25,8 +24,9 @@ router.post('/golden/verify-otp', verifyAdminOTP);
 
 router.get('/admin', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/login');
+        return res.redirect('/adminLogin');
     }
+
     const [userList] = await conPool.query('SELECT * FROM user');
 
     const [doctorList] = await conPool.query(`
@@ -90,7 +90,7 @@ router.get('/admin', async (req, res) => {
 
 router.get('/admin/users', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/login');
+        return res.redirect('/adminLogin');
     }
 
     const [userList] = await conPool.query('SELECT * FROM user');
@@ -102,7 +102,7 @@ router.get('/admin/users', async (req, res) => {
 
 router.get('/admin/doc', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/login');
+        return res.redirect('/adminLogin');
     }
 
     const [userList] = await conPool.query('SELECT * FROM user');
@@ -123,7 +123,7 @@ router.get('/admin/doc', async (req, res) => {
 
 router.get('/admin/pat', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/login');
+        return res.redirect('/adminLogin');
     }
     const [userList] = await conPool.query('SELECT * FROM user');
 
@@ -144,24 +144,44 @@ router.get('/admin/pat', async (req, res) => {
 
 router.get('/admin/reviveUser', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/login');
+        return res.redirect('/adminLogin');
     }
 
-    const [userList] = await conPool.query('SELECT * FROM user where flag=1');
-    return res.render('users/reviveUser', {
-        user: req.session.user,
-        userList
-    });
+    try {
+        const [userList] = await conPool.query('SELECT * FROM user WHERE Flag = 1');
+        return res.render('users/reviveUser', {
+            user: req.session.user,
+            userList
+        });
+    } catch (err) {
+        console.error('Error fetching users:', err);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
 });
-
 
 // Route to view admin logs
 router.get('/admin/logs', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/login');
+        return res.redirect('/adminLogin');
     }
 
-    const [logs] = await conPool.query('SELECT * FROM admin_activity ORDER BY ActivityTimestamp DESC');
+    const [logs] = await conPool.query(`
+        SELECT
+            aa.ActivityID,
+            u.Username AS AdminUsername,
+            aa.ActionPerformed,
+            aa.Description,
+            aa.TargetType,
+            aa.TargetID,
+            aa.ActivityTimestamp
+        FROM
+            admin_activity aa
+        JOIN
+            user u ON aa.AdminUserID = u.UserID
+        ORDER BY
+            aa.ActivityTimestamp DESC
+    `);
+
     return res.render('users/logs', {
         user: req.session.user,
         logs
@@ -172,8 +192,6 @@ router.get('/admin/logs', async (req, res) => {
 router.delete('/delete-user/:id', deleteUser);
 router.delete('/delete-doctor/:id', deleteDoctor);
 router.delete('/delete-patient/:id', deletePatient);
-
-
 
 router.put('/revive-user/:id', reviveUser);
 

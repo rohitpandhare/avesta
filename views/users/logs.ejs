@@ -61,6 +61,12 @@
                             Logs
                         </a>
                     </li>
+                    <li>
+                        <a href="/admin/reviveUser" class="nav-item">
+                            <i data-feather="refresh-ccw" class="w-5 h-5 mr-3"></i>
+                            Revive User
+                        </a>
+                    </li>
                 </ul>
             </nav>
 
@@ -107,7 +113,7 @@
                             <% logs.forEach(log => { %>
                                 <tr>
                                     <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
-                                    <td><%= log.AdminUserID %></td>
+                                    <td><%= log.AdminUsername %></td>
                                     <td><%= log.ActionPerformed %></td>
                                     <td><%= log.TargetType %></td>
                                     <td><%= log.TargetID %></td>
