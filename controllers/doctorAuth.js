@@ -83,7 +83,7 @@ async function deleteRelation(req, res) {
             // Insert log into admin_activity table
             await conPool.query(
                'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-               [doctorID, 'DEACTIVATE', 'Patient deactivated Relation', 'PATIENT RELATION', PatientID]
+               [doctorID, 'DEACTIVATE', 'Patient deactivated', 'PATIENT RELATION', PatientID]
            );
            return res.status(200).json({ success: true, message: 'Patient Deleted successfully!' });
        } else {
@@ -114,9 +114,9 @@ async function deleteRecord(req, res) {
             // Insert log into admin_activity table
             await conPool.query(
                'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-               [doctorID, 'DEACTIVATE', 'Record deactivated Relation', 'RECORD', RecordID]
+               [doctorID, 'DEACTIVATE', 'Record deactivated', 'RECORD', RecordID]
            );
-           return res.status(200).json({ success: true, message: 'Record Deleted successfully!' });
+           return res.status(200).json({ success: true, message: 'Record Deactivated successfully!' });
        } else {
            return res.status(404).json({ success: false, message: 'Record not found!' });
        }
@@ -148,20 +148,18 @@ async function deletePres(req, res) {
             return res.status(404).json({ error: 'Prescription not found' });
         }
 
-        s = 'COMPLETED'
       // Attempt to delete the relationship
-      const [result] = await conPool.query('UPDATE prescription SET flag = 1 WHERE PrescriptionID = ?', [PrescriptionID]);
-      await conPool.query('UPDATE prescription SET Status = ? WHERE PrescriptionID = ?', [s,PrescriptionID]);
+      const [result] = await conPool.query(`UPDATE prescription SET flag = 1 AND Status = 'COMPLETED' WHERE PrescriptionID = ?`, [PrescriptionID]);
 
       if (result.affectedRows > 0) {
         // Insert log into admin_activity table
         await conPool.query(
            'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-           [doctorID, 'DEACTIVATE', 'Prescription deactivated Relation', 'PRESCRIPTION', PrescriptionID]
+           [doctorID, 'DEACTIVATE', 'Prescription deactivated', 'PRESCRIPTION', PrescriptionID]
        );
-       return res.status(200).json({ success: true, message: 'Patient Deleted successfully!' });
+       return res.status(200).json({ success: true, message: 'Prescription Deactivated successfully!' });
    } else {
-       return res.status(404).json({ success: false, message: 'Patient not found!' });
+       return res.status(404).json({ success: false, message: 'Prescription not found!' });
    }
 
     } catch (err) {
@@ -238,10 +236,9 @@ async function addPatient(req, res) {
         // If PatientID is missing, fetch from database using patient name
         if (!PatientID || PatientID.trim() === "") {
             const [patient] = await conPool.query(
-                "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
+                `SELECT PatientID FROM patient WHERE Flag = 0 AND Name = ? LIMIT 1`,
                 [patientName.trim()]
             );
-            
 
             if (patient.length === 0) {
                 throw new Error("Patient not found");
@@ -251,7 +248,7 @@ async function addPatient(req, res) {
 
         // Validate patient exists
         const [patientExists] = await conPool.query(
-            'SELECT PatientID FROM patient WHERE PatientID = ?',
+            'SELECT PatientID FROM patient WHERE Flag = 0 AND PatientID = ?',
             [PatientID]
         );
 
@@ -280,7 +277,7 @@ async function addPatient(req, res) {
             );
             await conPool.query(
                 'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-                [doctorID, 'ADD PATIENT', 'Existing Patient Activate Relation', 'PATIENT RELATION', PatientID]
+                [doctorID, 'ADD PATIENT', 'Existing Patient Activated', 'PATIENT RELATION', PatientID]
             );
             console.log('Updated existing relationship');
         } else {
@@ -297,7 +294,7 @@ async function addPatient(req, res) {
 
     await conPool.query(
         'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-        [doctorID, 'ADD PATIENT', 'NEW Patient Activate Relation', 'PATIENT RELATION', PatientID]
+        [doctorID, 'ADD PATIENT', 'NEW Patient Activated', 'PATIENT RELATION', PatientID]
     );
     console.log('Inserted new relationship');
 }
@@ -391,7 +388,7 @@ async function addPrescription(req, res) {
                 throw new Error("Patient name is required if PatientID is not provided");
             }
             const [patient] = await conPool.query(
-                "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
+                "SELECT PatientID FROM patient WHERE Flag = 0 AND Name = ? LIMIT 1",
                 [patientName.trim()]
             );
             if (patient.length === 0) {
@@ -404,7 +401,7 @@ async function addPrescription(req, res) {
 
         // Validate patient exists
         const [patientExists] = await conPool.query(
-            'SELECT PatientID FROM patient WHERE PatientID = ?',
+            'SELECT PatientID FROM patient WHERE Flag = 0 AND PatientID = ?',
             [req.body.PatientID]
         );
         if (!patientExists.length) {
@@ -452,9 +449,9 @@ async function addPrescription(req, res) {
         // Insert into PRESCRIPTION table
         const [prescriptionResult] = await connection.query(
             `INSERT INTO PRESCRIPTION
-            (PatientID, DoctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID)
-            VALUES (?, ?, ?, ?, ?, ?)`,
-            [req.body.PatientID, doctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID]
+            (PatientID, DoctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID,Flag)
+            VALUES (?, ?, ?, ?, ?, ?, ?)`,
+            [req.body.PatientID, doctorID, DateIssued, DiagnosisNotes, Status, GlobalReferenceID,0]
         );
 
         const prescriptionId = prescriptionResult.insertId;
@@ -493,7 +490,6 @@ async function addPrescription(req, res) {
         const { prescriptions, medicalRecords, doctorPatients } = await updateData(doctorID);
         const [medData] = await conPool.query('SELECT * FROM medicines_data');
 
-
         // Fetch medicines for the newly created prescription
         const [prescriptionMedicines] = await conPool.query(
             `SELECT * FROM prescription_medicine WHERE PrescriptionID = ?`,
@@ -503,7 +499,7 @@ async function addPrescription(req, res) {
         console.log("Prescription added:", { prescriptionId, GlobalReferenceID, medicines: prescriptionMedicines });
         await conPool.query(
             'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-            [doctorID, 'ADD PRESCRIPTON', 'NEW Prescription Activate Relation', 'PRESCRIPTION', prescriptionId]
+            [doctorID, 'ADD PRESCRIPTON', 'NEW Prescription Activated', 'PRESCRIPTION', prescriptionId]
         );
 
         res.render('users/doctor', {
@@ -579,7 +575,7 @@ async function addMedRecords (req,res) {
         // If PatientID is missing, fetch from database using patient name
         if (!PatientID || PatientID.trim() === "") {
             const [patient] = await conPool.query(
-                "SELECT PatientID FROM patient WHERE Name = ? LIMIT 1",
+                "SELECT PatientID FROM patient WHERE Flag = 0 AND Name = ? LIMIT 1",
                 [patientName.trim()]
             );
 
@@ -591,7 +587,7 @@ async function addMedRecords (req,res) {
 
         // Validate patient exists
         const [patientExists] = await conPool.query(
-            'SELECT PatientID FROM patient WHERE PatientID = ?',
+            'SELECT PatientID FROM patient WHERE Flag = 0 AND PatientID = ?',
             [PatientID]
         );
         
@@ -623,7 +619,7 @@ async function addMedRecords (req,res) {
 
                 await conPool.query(
                     'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-                    [doctorID, 'ADD Medical Record', 'Exsisting Record Activate Relation', 'RECORD', PatientID]
+                    [doctorID, 'ADD Medical Record', 'Existing Record Activated', 'RECORD', PatientID]
                 );
 
                 console.log('Updated existing relationship');
@@ -640,9 +636,8 @@ async function addMedRecords (req,res) {
 
             await conPool.query(
                 'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-                [doctorID, 'ADD Medical Record', 'NEW Record Activate Relation', 'RECORD', PatientID]
+                [doctorID, 'ADD Medical Record', 'NEW Record Activated', 'RECORD', PatientID]
             )
-
             
         );
             console.log('Inserted new relationship');
@@ -1053,13 +1048,13 @@ async function revivePrescription(req, res) {
         }
 
       // Attempt to delete the relationship
-      const [result] = await conPool.query('UPDATE prescription SET flag = 0 WHERE PrescriptionID = ?', [PrescriptionID]);
+      const [result] = await conPool.query(`UPDATE prescription SET flag = 0, Status = 'ACTIVE' WHERE PrescriptionID = ?`, [PrescriptionID]);
 
       if (result.affectedRows > 0) {
         // Insert log into admin_activity table
         await conPool.query(
            'INSERT INTO doctor_activity (DoctorID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-           [doctorID, 'ACTIVATE', 'Prescription activated Relation', 'PRESCRIPTION', PrescriptionID]
+           [doctorID, 'ACTIVATE', 'Prescription Reactivated', 'PRESCRIPTION', PrescriptionID]
        );
        return res.status(200).json({ success: true, message: 'Patient Deleted successfully!' });
    } else {

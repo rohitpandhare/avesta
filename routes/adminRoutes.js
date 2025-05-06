@@ -94,7 +94,7 @@ router.get('/admin/users', async (req, res) => {
     }
 
     const [userList] = await conPool.query('SELECT * FROM user');
-    return res.render('users/adminUsers', {
+    return res.render('users/adm/adminUsers', {
         user: req.session.user,
         userList
     });
@@ -134,13 +134,12 @@ router.get('/admin/pat', async (req, res) => {
         WHERE u.Role = 'PATIENT'
     `);
 
-    return res.render('users/adminPat', {
+    return res.render('users/adm/adminPat', {
         user: req.session.user,
         patientList,
         userList
     });
 });
-
 
 router.get('/admin/reviveUser', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
@@ -149,7 +148,7 @@ router.get('/admin/reviveUser', async (req, res) => {
 
     try {
         const [userList] = await conPool.query('SELECT * FROM user WHERE Flag = 1');
-        return res.render('users/reviveUser', {
+        return res.render('users/adm/reviveUser', {
             user: req.session.user,
             userList
         });
@@ -182,7 +181,7 @@ router.get('/admin/logs', async (req, res) => {
             aa.ActivityTimestamp DESC
     `);
 
-    return res.render('users/logs', {
+    return res.render('users/adm/logs', {
         user: req.session.user,
         logs
     });

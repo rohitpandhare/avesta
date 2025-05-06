@@ -166,7 +166,7 @@
                     <thead>
                         <tr>
                             <th class="text-left">Timestamp</th>
-                            <th class="text-left">Doctor User</th>
+                            <!-- <th class="text-left">Doctor User</th> -->
                             <th class="text-left">Action</th>
                             <th class="text-left">Target Type</th>
                             <th class="text-left">Target ID</th>
@@ -177,7 +177,7 @@
                         <% logs.forEach(log => { %>
                             <tr>
                                 <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
-                                <td><%= log.Doctorname %></td>
+                                <!-- <td><%= log.Doctorname %></td> -->
                                 <td><%= log.ActionPerformed %></td>
                                 <td><%= log.TargetType %></td>
                                 <td><%= log.TargetID %></td>
