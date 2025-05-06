@@ -30,9 +30,9 @@ router.get('/printPrescription/:refId', async (req, res) => {
                 d.Phone,
                 d.Specialty,
                 pt.Name AS PatientName
-            FROM PRESCRIPTION p
-            LEFT JOIN DOCTOR d ON p.DOCTORID = d.DoctorID
-            LEFT JOIN PATIENT pt ON p.PATIENTID = pt.PatientID
+            FROM prescription p
+            LEFT JOIN doctor d ON p.DOCTORID = d.DoctorID
+            LEFT JOIN patient pt ON p.PATIENTID = pt.PatientID
             WHERE p.STATUS = 'ACTIVE' AND p.GLOBALREFERENCEID = ?
         `, [refId]);
 

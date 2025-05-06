@@ -11,7 +11,7 @@ async function findDoctor(req, res) {
                 Phone,
                 LicenseNumber,
                 Qualifications
-            FROM DOCTOR
+            FROM doctor
             ORDER BY Name
         `);
 
@@ -38,7 +38,7 @@ async function findPerticularDoctor(req, res){
                 Phone,
                 LicenseNumber,
                 Qualifications
-            FROM DOCTOR 
+            FROM doctor 
             WHERE 
                 Name LIKE ? 
                 OR Specialty LIKE ?

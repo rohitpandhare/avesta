@@ -188,9 +188,9 @@ router.post('/test-medical-record', async (req, res) => {
 router.get('/test-view-all', async (req, res) => {
     try {
         // Fetch all records from all three tables
-        const [prescriptions] = await conPool.query('SELECT * FROM PRESCRIPTION ORDER BY DateIssued DESC');
-        const [medicalRecords] = await conPool.query('SELECT * FROM MEDICAL_RECORD ORDER BY RecordDate DESC');
-        const [doctorPatients] = await conPool.query('SELECT * FROM DOCTOR_PATIENT ORDER BY FirstConsultation DESC');
+        const [prescriptions] = await conPool.query('SELECT * FROM prescription ORDER BY DateIssued DESC');
+        const [medicalRecords] = await conPool.query('SELECT * FROM medical_record ORDER BY RecordDate DESC');
+        const [doctorPatients] = await conPool.query('SELECT * FROM doctor_patient ORDER BY FirstConsultation DESC');
 
         res.render('testViewAllRecords', {
             prescriptions,
