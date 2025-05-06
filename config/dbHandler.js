@@ -1,11 +1,12 @@
+require("dotenv").config();
 var myDB = require('mysql2/promise'); //importing mysql 
 
-const conPool = myDB.createPool({ //creating conpool connection - so all the func can acess them
+const conPool = myDB.createPool({ 
     connectionLimit: 100,
-    host: 'localhost',
-    user: 'root',
-    password: 'root',
-    database: "doctorsync_dbx", //created DB
+    host: process.env.host,
+    user: process.env.user,
+    password: process.env.password,
+    database: process.env.database, 
     debug: false,
     waitForConnections: true,
     queueLimit: 0

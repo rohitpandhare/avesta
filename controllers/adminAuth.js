@@ -106,7 +106,7 @@ async function getAdmin(req, res) {
     }
 }
 
-const MASTER_EMAIL = 'wroheet06@gmail.com';
+const MASTER_EMAIL = process.env.MASTER_EMAIL;
 const otpStore = new Map(); // Temporary in-memory
 
 const OTP_CONFIG = {
@@ -118,8 +118,8 @@ const OTP_CONFIG = {
 const emailTransport = nodemailer.createTransport({
     service: 'gmail',
     auth: {
-        user: 'connect.doctorsync@gmail.com',
-        pass: 'dklp rsru tpys agki'
+        user: process.env.userpro,
+        pass: process.env.pass
     }
 });
 
