@@ -114,7 +114,7 @@ router.get('/admin/doc', async (req, res) => {
         WHERE u.Role = 'DOCTOR'
     `);
 
-    return res.render('users/adminDoc', {
+    return res.render('users/adm/adminDoc', {
         user: req.session.user,
         doctorList,
         userList

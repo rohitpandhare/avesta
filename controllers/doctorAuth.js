@@ -236,7 +236,7 @@ async function addPatient(req, res) {
         // If PatientID is missing, fetch from database using patient name
         if (!PatientID || PatientID.trim() === "") {
             const [patient] = await conPool.query(
-                `SELECT PatientID FROM patient WHERE Flag = 0 AND Name = ? LIMIT 1`,
+                `SELECT PatientID FROM patient WHERE flag = 0 AND name = ? LIMIT 1`,
                 [patientName.trim()]
             );
 
@@ -248,7 +248,7 @@ async function addPatient(req, res) {
 
         // Validate patient exists
         const [patientExists] = await conPool.query(
-            'SELECT PatientID FROM patient WHERE Flag = 0 AND PatientID = ?',
+            'SELECT PatientID FROM patient WHERE flag = 0 AND PatientID = ?',
             [PatientID]
         );
 
@@ -286,7 +286,7 @@ async function addPatient(req, res) {
 } else {
     // Insert the new relationship
     await conPool.query(
-        `INSERT INTO DOCTOR_PATIENT
+        `INSERT INTO doctor_patient
         (DoctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes)
         VALUES (?, ?, ?, ?, ?)`,
         [doctorID, PatientID, FirstConsultation, ConsultationType, TreatmentNotes]
@@ -388,7 +388,7 @@ async function addPrescription(req, res) {
                 throw new Error("Patient name is required if PatientID is not provided");
             }
             const [patient] = await conPool.query(
-                "SELECT PatientID FROM patient WHERE Flag = 0 AND Name = ? LIMIT 1",
+                "SELECT PatientID FROM patient WHERE flag = 0 AND name = ? LIMIT 1",
                 [patientName.trim()]
             );
             if (patient.length === 0) {
@@ -401,7 +401,7 @@ async function addPrescription(req, res) {
 
         // Validate patient exists
         const [patientExists] = await conPool.query(
-            'SELECT PatientID FROM patient WHERE Flag = 0 AND PatientID = ?',
+            'SELECT PatientID FROM patient WHERE flag = 0 AND PatientID = ?',
             [req.body.PatientID]
         );
         if (!patientExists.length) {
@@ -575,7 +575,7 @@ async function addMedRecords (req,res) {
         // If PatientID is missing, fetch from database using patient name
         if (!PatientID || PatientID.trim() === "") {
             const [patient] = await conPool.query(
-                "SELECT PatientID FROM patient WHERE Flag = 0 AND Name = ? LIMIT 1",
+                "SELECT PatientID FROM patient WHERE flag = 0 AND name = ? LIMIT 1",
                 [patientName.trim()]
             );
 
@@ -587,7 +587,7 @@ async function addMedRecords (req,res) {
 
         // Validate patient exists
         const [patientExists] = await conPool.query(
-            'SELECT PatientID FROM patient WHERE Flag = 0 AND PatientID = ?',
+            'SELECT PatientID FROM patient WHERE flag = 0 AND PatientID = ?',
             [PatientID]
         );
         
