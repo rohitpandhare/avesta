@@ -150,7 +150,7 @@
                                         <td><%= prescription.GlobalReferenceID || 'N/A' %></td>
                                         <td>
                                             <button class="view-prescription-btn text-blue-600 hover:text-blue-800" 
-                                            data-refid="<%= prescription.GlobalReferenceID %>">
+                                            data-refid="<%= prescription.GlobalReferenceID %>" target="_blank">
                                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
                                              class="w-6 h-6 inline-block">
                                             <path stroke-linecap="round" stroke-linejoin="round" 
@@ -212,13 +212,13 @@
     }, 5000);
 
     document.querySelectorAll(".view-prescription-btn").forEach(button => {
-            button.addEventListener("click", function () {
-                const refId = this.getAttribute("data-refid");
-                if (refId) {
-                    window.location.href = `/printPrescription/${refId}`;
-                }
-            });
-        });
+    button.addEventListener("click", function () {
+        const refId = this.getAttribute("data-refid");
+        if (refId) {
+            window.open(`/printPrescription/${refId}`, '_blank');
+        }
+    });
+});
 
 });
 </script>

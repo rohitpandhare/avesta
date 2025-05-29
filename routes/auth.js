@@ -11,7 +11,6 @@ const {
 
 const { generateOTP, sendOTPEmail, verifyOTP } = require('../controllers/userAuth');
 
-
 // User CRUD func import
 const {  
     getRel,
@@ -63,7 +62,13 @@ router.post('/request-otp', async (req, res) => {
             role,
             expires: Date.now() + 300000
         });
-
+        await conPool.query(`
+        INSERT INTO otp_table (otp, email, byUser) 
+        VALUES (?, ?, ?)
+        `, [otp, user.Email, username]);
+        console.log('OTP generated and stored for user:', username);
+        
+        // Send OTP email
         await sendOTPEmail(user.Email, otp);
         
         res.json({ success: true, email: user.Email });

@@ -1,6 +1,6 @@
 body {
-        background-color: #f0f8ff; /* Light sky blue background */
-        color: #333; /* Neutral text color */
+        background-color: white; /* Light sky blue background */
+        /* color: white; Neutral text color */
         font-family: Arial, sans-serif;
         overflow-x: visible !important;
      }
@@ -13,7 +13,7 @@ aside {
   width: 256px;
   height: 100vh;
   /* background: #f8f9fa; */
-  background-color: #fff;
+  background-color: #000030;
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
   transition: transform 0.3s ease;
@@ -25,7 +25,7 @@ main {
   margin-left: 270px;
   padding: 20px;
   transition: margin-left 0.3s ease;
-  width: calc(100% - 270px); /* Add this line */
+  width: calc(100% - 50px); /* Add this line */
   max-width: none; /* Add this line */
 }
 
@@ -39,7 +39,7 @@ main {
 .hamburger div {
   width: 25px;
   height: 3px;
-  background-color: #333;
+  background-color: #ffffff;
   margin: 5px 0;
   transition: all 0.3s ease;
 }
@@ -51,13 +51,13 @@ main {
         right: 10px;
         font-size: 24px;
         font-weight: bold;
-        color: #007bff;
+        color: #3b82f6;
         cursor: pointer;
         margin-bottom: 20px;
     }
 
 .close-icon:hover {
-  color: #475565; /* Change color on hover for better interactivity */
+  color: #604ffa; /* Change color on hover for better interactivity */
 }
 
 
@@ -93,9 +93,9 @@ main {
         border-collapse: collapse;
         margin-bottom: 1rem;
     }
-    thead {
+    /* thead {
         background-color: #e6f7ff; /* Light bluish shade for headers */
-        }
+        
 
     .table th,
     .table td {
@@ -234,7 +234,7 @@ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         .nav-item {
           display: flex;
           align-items: center;
-          color: #333;
+          color: white;
           padding: 0.5rem 1rem;
           border-radius: 0.375rem;
           transition: all 0.2s ease;

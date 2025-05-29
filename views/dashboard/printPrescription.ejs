@@ -4,12 +4,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Prescription - <%= prescription.GLOBALREFERENCEID %></title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <link rel="stylesheet" href="/css/styles.css">
   <style>
 
   .page {
   border: 1px solid #e5e7eb;
 }
+  .no-print {
+    position: fixed;
+    bottom: 1rem;
+    right: 1rem;
+    z-index: 50;
+  }
     @media print {
     .no-print {
       display: none !important;
@@ -40,7 +46,6 @@
     }
     th {
       background-color: #1e3a8a; /* Dark blue background */
-      color: white; /* White text color for header */
       font-weight: bold;
     }
     .table-row-even {
@@ -77,7 +82,7 @@
   <!-- Logo and Tagline -->
   <div class="mb-8 flex items-center justify-between border-b-2 border-gray-700 pb-2">
     <div>
-      <a href="/" class="text-3xl font-bold text-blue-700 tracking-tight no-underline">DoctorSync</a>
+      <a href="/" class="text-3xl font-bold text-blue-600 tracking-tight no-underline">DoctorSync</a>
       <p class="text-base text-gray-600 -mt-1">Sync your health</p>
       
     </div>
@@ -89,7 +94,8 @@
       <span><strong>Valid for:</strong> <%= prescription.VALIDITYDAYS || 'Not specified' %> days<span/>
     </div>
   </div>
-
+  <hr>
+<br>
   <!-- Doctor & Patient Info -->
   <div class="flex justify-between mb-6">
     <div>
@@ -102,6 +108,7 @@
     <div class="text-right">
       <p class="text-sm"><strong>Patient:</strong> <%= prescription.PatientName || 'Unknown Patient' %></p>
       <p class="text-sm"><strong>Date:</strong> <%= new Date(prescription.DATEISSUED).toLocaleDateString() %></p>
+      <p class="text-sm"><strong>Aadhar ID:</strong> XXXX XXX XXX 1234</p>
     </div>
   </div>
 
@@ -117,9 +124,9 @@
   <% if (medicines && medicines.length > 0) { %>
     <div class="mb-6">
       <p class="font-semibold text-base mb-2">Medications:</p>
-      <table class="w-full border border-black text-xs table-auto">
+      <table class="w-full borde border-black text-xs table-auto">
         <thead>
-          <tr class="bg-blue-900 text-white">
+          <tr class="bg-blue-90">
             <th class="w-3/4 px-2 py-1 border border-black text-center">Medication</th>
             <th class="w-1/4 px-2 py-1 border border-black text-center">Timing</th>
           </tr>
@@ -164,29 +171,35 @@
 </div>
 
 <!-- Hidden on print -->
-<div class="no-print fixed bottom-6 right-6 flex gap-3">
-  <button onclick="window.print()" class="px-5 py-2 bg-blue-600 text-white rounded-lg shadow-md">Print</button>
-  <button onclick="downloadPDF()" class="px-5 py-2 bg-gray-700 text-white rounded-lg shadow-md">Save as PDF</button>
+<div class="no-print gap-8 flex justify-end items-center p-4">  
+  <button onclick="printWithCustom()" class="px-5 py-2 bg-blue-600 rounded-lg shadow-md w-12 text-white"> Save </button>
+  
+  <button onclick="shareWhatsApp()" class="px-5 py-2 bg-blue-600 rounded-lg shadow-md w-20 text-white">WhatsApp</button>
+
+</div>
+ 
 </div>
 
-<!-- PDF Script -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <script>
-  const { jsPDF } = window.jspdf;
-  function downloadPDF() {
-    const element = document.querySelector('.page');
-    html2canvas(element).then(canvas => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgProps = pdf.getImageProperties(imgData);
-      const pdfWidth = 210;
-      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save("Prescription_<%= prescription.GLOBALREFERENCEID %>.pdf");
-    });
+  function printWithCustom(){
+    const originaTitle = document.title;
+    const customFileName = "Prescription - <%= prescription.GLOBALREFERENCEID %>";
+    document.title = customFileName;
+    window.print();
+    setTimeout(() => {
+      document.title = originaTitle; // Reset title after printing
+    },1000)
   }
+
+  function shareWhatsApp() {
+    const refId = "<%= prescription.GLOBALREFERENCEID %>";
+    const url = `http://localhost:3000/printPrescription/${refId}`;
+    const text = `Hi, please find your prescription here: ${url}`;
+    const whatsappURL = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(whatsappURL, '_blank');
+  }
+
 </script>
+
 </body>
 </html>

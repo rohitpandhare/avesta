@@ -212,9 +212,9 @@ async function verifyAdminOTP(req, res) {
     try {
         await connection.beginTransaction();
         const [userResult] = await connection.query(
-            `INSERT INTO user (Username, Email, Password, Role, CreatedAt)
-             VALUES (?, ?, ?, ?, CURRENT_TIMESTAMP)`,
-            [Username, Email, md5('NA'), 'ADMIN']
+            `INSERT INTO user (Username, Email, Role, CreatedAt)
+             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
+            [Username, Email, 'ADMIN']
         );
         await connection.commit();
         otpStore.delete(Username);

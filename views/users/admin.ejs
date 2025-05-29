@@ -9,30 +9,29 @@
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
 </head>
 
-<body class="bg-gray-100 min-h-screen font-sans antialiased">
-     <!-- Hamburger Menu -->
-     <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
-        <div></div>
-        <div></div>
-        <div></div>
+<body class="min-h-screen font-sans antialiased" style="background-color: white;">
+
+    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
+        <div style="background-color: green;"></div>
+        <div style="background-color: green;"></div>
+        <div style="background-color: green;"></div>
     </div>
 
-    <div class="flex h-screen"> 
-        <!-- div for whole content  -->
-
-        <!-- Sidebar -->
-        <aside class="sidebar flex flex-col h-full" id="sidebar">
+    <div class="flex h-screen">
+        <aside class="sidebar flex flex-col h-full text-white" id="sidebar" style="background-color: #000030;">
             <span class="close-icon" id="close-icon" onclick="closeSidebar()">×</span>
-            <div class="p-6 border-b">
-                <h2 class="text-2xl font-bold text-gray-800">Admin Panel</h2>
-                Welcome Admin: <span class="text-blue-600">
-                    <%= user?.Username?.split('@')[0] || 'Admin' %>
+            <div class="p-6 border-b border-gray-700"> <h2 class="text-2xl font-bold text-white">Admin Panel</h2>
+                <span class="text-white">Welcome Admin:
+                    <span class="text-blue-600">
+                        <%= user?.Username?.split('@')[0] || 'Admin' %>
+                    </span>
                     <br>
-                <span class="text-gray-600"> UserID: </span> <%= user?.UserID || '0' %>
-                </span> 
+                    <span class="text-white"> UserID: </span>
+                    <span class="text-blue-600"><%= user?.UserID || '0' %></span>
+                </span>
             </div>
-            
-            <nav class="p-4 flex-1">
+
+            <nav class="p-4 flex-1 ">
                 <ul class="space-y-2">
                     <li>
                         <a href="/admin" class="nav-item">
@@ -72,10 +71,8 @@
                     </li>
                 </ul>
             </nav>
-            
-            <!-- logout button at the bottom -->
-            <div class="p-4 border-t border-gray-200">
-                <a href="/auth/logout" class="flex items-center px-4 py-2 bg-red-600 text-red-600 rounded-lg hover:bg-red-700 transition-colors text-xl">
+
+             <div class="p-4 border-t"> <a href="/auth/logout" class="flex items-center px-4 py-2 text-red-600 rounded-lg hover:bg-red-700 transition-colors text-xl">
                     <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
                     </svg>
@@ -84,21 +81,19 @@
             </div>
         </aside>
 
-        <!-- Main Content -->
         <main class="main-content">
             <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+                <h1 class="text-2xl font-bold">Dashboard Overview</h1>
                 <div class="flex items-center space-x-4">
-                    <span class="text-gray-700">Welcome Admin,
+                    <span class="text-green-600">Welcome Admin,
                         <span class="text-blue-600">
                             <%= user?.Username?.split('@')[0] || 'Admin' %>
-                        </span> 
+                        </span>
                     </span>
                 </div>
             </header>
 
-            <!-- Stats Section -->
-            <section id="dashboard" class="mb-12 w-full">
+            <section id="dashboard" class="mb-12 w-full" >
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div class="stat-card">
                         <h3 class="text-lg font-semibold mb-2 text-gray-700">Total Users</h3>
@@ -113,35 +108,34 @@
                         <p class="text-3xl font-bold text-yellow-600"><%= patientList?.length || 0 %></p>
                     </div>
                 </div>
-            
-                <!-- Doctor Specialties Table -->
-                <section id="doctor-stats " class="mb-12 w-full">
-                   <div class="stat-card">
-                       <h3 class="text-lg font-semibold mb-4 text-gray-700">Doctor Specialties</h3>
-                       <div class="overflow-x-auto">
-                           <table class="data-table w-full">
-                               <thead>
-                                   <tr>
-                                       <th class="text-left">Specialty</th>
-                                       <th class="text-left">Doctors</th>
-                                       <th class="text-left">Active Prescriptions</th>
-                                       <th class="text-left">Completed Prescriptions</th>
-                                   </tr>
-                               </thead>
-                               <tbody>
-                                   <% specialties.forEach(specialty => { %>
-                                       <tr>
-                                           <td><%= specialty.name %></td>
-                                           <td><%= specialty.doctorCount %></td>
-                                           <td><%= specialty.activePrescriptions %></td>
-                                           <td><%= specialty.completedPrescriptions %></td>
-                                       </tr>
-                                   <% }); %>
-                               </tbody>
-                           </table>
-                       </div>
-                   </div>
-               </section>
+
+                <section id="doctor-stats" class="mb-12 w-full" >
+                    <div class="stat-card">
+                        <h3 class="text-lg font-semibold mb-4 text-blue-600 justify-center">Doctor Specialties</h3>
+                        <div class="overflow-x-auto">
+                            <table class="data-table w-full rounded-xl">
+                                <thead>
+                                    <tr class="bg-gray-100">
+                                        <th class="text-left">Specialty</th>
+                                        <th class="text-left">Doctors</th>
+                                        <th class="text-left">Active Prescriptions</th>
+                                        <th class="text-left">Completed Prescriptions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% specialties.forEach(specialty => { %>
+                                        <tr>
+                                            <td><%= specialty.name %></td>
+                                            <td><%= specialty.doctorCount %></td>
+                                            <td><%= specialty.activePrescriptions %></td>
+                                            <td><%= specialty.completedPrescriptions %></td>
+                                        </tr>
+                                    <% }); %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </section>
             </section>
         </main>
 
@@ -152,25 +146,25 @@
         feather.replace();
         // Sidebar functionality
         document.addEventListener('DOMContentLoaded', () => {
-        const sidebar = document.getElementById('sidebar');
-        const hamburger = document.getElementById('hamburger');
-        const closeIcon = document.getElementById('close-icon');
+            const sidebar = document.getElementById('sidebar');
+            const hamburger = document.getElementById('hamburger');
+            const closeIcon = document.getElementById('close-icon');
 
-        const navItems = document.querySelectorAll('.nav-item');
-        const sections = document.querySelectorAll('main > section');
+            const navItems = document.querySelectorAll('.nav-item');
+            const sections = document.querySelectorAll('main > section');
 
-        function toggleSidebar() {
-            sidebar.classList.toggle('open');
-        }
+            function toggleSidebar() {
+                sidebar.classList.toggle('open');
+            }
 
-        function closeSidebar() {
-            sidebar.classList.remove('open');
-        }
+            function closeSidebar() {
+                sidebar.classList.remove('open');
+            }
 
-        hamburger.addEventListener('click', toggleSidebar);
-        closeIcon.addEventListener('click', closeSidebar);
+            hamburger.addEventListener('click', toggleSidebar);
+            closeIcon.addEventListener('click', closeSidebar);
 
-    });
+        });
 
         // Delete functionality
         function deleteItem(type, id) {
@@ -202,9 +196,7 @@
                 console.error(`Error deleting ${type}:`, error);
                 alert(`Failed to delete ${type}: ${error.message}`);
             });
-        } 
+        }
     </script>
 </body>
 </html>
-
-
