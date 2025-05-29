@@ -187,6 +187,22 @@ router.get('/admin/logs', async (req, res) => {
     });
 });
 
+
+router.get('/admin/deactivate/:id', async (req, res) => {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
+    }
+
+    const refId = req.params.id;
+
+    const [userList] = await conPool.query('SELECT * FROM user WHERE userID = ?', [refId]);
+
+    return res.render('users/adm/adminDel', {
+        user: req.session.user,
+        userList
+    });
+});
+
 // Admin dashboard
 router.delete('/delete-user/:id', deleteUser);
 router.delete('/delete-doctor/:id', deleteDoctor);

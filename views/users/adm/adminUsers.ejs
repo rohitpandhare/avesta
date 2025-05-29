@@ -80,6 +80,7 @@
                 </a>
             </div>
         </aside>
+
         <!-- Main Content -->
         <main class="main-content">
             <header class="flex justify-between items-center mb-8">
@@ -117,10 +118,10 @@
                                         <td><%= user.Email %></td>
                                         <td><%= user.Role %></td>
                                         <td>
-                                            <button onclick="deleteItem('user', '<%= user.UserID %>')" 
-                                                    class="btn btn-danger">
-                                                Deactivate
-                                            </button>
+                                            <button id="deleteUserBtn" data-refid="<%= user.UserID %>"
+                                            class="btn btn-danger" target="_blank">
+                                        <i data-feather="trash-2" class="w-4 h-4 mr-2"></i> Deactivate
+                                    </button>
                                         </td>
                                     </tr>
                                 <% }) %>
@@ -137,8 +138,8 @@
         </main>
 
     </div>
-
-    <script>
+    <script src="/javascripts/adminHelp.js"></script>
+     <script>
         // Initialize Feather Icons
         feather.replace();
         // Sidebar functionality
@@ -194,8 +195,16 @@
                 alert(`Failed to delete ${type}: ${error.message}`);
             });
         } 
-    </script>
+
+         document.querySelectorAll('#deleteUserBtn').forEach(button => {
+            button.addEventListener('click', (event) => {
+                const userId = event.currentTarget.getAttribute('data-refid');
+                if(userId){
+                    window.open(`/admin/deactivate/${userId}`, '_blank');
+                }
+            });
+        });
+    </script> 
 </body>
 </html>
-
 

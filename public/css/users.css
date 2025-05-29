@@ -1,7 +1,6 @@
 body {
         background-color: white; /* Light sky blue background */
-        /* color: white; Neutral text color */
-        font-family: Arial, sans-serif;
+        font-family: 'Inter', sans-serif;
         overflow-x: visible !important;
      }
 
@@ -17,7 +16,7 @@ aside {
   box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
   transition: transform 0.3s ease;
-  /* z-index: 10;  */
+  z-index: 10; 
 }
 
 /* Main content should have left margin to prevent overlap */
@@ -31,15 +30,21 @@ main {
 
 /* Hamburger menu for mobile */
 .hamburger {
-  display: none;
-  cursor: pointer;
-  padding: 10px;
-}
+          display: none; /* Shown via media query */
+          cursor: pointer;
+          padding: 10px;
+          position: fixed; /* To keep it visible on scroll */
+          top: 1rem;
+          left: 1rem;
+          z-index: 100; /* Above sidebar */
+          background-color: white; /* Added for visibility if overlapping */
+          border-radius: 0.375rem;
+          box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+      }
 
 .hamburger div {
   width: 25px;
   height: 3px;
-  background-color: #ffffff;
   margin: 5px 0;
   transition: all 0.3s ease;
 }
@@ -47,17 +52,17 @@ main {
   .close-icon {
       display: none;
         position: absolute;
-        top: 2px;
-        right: 10px;
+        top: 10px;
+        right: 15px;
         font-size: 24px;
         font-weight: bold;
-        color: #3b82f6;
+        color: #ffffff;
         cursor: pointer;
         margin-bottom: 20px;
     }
 
 .close-icon:hover {
-  color: #604ffa; /* Change color on hover for better interactivity */
+  color: #cccccc; /* Change color on hover for better interactivity */
 }
 
 
@@ -67,19 +72,19 @@ main {
   }
   aside {
     transform: translateX(-100%);
+    z-index: 200;
   }
   aside.open {
     transform: translateX(0);
   }
-  aside.open + main {
-    margin-left: 256px;
-}
+
   .hamburger {
     display: block;
   }
   main {
     margin-left: 0;
     padding-top: 60px;
+    width: 100%;
   }
 }
 
@@ -219,98 +224,180 @@ box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 
 /* extra for admin ejs  */
 
-        /* Stats cards */
-        .stat-card {
-          background: white;
-          border-radius: 0.5rem;
-          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-          padding: 1.5rem;
-          margin-bottom: 2rem;
-      }
+  /* Stats cards */
+  .stat-card {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
 
 
-      
-        /* Navigation */
-        .nav-item {
-          display: flex;
-          align-items: center;
-          color: white;
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          transition: all 0.2s ease;
-      }
 
-      .nav-item:hover {
-          background-color: #f3f4f6;
-          color: #3b82f6;
-      }
+  /* Navigation */
+  .nav-item {
+    display: flex;
+    align-items: center;
+    /* color: white; */
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+}
 
-      .nav-item.active {
-          background-color: #e6f7ff;
-          color: #3b82f6;
-      }
+.nav-item:hover {
+    background-color: #f3f4f6;
+    /* color: #3b82f6; */
+}
 
-      /* Buttons */
-      .btn {
-          transition: all 0.2s ease;
-          padding: 0.5rem 1rem;
-          border-radius: 0.375rem;
-          font-weight: 500;
-      }
+.nav-item.active {
+    background-color: #e6f7ff;
+    /* color: #3b82f6; */
+}
 
-      .btn-danger {
-          background-color: #ef4444;
-          color: white;
-      }
+/* Buttons */
+.btn {
+    transition: all 0.2s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    font-weight: 500;
+     display: inline-flex; /* Added for icon alignment */
+    align-items: center; /* Added for icon alignment */
+    justify-content: center; /* Added for icon alignment */
+}
 
-      .btn-danger:hover {
-          background-color: #dc2626;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
+.btn-danger {
+    background-color: #ef4444;
+    color: white;
+}
 
-      .btn-primary {
-          background-color: #3b82f6;
-          color: white;
-      }
+.btn-danger:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-      .btn-primary:hover {
-          background-color: #2563eb;
-      }
+.btn-primary {
+    background-color: #3b82f6;
+    color: white;
+}
 
-         /* Table styles */
-         .data-table {
-          width: 100%;
-          border-collapse: collapse;
-          margin-bottom: 1rem;
-      }
+.btn-primary:hover {
+    background-color: #2563eb;
+}
 
-      .data-table thead {
-          background-color: #e6f7ff;
-      }
+    /* Table styles */
+    .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
 
-      .data-table th,
-      .data-table td {
-          padding: 0.75rem;
-          vertical-align: top;
-          border-top: 1px solid #dee2e6;
-          text-align: left;
-      }
+.data-table thead {
+    background-color: #e6f7ff;
+}
 
-      .data-table thead th {
-          vertical-align: bottom;
-          border-bottom: 2px solid #dee2e6;
-      }
+.data-table th,
+.data-table td {
+    padding: 0.75rem;
+    vertical-align: top;
+    border-top: 1px solid #dee2e6;
+    text-align: left;
+}
 
-      .data-table tbody tr:nth-child(odd) {
-          background-color: #ffffff;
-      }
+.data-table thead th {
+    vertical-align: bottom;
+    border-bottom: 2px solid #dee2e6;
+}
 
-      .data-table tbody tr:nth-child(even) {
-          background-color: #e6f7ff;
-      }
+.data-table tbody tr:nth-child(odd) {
+    background-color: #ffffff;
+}
 
-      .data-table tbody tr:hover {
-          background-color: #bdd1e6;
-          color: #ffffff;
-      }
+.data-table tbody tr:nth-child(even) {
+    background-color: #e6f7ff;
+}
+
+.data-table tbody tr:hover {
+    background-color: #bdd1e6;
+    color: #ffffff;
+}
+
+
+
+        /* Styles for the new user card section (essential) */
+        .user-card {
+            background-color: white; /* Already in section, but can be specific */
+            border: 1px solid #e2e8f0; /* Tailwind gray-300 equivalent */
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        .user-card-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        .user-avatar-icon {
+            width: 4rem; height: 4rem;
+            color: #9ca3af; background-color: #f3f4f6;
+            border-radius: 9999px; /* full */
+            display: flex; align-items: center; justify-content: center;
+        }
+        .user-avatar-icon svg {
+            width: 2.5rem; height: 2.5rem;
+        }
+        .user-card-info p {
+            margin-bottom: 0.25rem;
+        }
+        .user-card-info strong {
+            color: #1f2937; /* Tailwind gray-800 equivalent */
+        }
+
+        /* Custom modal styles (essential for JS functionality) */
+        .custom-modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000;
+        }
+        .custom-modal {
+            background-color: white; padding: 2rem; border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+            width: 90%; max-width: 400px; text-align: center;
+        }
+        .custom-modal-buttons {
+            margin-top: 1.5rem; display: flex; justify-content: space-around;
+        }
+        .custom-modal-button {
+            padding: 0.5rem 1rem; border-radius: 0.375rem; font-weight: 500; cursor: pointer;
+        }
+        .custom-modal-button-confirm {
+            background-color: #dc2626; color: white;
+        }
+        .custom-modal-button-cancel {
+            background-color: #e5e7eb; color: #374151;
+        }
+
+        /* Custom message/alert box (essential for JS functionality) */
+        .custom-message-box {
+            position: fixed; top: 20px; right: 20px;
+            color: white; padding: 1rem 1.5rem; border-radius: 0.375rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            z-index: 1001; opacity: 0; transform: translateY(-20px);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .custom-message-box.show {
+            opacity: 1; transform: translateY(0);
+        }
+        .custom-message-box.success { /* Default state if not error */
+             background-color: #10b981; /* green-500 */
+        }
+        .custom-message-box.error {
+            background-color: #ef4444; /* red-500 */
+        }

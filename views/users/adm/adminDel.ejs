@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - DoctorSync</title>
+    <link rel="stylesheet" href="/css/tailwind.css">
+    <link rel="stylesheet" href="/css/users.css">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+</head>
+<body class="min-h-screen font-sans antialiased" style="background-color: white;">
+
+    <div class="hamburger" id="hamburger">
+        <div style="background-color: green;"></div>
+        <div style="background-color: green;"></div>
+        <div style="background-color: green;"></div>
+    </div>
+
+    <div class="flex h-screen">
+        <aside class="sidebar flex flex-col h-full text-white" id="sidebar" style="background-color: #000030;">
+            <span class="close-icon" id="close-icon">×</span>
+            <div class="p-6 border-b border-gray-700">
+                <h2 class="text-2xl font-bold text-white">Admin Panel</h2>
+                <span class="text-white">Welcome Admin:
+                    <span class="text-blue-600">
+                        <%= user?.Username?.split('@')[0] || 'Admin' %>
+                    </span>
+                    <br>
+                    <span class="text-white"> UserID: </span>
+                    <span class="text-blue-600"><%= user?.UserID || '0' %></span>
+                </span>
+            </div>
+
+            <nav class="p-4 flex-1 ">
+                <ul class="space-y-2">
+                    <li><a href="/admin" class="nav-item text-white hover:bg-gray-700"><i data-feather="home" class="w-5 h-5 mr-3"></i>Dashboard</a></li>
+                    <li><a href="/admin/users" class="nav-item text-white hover:bg-gray-700"><i data-feather="users" class="w-5 h-5 mr-3"></i>Users</a></li>
+                    <li><a href="/admin/doc" class="nav-item text-white hover:bg-gray-700"><i data-feather="user-plus" class="w-5 h-5 mr-3"></i>Doctors</a></li>
+                    <li><a href="/admin/pat" class="nav-item text-white hover:bg-gray-700"><i data-feather="user" class="w-5 h-5 mr-3"></i>Patients</a></li>
+                    <li><a href="/admin/logs" class="nav-item text-white hover:bg-gray-700"><i data-feather="file-text" class="w-5 h-5 mr-3"></i>Logs</a></li>
+                    <li><a href="/admin/reviveUser" class="nav-item text-white hover:bg-gray-700"><i data-feather="refresh-ccw" class="w-5 h-5 mr-3"></i>Revive User</a></li>
+                </ul>
+            </nav>
+
+            <div class="p-4 border-t border-gray-700">
+                <a href="/auth/logout" class="flex items-center px-4 py-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-700 transition-colors text-xl">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    Logout
+                </a>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="flex justify-between items-center mb-8 p-6 bg-white shadow rounded-lg">
+                <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
+                <div class="flex items-center space-x-4">
+                    <span class="text-green-600">Welcome Admin, <span class="text-blue-600">
+                                <%= user?.Username?.split('@')[0] || 'Admin' %>
+                            </span>
+                    </span>
+                </div>
+            </header>
+
+            <section id="user-list-section" class="mb-12 w-full">
+                <h3 class="text-xl font-semibold text-gray-700 mb-6">Active User Details</h3>
+                <div id="user-cards-container" class="space-y-6">
+                    <%
+                        // Ensure userList is defined, default to empty array if not
+                        const localUserList = typeof userList !== 'undefined' ? userList : [];
+                        const activeUsers = localUserList.filter(user => user.Flag === 0);
+                        if (activeUsers?.length > 0) {
+                            const userToDisplay = activeUsers[0]; // Displaying only the first active user
+                    %>
+                            <div class="user-card">
+                                <div class="user-card-header">
+                                    <div class="user-avatar-icon">
+                                        <i data-feather="user"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-semibold text-gray-900"><%= userToDisplay.Username %></h4>
+                                        <p class="text-sm text-gray-500"><%= userToDisplay.Email %></p>
+                                    </div>
+                                </div>
+                                <div class="user-card-info">
+                                    <p><strong class="text-gray-600">UserID:</strong> <span class="text-gray-800"><%= userToDisplay.UserID %></span></p>
+                                    <p><strong class="text-gray-600">Role:</strong> <span class="text-gray-800"><%= userToDisplay.Role %></span></p>
+                                </div>
+                                <div class="mt-4 flex justify-end">
+                                    <button onclick="window.confirmDeleteItem('user', '<%= userToDisplay.UserID %>', '<%= userToDisplay.Username %>')"
+                                            class="btn btn-danger">
+                                        <i data-feather="trash-2" class="w-4 h-4 mr-2"></i> Deactivate
+                                    </button>
+                                </div>
+                            </div>
+                    <%
+                        } else {
+                    %>
+                        <div class="text-center py-10">
+                            <i data-feather="info" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
+                            <p class="text-gray-500 text-lg">No active user data to display.</p>
+                            <p>Click below to see all users !</p>
+                            <a href="/admin/users" class="nav-item hover:bg-gray-300"><i data-feather="users" ></i>Users</a></li>
+                        </div>
+                    <%
+                        }
+                    %>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="customConfirmModal" class="custom-modal-overlay hidden">
+        <div class="custom-modal">
+            <h3 class="text-lg font-semibold mb-4" id="confirmModalTitle">Confirm Action</h3>
+            <p id="confirmModalMessage">Are you sure?</p>
+            <div class="custom-modal-buttons">
+                <button id="confirmModalCancel" class="custom-modal-button custom-modal-button-cancel">Cancel</button>
+                <button id="confirmModalConfirm" class="custom-modal-button custom-modal-button-confirm">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="customOtpModal" class="custom-modal-overlay hidden">
+        <div class="custom-modal">
+            <h3 class="text-lg font-semibold mb-4" id="otpModalTitle">Verify Action with OTP</h3>
+            <p id="otpModalMessage">Please enter the verification code sent to your email.</p>
+
+            <div class="space-y-4 mt-6">
+                <input type="hidden" id="otpUserId" value="">
+                <input type="hidden" id="otpUsername" value="">
+
+                <div>
+                    <label for="otpInput" class="block text-sm font-medium text-gray-700 text-left">Verification Code</label>
+                    <div class="relative mt-1">
+                        <input type="text"
+                               name="otp"
+                               id="otpInput"
+                               required
+                               class="w-full pl-4 pr-4 py-3 border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 placeholder-gray-400"
+                               placeholder="Enter 6-digit code">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <button type="button" id="requestOtpBtn"
+                            class="w-full bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors">
+                        Send Verification Code
+                    </button>
+
+                    <button type="button" id="verifyOtpBtn"
+                            class="w-full bg-green-600 text-white px-4 py-3 rounded-xl hover:bg-green-700 transition-colors hidden">
+                        Verify & Deactivate
+                    </button>
+                </div>
+
+                <div id="otpStatusMessage" class="text-center text-sm"></div>
+            </div>
+
+            <div class="custom-modal-buttons mt-6">
+                <button id="otpModalCancel" class="custom-modal-button custom-modal-button-cancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="customMessageBox" class="custom-message-box">
+        <span id="customMessageText"></span>
+    </div>
+
+    <script src="/javascripts/adminHelp.js"></script>
+
+</body>
+</html>
