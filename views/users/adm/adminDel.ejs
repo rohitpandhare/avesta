@@ -10,7 +10,7 @@
 </head>
 <body class="min-h-screen font-sans antialiased" style="background-color: white;">
 
-    <div class="hamburger" id="hamburger">
+    <!-- <div class="hamburger" id="hamburger">
         <div style="background-color: green;"></div>
         <div style="background-color: green;"></div>
         <div style="background-color: green;"></div>
@@ -48,19 +48,9 @@
                     Logout
                 </a>
             </div>
-        </aside>
-
-        <main class="main-content">
-            <header class="flex justify-between items-center mb-8 p-6 bg-white shadow rounded-lg">
-                <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
-                <div class="flex items-center space-x-4">
-                    <span class="text-green-600">Welcome Admin, <span class="text-blue-600">
-                                <%= user?.Username?.split('@')[0] || 'Admin' %>
-                            </span>
-                    </span>
-                </div>
-            </header>
-
+        </aside> -->
+        <%- include('nav') -%>
+        
             <section id="user-list-section" class="mb-12 w-full">
                 <h3 class="text-xl font-semibold text-gray-700 mb-6">Active User Details</h3>
                 <div id="user-cards-container" class="space-y-6">

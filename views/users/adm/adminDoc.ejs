@@ -11,134 +11,53 @@
 
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
      <!-- Hamburger Menu -->
-    <div class="hamburger" id="hamburger" onclick="toggleSidebar()">
-        <div style="background-color: green;"></div>
-        <div style="background-color: green;"></div>
-        <div style="background-color: green;"></div>
+    <%- include('nav') -%>
+
+<!-- Doctors Section -->
+    <h2 class="text-xl font-bold mb-4 text-gray-800">Doctor Management</h2>
+    <div class="bg-white rounded-lg shadow overflow-hidden w-full">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th class="text-left">DoctorID</th>
+                    <th class="text-left">Name</th>
+                    <th class="text-left">Specialty</th>
+                    <th class="text-left">Phone</th>
+                    <th class="text-left">License</th>
+                    <th class="text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% 
+                const activeDoc = doctorList?.filter(doctor => doctor.Flag === 0); 
+                if (activeDoc?.length > 0) { 
+                %>
+
+                <% activeDoc.forEach(doctor => { %>
+                        <tr>
+                            <td><%= doctor.DoctorID %></td>
+                            <td><%= doctor.Name %></td>
+                            <td><%= doctor.Specialty %></td>
+                            <td><%= doctor.Phone %></td>
+                            <td><%= doctor.LicenseNumber %></td>
+                            <td>
+                                <button onclick="deleteItem('doctor', '<%= doctor.DoctorID %>')" 
+                                        class="btn btn-danger">
+                                    Deactivate
+                                </button>
+                            </td>
+                        </tr>
+                    <% }) %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="6" class="text-center py-4">No doctors available</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
     </div>
 
-    <div class="flex h-screen">
-        <aside class="sidebar flex flex-col h-full text-white" id="sidebar" style="background-color: #000030;">
-            <span class="close-icon" id="close-icon" onclick="closeSidebar()">×</span>
-            <div class="p-6 border-b border-gray-700"> <h2 class="text-2xl font-bold text-white">Admin Panel</h2>
-                <span class="text-white">Welcome Admin:
-                    <span class="text-blue-600">
-                        <%= user?.Username?.split('@')[0] || 'Admin' %>
-                    </span>
-                    <br>
-                    <span class="text-white"> UserID: </span>
-                    <span class="text-blue-600"><%= user?.UserID || '0' %></span>
-                </span>
-            </div>
-
-            <nav class="p-4 flex-1 ">
-                <ul class="space-y-2">
-                    <li>
-                        <a href="/admin" class="nav-item">
-                            <i data-feather="home" class="w-5 h-5 mr-3"></i>
-                            Dashboard
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/users" class="nav-item">
-                            <i data-feather="users" class="w-5 h-5 mr-3"></i>
-                            Users
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/doc" class="nav-item">
-                            <i data-feather="user-plus" class="w-5 h-5 mr-3"></i>
-                            Doctors
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/pat" class="nav-item">
-                            <i data-feather="user" class="w-5 h-5 mr-3"></i>
-                            Patients
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/logs" class="nav-item">
-                            <i data-feather="file-text" class="w-5 h-5 mr-3"></i>
-                            Logs
-                        </a>
-                    </li>
-                    <li>
-                        <a href="/admin/reviveUser" class="nav-item">
-                            <i data-feather="refresh-ccw" class="w-5 h-5 mr-3"></i>
-                            Revive User
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-
-             <div class="p-4 border-t"> <a href="/auth/logout" class="flex items-center px-4 py-2 text-red-600 rounded-lg hover:bg-red-700 transition-colors text-xl">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Logout
-                </a>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-800">Dashboard Overview</h1>
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-700">Welcome Admin,
-                        <span class="text-blue-600">
-                            <%= user?.Username?.split('@')[0] || 'Admin' %>
-                        </span> 
-                    </span>
-                </div>
-            </header>
-
-            <!-- Doctors Section -->
-                <h2 class="text-xl font-bold mb-4 text-gray-800">Doctor Management</h2>
-                <div class="bg-white rounded-lg shadow overflow-hidden w-full">
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th class="text-left">DoctorID</th>
-                                <th class="text-left">Name</th>
-                                <th class="text-left">Specialty</th>
-                                <th class="text-left">Phone</th>
-                                <th class="text-left">License</th>
-                                <th class="text-left">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% 
-                            const activeDoc = doctorList?.filter(doctor => doctor.Flag === 0); 
-                            if (activeDoc?.length > 0) { 
-                            %>
-
-                            <% activeDoc.forEach(doctor => { %>
-                                    <tr>
-                                        <td><%= doctor.DoctorID %></td>
-                                        <td><%= doctor.Name %></td>
-                                        <td><%= doctor.Specialty %></td>
-                                        <td><%= doctor.Phone %></td>
-                                        <td><%= doctor.LicenseNumber %></td>
-                                        <td>
-                                            <button onclick="deleteItem('doctor', '<%= doctor.DoctorID %>')" 
-                                                    class="btn btn-danger">
-                                                Deactivate
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <% }) %>
-                            <% } else { %>
-                                <tr>
-                                    <td colspan="6" class="text-center py-4">No doctors available</td>
-                                </tr>
-                            <% } %>
-                        </tbody>
-                    </table>
-                </div>
-
-        </main>
+</main>
 
     </div>
    <script src="/javascripts/adminHelp.js"></script>
