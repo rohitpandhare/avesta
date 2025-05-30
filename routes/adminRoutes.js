@@ -3,6 +3,14 @@ const router = express.Router();
 
 const { conPool } = require('../config/dbHandler');
 
+// --- TEMPORARY TEST ROUTE: ADD THIS AFTER 'const router = express.Router();' ---
+// router.post('/admin/*', (req, res, next) => {
+//     console.log("!!! TEMPORARY ADMIN CATCH-ALL POST ROUTE HIT !!!");
+//     console.log(`Path: ${req.originalUrl}, Method: ${req.method}`);
+//     // IMPORTANT: Do NOT send a response here. Call next() to allow other routes to be tried.
+//     next();
+// });
+
 // Admin controller functions
 const {
     requestAdminOTP, 
@@ -108,7 +116,7 @@ router.get('/admin/doc', async (req, res) => {
     const [userList] = await conPool.query('SELECT * FROM user');
 
     const [doctorList] = await conPool.query(`
-        SELECT d.*, u.Username
+        SELECT d.*, u.Username, u.UserID
         FROM doctor d
         JOIN user u ON d.UserID = u.UserID
         WHERE u.Role = 'DOCTOR'
@@ -128,7 +136,7 @@ router.get('/admin/pat', async (req, res) => {
     const [userList] = await conPool.query('SELECT * FROM user');
 
     const [patientList] = await conPool.query(`
-        SELECT p.*, u.Username
+        SELECT p.*, u.Username, u.UserID
         FROM patient p
         JOIN user u ON p.UserID = u.UserID
         WHERE u.Role = 'PATIENT'
@@ -193,14 +201,87 @@ router.get('/admin/deactivate/:id', async (req, res) => {
         return res.redirect('/adminLogin');
     }
 
-    const refId = req.params.id;
+    const refId = req.params.id; // This is the UserID
 
     const [userList] = await conPool.query('SELECT * FROM user WHERE userID = ?', [refId]);
 
     return res.render('users/adm/adminDel', {
         user: req.session.user,
-        userList
+        userList // This will contain either one user or an empty array
     });
+});
+
+// Correct route for deactivating a user
+router.post('/admin/deactivate-user/:userID', async (req, res) => {
+    const { userID } = req.params; // Get userID from URL parameters
+    console.log(`[Deactivate User Route] Attempting to deactivate user with ID: ${userID}`);
+
+    // --- Start: Your actual database logic to update the user's Flag ---
+    try {
+        const [result] = await conPool.execute(
+            'UPDATE User SET Flag = 1 WHERE UserID = ?',
+            [userID]
+        );
+
+
+        if (result.affectedRows > 0) {
+            await conPool.query(
+               'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+               [req.session.user.UserID, 'DEACTIVATE', 'Admin deactivated user', 'USER', userID]);
+            console.log(`[Deactivate User Route] User ${userID} deactivated (Flag = 1) successfully.`);
+            return res.status(200).json({ success: true, message: `User ${userID} deactivated successfully.` });
+        } else {
+            console.log(`[Deactivate User Route] User ${userID} not found or already deactivated.`);
+            return res.status(404).json({ success: false, error: 'User not found or already deactivated.' });
+        }
+    } catch (error) {
+        console.error('[Deactivate User Route] Database error during deactivation:', error);
+        return res.status(500).json({ success: false, error: 'Internal server error during deactivation.' });
+    }
+    // --- End: Your actual database logic ---
+});
+
+router.get('/admin/activate/:id', async (req, res) => {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
+    }
+
+    const refId = req.params.id; // This is the UserID
+
+    const [userList] = await conPool.query('SELECT * FROM user WHERE userID = ?', [refId]);
+
+    return res.render('users/adm/adminRevive', {
+        user: req.session.user,
+        userList // This will contain either one user or an empty array
+    });
+});
+
+// Correct route for deactivating a user
+router.post('/admin/activate-user/:userID', async (req, res) => {
+    const { userID } = req.params; // Get userID from URL parameters
+    console.log(`[Activate User Route] Attempting to deactivate user with ID: ${userID}`);
+
+    // --- Start: Your actual database logic to update the user's Flag ---
+    try {
+        const [result] = await conPool.execute(
+            'UPDATE User SET Flag = 0 WHERE UserID = ?',
+            [userID]
+        );
+
+        if (result.affectedRows > 0) {
+            await conPool.query(
+               'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+               [req.session.user.UserID, 'ACTIVATE', 'Admin activated user', 'USER', userID]);
+            console.log(`[Activate User Route] User ${userID} activated (Flag = 0) successfully.`);
+            return res.status(200).json({ success: true, message: `User ${userID} activated successfully.` });
+        } else {
+            console.log(`[Activate User Route] User ${userID} not found or already deactivated.`);
+            return res.status(404).json({ success: false, error: 'User not found or already deactivated.' });
+        }
+    } catch (error) {
+        console.error('[Deactivate User Route] Database error during activation:', error);
+        return res.status(500).json({ success: false, error: 'Internal server error during activation.' });
+    }
 });
 
 // Admin dashboard

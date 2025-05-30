@@ -41,10 +41,10 @@
                             <td><%= doctor.Phone %></td>
                             <td><%= doctor.LicenseNumber %></td>
                             <td>
-                                <button onclick="deleteItem('doctor', '<%= doctor.DoctorID %>')" 
-                                        class="btn btn-danger">
-                                    Deactivate
-                                </button>
+                                <button id="deleteDoctorBtn" data-refid="<%= doctor.UserID %>"
+                                class="btn btn-danger" target="_blank">
+                            <i data-feather="trash-2" class="w-4 h-4 mr-2"></i> Deactivate
+                        </button>
                             </td>
                         </tr>
                     <% }) %>
@@ -61,6 +61,17 @@
 
     </div>
    <script src="/javascripts/adminHelp.js"></script>
+   <script>
+    
+    document.querySelectorAll('#deleteDoctorBtn').forEach(button => {
+    button.addEventListener('click', (event) => {
+        const userId = event.currentTarget.getAttribute('data-refid');
+        if(userId){
+            window.open(`/admin/deactivate/${userId}`, '_blank');
+        }
+    });
+});
+   </script>
     <!-- <script>
         // Initialize Feather Icons
         feather.replace();

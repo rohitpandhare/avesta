@@ -43,10 +43,10 @@
                             <td><%= new Date(patient.DOB).toLocaleDateString('en-GB').split('/').join('-') %></td>
                             <td><%= patient.BloodGroup %></td>
                             <td>
-                                <button onclick="deleteItem('patient', '<%= patient.PatientID %>')" 
-                                        class="btn btn-danger">
-                                    Deactivate
-                                </button>
+                                <button id="deletePatientBtn" data-refid="<%= patient.UserID %>"
+                                class="btn btn-danger" target="_blank">
+                            <i data-feather="trash-2" class="w-4 h-4 mr-2"></i> Deactivate
+                        </button>
                             </td>
                         </tr>
                     <% }) %>
@@ -63,6 +63,17 @@
 
     </div>
     <script src="/javascripts/adminHelp.js"></script>
+       <script>
+    
+    document.querySelectorAll('#deletePatientBtn').forEach(button => {
+    button.addEventListener('click', (event) => {
+        const userId = event.currentTarget.getAttribute('data-refid');
+        if(userId){
+            window.open(`/admin/deactivate/${userId}`, '_blank');
+        }
+    });
+});
+   </script>
     <!-- <script>
         // Initialize Feather Icons
         feather.replace();

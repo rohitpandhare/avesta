@@ -2,8 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const cors = require('cors');
-
-const bodyParser = require('body-parser');
+const bodyParser = require('body-parser'); // This was already here
 
 const app = express();
 const port = 3000;
@@ -12,7 +11,7 @@ const port = 3000;
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(bodyParser.json());
+app.use(bodyParser.json()); // This was already here
 
 // View engine setup
 app.set('view engine', 'ejs');
@@ -38,25 +37,40 @@ app.use(session({
     }
 }));
 
-const dashboardLinks = require('./routes/dashboardRoutes');
-app.use('/', dashboardLinks)
 
-const publicLinks = require('./routes/publicRoutes'); 
+// ADD THIS LOG
+app.use((req, res, next) => {
+    console.log(`Incoming Request (Global Middleware): ${req.method} ${req.originalUrl}`);
+    next();
+});
+
+// --- IMPORTANT: Adjust the order of route mounting here ---
+// Mount specific API routes (like admin or auth APIs) earlier
+const authlinks = require('./routes/auth');
+app.use('/auth', authlinks); // Auth routes are mounted under /auth
+
+const adminLinks = require('./routes/adminRoutes');
+console.log('--- Before mounting adminLinks ---');
+app.use('/', adminLinks); // Admin routes mounted at root /
+
+// ADD THIS LOG AFTER adminLinks MOUNTING
+console.log('--- After mounting adminLinks ---');
+
+
+// Now, mount more general or less specific routes later
+const dashboardLinks = require('./routes/dashboardRoutes');
+app.use('/', dashboardLinks);
+
+const publicLinks = require('./routes/publicRoutes');
 app.use('/', publicLinks);
 
-const testLinks = require('./routes/testRoutes'); 
+const testLinks = require('./routes/testRoutes');
 app.use('/', testLinks);
 
-const authlinks = require('./routes/auth'); 
-app.use('/auth', authlinks);
-
-const adminLinks = require('./routes/adminRoutes'); 
-app.use('/', adminLinks);
-
-const doctorLinks = require('./routes/doctorRoutes'); 
+const doctorLinks = require('./routes/doctorRoutes');
 app.use('/doctor', doctorLinks);
 
-const patientLinks = require('./routes/patientRoutes'); 
+const patientLinks = require('./routes/patientRoutes');
 app.use('/patient', patientLinks);
 
 app.get("/testPres", (req, res) => {
@@ -66,7 +80,7 @@ app.get("/testPres", (req, res) => {
 const { conPool } = require('./config/dbHandler');
 
 app.get("/search-patient", async (req, res) => {
-    const searchQuery = req.query.query;  // Changed from req.query.name to req.query.query
+    const searchQuery = req.query.query;
     
     if (!searchQuery) {
         return res.json([]);
@@ -85,7 +99,7 @@ app.get("/search-patient", async (req, res) => {
 });
 
 app.get("/search-med", async (req, res) => {
-    const searchQuery = req.query.query;  // Changed from req.query.name to req.query.query
+    const searchQuery = req.query.query;
     
     if (!searchQuery) {
         return res.json([]);
@@ -107,8 +121,7 @@ app.get("/adminLogin", async (req, res) => {
     res.render("secret/adminLogin");
 });
 
-
-// Error handling middleware
+// Error handling middleware (should be last)
 app.use((err, req, res, next) => {
     console.error('Unhandled Error:', err);
     res.status(500).render('error', {

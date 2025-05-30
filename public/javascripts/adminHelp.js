@@ -1,23 +1,40 @@
+// adminHelp.js
+
+// --- Sidebar functions (moved to global scope) ---
+let sidebar; // Declare sidebar in a wider scope
+function toggleSidebar() {
+    if (sidebar) { // Check if sidebar is defined before toggling
+        sidebar.classList.toggle('open');
+    }
+}
+
+function closeSidebar() {
+    if (sidebar) { // Check if sidebar is defined before closing
+        sidebar.classList.remove('open');
+    }
+}
+// --- END Sidebar functions ---
+
 document.addEventListener('DOMContentLoaded', () => {
-     feather.replace();
-    const sidebar = document.getElementById('sidebar');
+    feather.replace();
+
+    sidebar = document.getElementById('sidebar'); // Assign sidebar here
     const hamburger = document.getElementById('hamburger');
     const closeIcon = document.getElementById('close-icon');
 
-    const navItems = document.querySelectorAll('.nav-item');
-    const sections = document.querySelectorAll('main > section');
+    if (hamburger) hamburger.addEventListener('click', toggleSidebar);
+    if (closeIcon) closeIcon.addEventListener('click', closeSidebar);
 
-    function toggleSidebar() {
-        sidebar.classList.toggle('open');
+    //hide hamburger when sidebar is open
+    if (sidebar) {
+        sidebar.addEventListener('transitionend', () => {
+            if (sidebar.classList.contains('open')) {
+                hamburger.style.display = 'none'; // Hide hamburger when sidebar is open
+            } else {
+                hamburger.style.display = 'block'; // Show hamburger when sidebar is closed
+            }
+        });
     }
-
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-    }
-
-    hamburger.addEventListener('click', toggleSidebar);
-    closeIcon.addEventListener('click', closeSidebar);
-
 });
 
 // Smooth scroll functionality
@@ -33,7 +50,10 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Delete functionality
+// IMPORTANT: The deleteItem function is NOT used for user deactivation after OTP.
+// It is kept here for other potential "delete" operations if they exist and are handled
+// by backend routes like /delete-record/:id, /delete-prescription/:id etc.
+// For user deactivation, we will call /admin/deactivate-user directly.
 function deleteItem(type, id) {
     fetch(`/delete-${type}/${id}`, {
         method: 'DELETE',
@@ -41,7 +61,7 @@ function deleteItem(type, id) {
             'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
         },
-        credentials: 'include' 
+        credentials: 'include'
     })
     .then(response => {
         if (!response.ok) {
@@ -63,6 +83,8 @@ function deleteItem(type, id) {
 
 // Revive functionality
 function ReviveItem(type, id) {
+    // IMPORTANT: Do NOT use alert() or confirm() in production code.
+    // Replace with custom modal UI for better user experience and compatibility.
     if (!confirm(`Are you sure you want to revive this ${type}?`)) {
         return;
     }
@@ -84,16 +106,21 @@ function ReviveItem(type, id) {
         return response.json();
     })
     .then(data => {
+        // IMPORTANT: Do NOT use alert() in production code.
+        // Replace with custom modal UI for better user experience and compatibility.
         alert(data.message || `${type} Recovered successfully`);
         window.location.reload();
     })
     .catch(error => {
         console.error(`Error Recovering ${type}:`, error);
+        // IMPORTANT: Do NOT use alert() in production code.
+        // Replace with custom modal UI for better user experience and compatibility.
         alert(`Failed to Recover ${type}: ${error.message}`);
     });
 }
 
- // --- Custom Modal and Message Box Logic ---
+
+// --- Custom Modal and Message Box Logic ---
 const confirmModal = document.getElementById('customConfirmModal');
 const confirmModalTitle = document.getElementById('confirmModalTitle');
 const confirmModalMessage = document.getElementById('confirmModalMessage');
@@ -115,7 +142,7 @@ function hideConfirmModal() {
 
 if(confirmModalConfirmBtn) confirmModalConfirmBtn.addEventListener('click', () => {
     if (confirmCallback) confirmCallback();
-    hideConfirmModal();
+    hideConfirmModal(); // Hide the first confirmation modal
 });
 
 if(confirmModalCancelBtn) confirmModalCancelBtn.addEventListener('click', () => {
@@ -123,127 +150,13 @@ if(confirmModalCancelBtn) confirmModalCancelBtn.addEventListener('click', () => 
 });
 
 
-// --- Custom OTP Modal Logic ---
-const otpModal = document.getElementById('customOtpModal');
-const otpModalTitle = document.getElementById('otpModalTitle');
-const otpModalMessage = document.getElementById('otpModalMessage');
-const otpUserIdInput = document.getElementById('otpUserId');
-const otpUsernameInput = document.getElementById('otpUsername');
-const otpInput = document.getElementById('otpInput');
-const requestOtpBtn = document.getElementById('requestOtpBtn');
-const verifyOtpBtn = document.getElementById('verifyOtpBtn');
-const otpModalCancelBtn = document.getElementById('otpModalCancel');
-const otpStatusMessage = document.getElementById('otpStatusMessage');
-
-let currentItemType = '';
-let currentItemId = '';
-
-window.showOtpModal = (type, id, username) => {
-    currentItemType = type;
-    currentItemId = id;
-    otpUserIdInput.value = id; // Store ID for fetch calls
-    otpUsernameInput.value = username; // Store username for fetch calls
-    otpModalTitle.textContent = `Verify Deactivation for ${username}`;
-    otpModalMessage.textContent = `A verification code will be sent to ${username}'s associated email.`;
-    otpInput.value = ''; // Clear previous OTP
-    otpStatusMessage.textContent = ''; // Clear status message
-    requestOtpBtn.classList.remove('hidden');
-    verifyOtpBtn.classList.add('hidden');
-    otpModal.classList.remove('hidden');
-};
-
-function hideOtpModal() {
-    otpModal.classList.add('hidden');
-    currentItemType = '';
-    currentItemId = '';
-}
-
-if(otpModalCancelBtn) otpModalCancelBtn.addEventListener('click', hideOtpModal);
-
-// Function to show status messages within the OTP modal
-function showOtpStatus(message, color) {
-    otpStatusMessage.textContent = message;
-    otpStatusMessage.className = `text-center text-${color}-600 text-sm mt-2`;
-}
-
-// Request OTP button click handler
-if(requestOtpBtn) requestOtpBtn.addEventListener('click', async () => {
-    const username = otpUsernameInput.value.trim();
-    const userId = otpUserIdInput.value.trim(); // Get the user ID
-    const role = 'ADMIN'; // Assuming admin is requesting OTP for user deactivation
-
-    if (!username || !userId) {
-        showOtpStatus('User information missing for OTP request.', 'red');
-        return;
-    }
-
-    try {
-        showOtpStatus(`Sending verification code to ${username}...`, 'blue');
-
-        const response = await fetch('/auth/request-otp-for-delete', { // New endpoint for delete OTP
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, userId, role }) // Send userId too
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            requestOtpBtn.classList.add('hidden');
-            verifyOtpBtn.classList.remove('hidden');
-            showOtpStatus(`Verification code sent to ${data.email || username}'s email.`, 'green');
-        } else {
-            showOtpStatus(data.error || 'Failed to send code.', 'red');
-        }
-    } catch (error) {
-        console.error('Error requesting OTP:', error);
-        showOtpStatus('Connection error while requesting OTP.', 'red');
-    }
-});
-
-// Verify OTP button click handler
-if(verifyOtpBtn) verifyOtpBtn.addEventListener('click', async () => {
-    const username = otpUsernameInput.value.trim();
-    const userId = otpUserIdInput.value.trim(); // Get the user ID
-    const otp = otpInput.value.trim();
-    const role = 'ADMIN'; // Assuming admin is verifying OTP for user deactivation
-
-    if (!otp) {
-        showOtpStatus('Please enter the verification code.', 'red');
-        return;
-    }
-
-    try {
-        showOtpStatus('Verifying code...', 'blue');
-
-        const response = await fetch('/auth/verify-otp-for-delete', { // New endpoint for delete OTP verification
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, userId, role, otp }) // Send userId too
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            showOtpStatus('Verification successful! Proceeding with deactivation...', 'green');
-            hideOtpModal(); // Hide OTP modal
-            deleteItem(currentItemType, currentItemId); // Proceed with deletion
-        } else {
-            showOtpStatus(data.error || 'Verification failed. Invalid code or expired.', 'red');
-        }
-    } catch (error) {
-        console.error('Error verifying OTP:', error);
-        showOtpStatus('Connection error while verifying OTP.', 'red');
-    }
-});
-
-
+// Custom message/alert box
 const messageBox = document.getElementById('customMessageBox');
 const messageText = document.getElementById('customMessageText');
 let messageTimeout;
 
 function showMessage(message, type = 'success', duration = 3000) {
-    if (!messageBox || !messageText) return; // Guard against missing elements
+    if (!messageBox || !messageText) return;
     messageText.textContent = message;
     messageBox.className = 'custom-message-box'; 
     messageBox.classList.add(type === 'error' ? 'error' : 'success');
@@ -254,6 +167,141 @@ function showMessage(message, type = 'success', duration = 3000) {
     }, duration);
 }
 
+// Function to show status messages within the OTP modal
+function showOtpStatus(message, color) {
+    const otpStatusMessage = document.getElementById('otpStatusMessage');
+    if (otpStatusMessage) {
+        otpStatusMessage.textContent = message;
+        otpStatusMessage.className = `text-center text-${color}-600 text-sm mt-2`;
+    }
+}
+
+
+// --- Custom OTP Modal Logic ---
+const otpModal = document.getElementById('customOtpModal');
+const otpModalTitle = document.getElementById('otpModalTitle');
+const otpModalMessage = document.getElementById('otpModalMessage');
+const otpUserIdInput = document.getElementById('otpUserId'); // Hidden input for userId
+const otpUsernameInput = document.getElementById('otpUsername'); // Hidden input for username
+const otpInput = document.getElementById('otpInput');
+const verifyAndDeactivateBtn = document.getElementById('verifyAndDeactivateBtn');
+const otpModalCancelBtn = document.getElementById('otpModalCancel');
+
+// Removed currentItemType, currentItemId, currentItemUsername global variables
+// as we will now directly read from otpUserIdInput.value
+
+// Function to show OTP modal and automatically request OTP
+window.showAndRequestOtpModal = async (type, id, username) => {
+    // Set values into the hidden inputs directly
+    otpUserIdInput.value = id; 
+    otpUsernameInput.value = username;
+
+    otpModalTitle.textContent = `Verify Deactivation for ${username}`;
+    otpModalMessage.textContent = `A verification code will be sent to ${username}'s associated email.`;
+    otpInput.value = ''; // Clear previous OTP
+    showOtpStatus('', 'gray'); // Clear status message
+    otpModal.classList.remove('hidden'); // Show the OTP modal
+
+    // Automatically send OTP
+    try {
+        showOtpStatus(`Sending verification code to ${username}...`, 'blue');
+
+        const response = await fetch('/auth/request-otp-for-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, userId: id, role: 'ADMIN' }) // Use 'id' directly here
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showOtpStatus(`Verification code sent to ${data.email || username}'s email.`, 'green');
+        } else {
+            showOtpStatus(data.error || 'Failed to send code.', 'red');
+        }
+    } catch (error) {
+        console.error('Error requesting OTP automatically:', error);
+        showOtpStatus('Connection error while requesting OTP.', 'red');
+    }
+};
+
+
+function hideOtpModal() {
+    otpModal.classList.add('hidden');
+    // Clear hidden input values on hide
+    otpUserIdInput.value = '';
+    otpUsernameInput.value = '';
+}
+
+if(otpModalCancelBtn) otpModalCancelBtn.addEventListener('click', hideOtpModal);
+
+
+// Verify & Deactivate button click handler
+if(verifyAndDeactivateBtn) verifyAndDeactivateBtn.addEventListener('click', async () => {
+    const otp = otpInput.value.trim();
+    // Directly get the userId from the hidden input field
+    const userIdToDeactivate = otpUserIdInput.value; 
+
+    if (!otp) {
+        showOtpStatus('Please enter the verification code.', 'red');
+        return;
+    }
+    
+    if (!userIdToDeactivate) {
+        showOtpStatus('Error: User ID not found for deactivation.', 'red');
+        console.error('Deactivation Error: userIdToDeactivate is empty or null.');
+        return;
+    }
+
+    try {
+        showOtpStatus('Verifying code...', 'blue');
+
+        const verifyOtpResponse = await fetch('/auth/verify-otp-for-delete', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: userIdToDeactivate, otp }) // Use userIdToDeactivate for verification
+        });
+
+        const verifyOtpResult = await verifyOtpResponse.json();
+
+        if (verifyOtpResult.success) {
+            // OTP verification successful!
+            showOtpStatus('Verification successful! Proceeding with deactivation...', 'green');
+            hideOtpModal(); // Hide OTP modal immediately
+
+            // --- CRUCIAL CHANGE: Call the new deactivation endpoint with URL parameter ---
+            // Use userIdToDeactivate directly from the hidden input
+            console.log('Attempting to deactivate user with ID from hidden input:', userIdToDeactivate); // New debug log
+            const deactivateUserResponse = await fetch(`/admin/deactivate-user/${userIdToDeactivate}`, { 
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const deactivateUserResult = await deactivateUserResponse.json();
+
+            if (deactivateUserResult.success) {
+                showMessage(deactivateUserResult.message || 'User deactivated successfully!', 'success');
+                setTimeout(() => {
+                    window.location.reload(); // Reload the page to see changes
+                }, 1500); 
+            } else {
+                showMessage(deactivateUserResult.error || 'Failed to deactivate user.', 'error');
+            }
+            // --- END CRUCIAL CHANGE ---
+
+        } else {
+            // OTP verification failed
+            showOtpStatus(verifyOtpResult.error || 'Verification failed. Invalid code or expired.', 'red');
+        }
+    } catch (error) {
+        console.error('Error during OTP verification or deactivation:', error);
+        showOtpStatus('An unexpected error occurred during deactivation.', 'red');
+    }
+});
+
+
 // --- Delete functionality using Custom Modal and OTP ---
 window.confirmDeleteItem = (type, id, itemName = '') => {
     const itemDisplayName = itemName ? ` '${itemName}'` : '';
@@ -261,8 +309,8 @@ window.confirmDeleteItem = (type, id, itemName = '') => {
         `Deactivate ${type}`,
         `Are you sure you want to deactivate this ${type}${itemDisplayName}? This action requires OTP verification.`,
         () => {
-            // If initial confirmation is given, show the OTP modal
-            window.showOtpModal(type, id, itemName);
+            // If initial confirmation is given, show the OTP modal and automatically request OTP
+            window.showAndRequestOtpModal(type, id, itemName);
         }
     );
 };
