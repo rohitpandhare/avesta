@@ -37,12 +37,13 @@ aside {
 
 /* Main content should have left margin to prevent overlap */
 main {
-    margin-left: 270px;
+    margin-left: 125px;
     padding: 20px;
     transition: margin-left 0.3s ease;
     width: calc(100% - 50px); /* Add this line */
     max-width: none; /* Add this line */
 }
+
 
 
 /* Hamburger menu for mobile */

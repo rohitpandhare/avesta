@@ -102,11 +102,66 @@ router.get('/admin/users', async (req, res) => {
     }
 
     const [userList] = await conPool.query('SELECT * FROM user');
+
+    const [doctorList] = await conPool.query(`
+        SELECT d.*, u.Username, u.UserID
+        FROM doctor d
+        JOIN user u ON d.UserID = u.UserID
+        WHERE u.Role = 'DOCTOR'
+    `);
+
+    const [prescriptionStats] = await conPool.query(`
+        SELECT 
+            d.Specialty, 
+            SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
+        FROM prescription p
+        JOIN doctor d ON p.DoctorID = d.DoctorID
+        GROUP BY d.Specialty
+    `);
+
+    const [patientList] = await conPool.query(`
+        SELECT p.*, u.Username, u.UserID
+        FROM patient p
+        JOIN user u ON p.UserID = u.UserID
+        WHERE u.Role = 'PATIENT'
+    `);
+
+    const specialtyStats = {};
+    doctorList.forEach(doctor => {
+        const spec = doctor.Specialty || 'Other';
+        if (!specialtyStats[spec]) {
+            specialtyStats[spec] = {
+                doctorCount: 0,
+                activePrescriptions: 0,
+                completedPrescriptions: 0
+            };
+        }
+        specialtyStats[spec].doctorCount++;
+    });
+
+    prescriptionStats.forEach(row => {
+        const spec = row.Specialty || 'Other';
+        if (specialtyStats[spec]) {
+            specialtyStats[spec].activePrescriptions = row.active;
+            specialtyStats[spec].completedPrescriptions = row.completed;
+        }
+    });
+
+    const specialties = Object.entries(specialtyStats)
+        .map(([name, stats]) => ({ name, ...stats }))
+        .sort((a, b) => b.doctorCount - a.doctorCount);
+
     return res.render('users/adm/adminUsers', {
         user: req.session.user,
-        userList
+        specialties,
+        userList,
+        doctorList,
+        prescriptionStats,
+        patientList
     });
 });
+
 
 router.get('/admin/doc', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {

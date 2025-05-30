@@ -255,12 +255,12 @@ router.post('/request-otp-for-delete', async (req, res) => {
         }
 
         const [targetUsers] = await conPool.query(
-            `SELECT UserID, Username, Email FROM user WHERE UserID = ? AND Username = ?`,
-            [userId, username]
+            `SELECT UserID, Username, Email FROM user WHERE UserID = ?`,
+            [userId]
         );
 
         if (!targetUsers.length) {
-            console.error(`[request-otp-for-delete] Target user not found for UserID: ${userId}, Username: ${username}`);
+            console.error(`[request-otp-for-delete] Target user not found for UserID: ${userId}`);
             return res.status(404).json({ error: 'Target user for deactivation not found.' });
         }
 

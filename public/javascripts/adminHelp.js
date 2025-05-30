@@ -25,16 +25,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hamburger) hamburger.addEventListener('click', toggleSidebar);
     if (closeIcon) closeIcon.addEventListener('click', closeSidebar);
 
-    //hide hamburger when sidebar is open
-    if (sidebar) {
-        sidebar.addEventListener('transitionend', () => {
-            if (sidebar.classList.contains('open')) {
-                hamburger.style.display = 'none'; // Hide hamburger when sidebar is open
-            } else {
-                hamburger.style.display = 'block'; // Show hamburger when sidebar is closed
-            }
-        });
-    }
+    // //hide hamburger when sidebar is open
+    // if (sidebar) {
+    //     sidebar.addEventListener('transitionend', () => {
+    //         if (sidebar.classList.contains('open')) {
+    //             hamburger.style.display = 'none'; // Hide hamburger when sidebar is open
+    //         } else {
+    //             hamburger.style.display = 'block'; // Show hamburger when sidebar is closed
+    //         }
+    //     });
+    // }
 });
 
 // Smooth scroll functionality
