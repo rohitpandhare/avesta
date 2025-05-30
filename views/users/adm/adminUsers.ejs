@@ -37,6 +37,33 @@
             color: #2d3748; /* Tailwind gray-800 */
         }
 
+        /* Styles for the custom message box */
+        .custom-message-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            color: white;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .custom-message-box.show {
+            opacity: 1;
+        }
+
+        .custom-message-box.success {
+            background-color: #28a745; /* Green for success */
+        }
+
+        .custom-message-box.error {
+            background-color: #dc3545; /* Red for error */
+        }
     
     </style>
 </head>
@@ -276,6 +303,23 @@
             }
         });
 
+              function showCustomMessage(message, type) {
+            const messageBox = document.getElementById('customMessageBox');
+            const messageText = document.getElementById('customMessageText');
+
+            messageText.textContent = message;
+            messageBox.className = 'custom-message-box'; // Reset classes
+            messageBox.classList.add('show', type); // Add show and type (success/error) classes
+            messageBox.style.display = 'block'; // Make it visible
+
+            // Hide the message after 3 seconds
+            setTimeout(() => {
+                messageBox.classList.remove('show');
+                messageBox.addEventListener('transitionend', () => {
+                    messageBox.style.display = 'none';
+                }, { once: true });
+            }, 3000);
+        }
     
     </script>
 </body>

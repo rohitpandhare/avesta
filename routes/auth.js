@@ -244,7 +244,7 @@ router.post('/verify-otp', async (req, res) => {
 
 // --- Request OTP for User Deactivation Endpoint ---
 router.post('/request-otp-for-delete', async (req, res) => {
-    const { username, userId, role } = req.body;
+    const { username, userId, role } = req.body; // 'username' is the doctor/patient's Name, 'userId' is their UserID
 
     console.log(`[request-otp-for-delete] Request received for userId: ${userId}, username: ${username}, role: ${role}`);
 
@@ -254,13 +254,15 @@ router.post('/request-otp-for-delete', async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: Only admins can request deactivation OTPs.' });
         }
 
+        // MODIFIED: Query only by UserID, as it's the unique identifier in the 'user' table
         const [targetUsers] = await conPool.query(
             `SELECT UserID, Username, Email FROM user WHERE UserID = ?`,
             [userId]
         );
 
         if (!targetUsers.length) {
-            console.error(`[request-otp-for-delete] Target user not found for UserID: ${userId}`);
+            console.error(`[request-otp-for-delete] Target user not found for UserID: ${userId}.`);
+            // Removed username from error message as it's not used in lookup now
             return res.status(404).json({ error: 'Target user for deactivation not found.' });
         }
 
@@ -387,13 +389,14 @@ router.post('/request-otp-for-revive', async (req, res) => {
             return res.status(403).json({ error: 'Unauthorized: Only admins can request deactivation OTPs.' });
         }
 
+        // MODIFIED: Query only by UserID, as it's the unique identifier in the 'user' table
         const [targetUsers] = await conPool.query(
-            `SELECT UserID, Username, Email FROM user WHERE UserID = ? AND Username = ?`,
-            [userId, username]
+            `SELECT UserID, Username, Email FROM user WHERE UserID = ?`,
+            [userId]
         );
 
         if (!targetUsers.length) {
-            console.error(`[request-otp-for-revive] Target user not found for UserID: ${userId}, Username: ${username}`);
+            console.error(`[request-otp-for-revive] Target user not found for UserID: ${userId}.`);
             return res.status(404).json({ error: 'Target user for activation not found.' });
         }
 
