@@ -3,107 +3,385 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Patient Dashboard</title>
+    <title>My Records - DoctorSync</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/users.css">
+    <style>
+        /* Custom styles for active tab button */
+        .tab-button.active {
+            border-color: #3b82f6; /* Tailwind blue-500 */
+            color: #1d4ed8; /* Tailwind blue-800 */
+            font-weight: 600;
+        }
+        /* Optional: Add more specific styles if needed */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0; /* gray-200 */
+        }
+        .data-table th {
+            background-color: #f8f8f8; /* gray-50 */
+            font-weight: 600;
+            color: #4a5568; /* gray-700 */
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+        .data-table tbody tr:hover {
+            background-color: #f0f4f8; /* gray-100 */
+        }
+    </style>
 </head>
-
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
-<%- include('nav') -%>
-<div id="main-content" class="space-y-12">
+    <%- include('nav', { user: typeof user !== 'undefined' ? user : null }) -%>
 
-    <!-- Medical Records Section -->
-    <section class="space-y-6" id="records-section" style="margin-left: 120px;">
-        <h2 class="text-2xl font-semibold text-gray-800">Medical Records</h2>
-        <div class="bg-white rounded-lg shadow overflow-hidden">
-            <div class="table-responsive">
-                <table class="table table-striped table-bordered table-hover">
-                    <thead class="bg-gray-50">
-                    <tr>
-                        <th>Doctor Name</th>
-                        <th>Record Date</th>
-                        <th>Diagnosis</th>
-                        <th>Symptoms</th>
-                        <th>Treatments</th>
-                        <th>Notes</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <% if (medicalRecords && medicalRecords.length > 0) { %>
-                        <% medicalRecords.forEach(record => { %>
-                            <tr>
-                                <td><%= record.DoctorName || 'N/A' %></td>
-                                <td><%= new Date(record.RecordDate).toLocaleDateString() %></td>
-                                <td><%= record.Diagnosis || 'N/A' %></td>
-                                <td><%= record.Symptoms || 'N/A' %></td>
-                                <td><%= record.Treatments || 'N/A' %></td>
-                                <td><%= record.Notes || 'N/A' %></td>
-                            </tr>
-                        <% }) %>
-                    <% } else { %>
-                        <tr>
-                            <td colspan="6" class="text-center">No medical records found.</td>
-                        </tr>
-                    <% } %>
-                    </tbody>
-                </table>
+    <div class="max-w-6xl mx-auto p-6 bg-white rounded-lg shadow-md my-8">
+        <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">My Patient Dashboard</h1>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4" role="alert">
+                <strong class="font-bold">Error!</strong>
+                <span class="block sm:inline"><%= error %></span>
             </div>
+        <% } %>
+
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-4 md:space-x-8" aria-label="Tabs">
+                <button id="tab-profile" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 active" onclick="showTab('profile')">
+                    Profile
+                </button>
+                <button id="tab-doctors-associated" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('doctors-associated')">
+                    Doctors Associated
+                </button>
+                <button id="tab-prescriptions" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('prescriptions')">
+                    Prescriptions
+                </button>
+                <button id="tab-medical-records" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('medical-records')">
+                    Medical Records
+                </button>
+            </nav>
         </div>
-    </section>
 
-</div>
-</main>
-</div>
+        
+        <div id="content-profile" class="tab-content">
+            <% if (patient) { %>
+                <div id="viewMode" class="space-y-4">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Your Details</h2>
 
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const mainContent = document.getElementById('main-content');
-      const pageTitle = document.getElementById('page-title');
-      const pageDescription = document.getElementById('page-description');
-      const main = document.querySelector('main');
-      const sidebar = document.getElementById('sidebar');
-      const hamburger = document.getElementById('hamburger');
-      const closeIcon = document.getElementById('close-icon');
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-gray-600 font-medium">Patient ID:</p>
+                            <p class="text-gray-800"><%= patient.PatientID %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">User ID:</p>
+                            <p class="text-gray-800"><%= patient.UserID %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Name:</p>
+                            <p class="text-gray-800"><%= patient.Name %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Address:</p>
+                            <p class="text-gray-800"><%= patient.Address %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Phone:</p>
+                            <p class="text-gray-800"><%= patient.Phone %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Date of Birth:</p>
+                            <p class="text-gray-800"><%= patient.DOB %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Blood Group:</p>
+                            <p class="text-gray-800"><%= patient.BloodGroup %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Medical History:</p>
+                            <p class="text-gray-800 whitespace-pre-line"><%= patient.MedicalHistory || 'N/A' %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Emergency Contact Name:</p>
+                            <p class="text-gray-800"><%= patient.EmergencyContact %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Emergency Phone:</p>
+                            <p class="text-gray-800"><%= patient.EmergencyPhone %></p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600 font-medium">Aadhar ID:</p>
+                            <p class="text-gray-800"><%= patient.AadharID || 'N/A' %></p>
+                        </div>
+                    </div>
 
-    function toggleSidebar() {
-        sidebar.classList.toggle('open');
-    }
+                    <!-- <div class="mt-6 text-right">
+                        <button id="editProfileBtn" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Edit Profile</button>
+                    </div>
+                </div>
 
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-    }
+                <form id="editMode" class="hidden space-y-4" action="/patient/updateProfile" method="POST">
+                    <h2 class="text-xl font-semibold text-gray-700 mb-4">Edit Details</h2>
 
-    hamburger.addEventListener('click', toggleSidebar);
-    closeIcon.addEventListener('click', closeSidebar);
+                    <input type="hidden" name="PatientID" value="<%= patient.PatientID %>">
 
-    function closeToast() {
-        const toast = document.getElementById('toast');
-        if (toast) {
-          toast.style.transform = 'translateX(100%)'; // Slide out to the right
-          setTimeout(() => toast.remove(), 500); // Remove after animation
-        }
-      }
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label for="name" class="block text-sm font-medium text-gray-700">Name:</label>
+                            <input type="text" id="name" name="Name" value="<%= patient.Name %>" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="address" class="block text-sm font-medium text-gray-700">Address:</label>
+                            <textarea id="address" name="Address" rows="3" required
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"><%= patient.Address %></textarea>
+                        </div>
+                        <div>
+                            <label for="phone" class="block text-sm font-medium text-gray-700">Phone:</label>
+                            <input type="tel" id="phone" name="Phone" value="<%= patient.Phone %>" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="dob" class="block text-sm font-medium text-gray-700">Date of Birth:</label>
+                            <input type="date" id="dob" name="DOB" value="<%= patient.DOB %>" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="bloodGroup" class="block text-sm font-medium text-gray-700">Blood Group:</label>
+                            <select id="bloodGroup" name="BloodGroup" required
+                                    class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <% const bloodGroups = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']; %>
+                                <% bloodGroups.forEach(group => { %>
+                                    <option value="<%= group %>" <%= patient.BloodGroup === group ? 'selected' : '' %>><%= group %></option>
+                                <% }); %>
+                            </select>
+                        </div>
+                        <div>
+                            <label for="medicalHistory" class="block text-sm font-medium text-gray-700">Medical History:</label>
+                            <textarea id="medicalHistory" name="MedicalHistory" rows="3"
+                                      class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"><%= patient.MedicalHistory || '' %></textarea>
+                        </div>
+                        <div>
+                            <label for="emergencyContact" class="block text-sm font-medium text-gray-700">Emergency Contact Name:</label>
+                            <input type="text" id="emergencyContact" name="EmergencyContact" value="<%= patient.EmergencyContact %>" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="emergencyPhone" class="block text-sm font-medium text-gray-700">Emergency Phone:</label>
+                            <input type="tel" id="emergencyPhone" name="EmergencyPhone" value="<%= patient.EmergencyPhone %>" required
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        <div>
+                            <label for="aadharID" class="block text-sm font-medium text-gray-700">Aadhar ID:</label>
+                            <input type="text" id="aadharID" name="AadharID" value="<%= patient.AadharID || '' %>"
+                                   class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                    </div>
 
-    // Automatically hide toast after 5 seconds
-    setTimeout(function() {
-        var toast = document.getElementById('toast');
-        if (toast) {
-            toast.style.display = 'none';
-        }
-    }, 5000);
+                    <div class="mt-6 flex justify-end space-x-4">
+                        <button type="button" id="cancelEditBtn" class="bg-gray-300 text-gray-800 px-6 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500">Cancel</button>
+                        <button type="submit" class="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">Save Changes</button>
+                    </div>
+                </form> -->
+            <% } else { %>
+                <p class="text-center text-gray-600">Patient profile not found. Please ensure you are logged in as a patient.</p>
+            <% } %>
+        </div>
 
-    document.querySelectorAll(".view-prescription-btn").forEach(button => {
-            button.addEventListener("click", function () {
-                const refId = this.getAttribute("data-refid");
-                if (refId) {
-                    window.location.href = `/printPrescription/${refId}`;
-                }
+
+
+        <div id="content-doctors-associated" class="tab-content hidden">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">My Associated Doctors</h2>
+            <% if (doctorRelationships && doctorRelationships.length > 0) { %>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Doctor ID</th>
+                                <th>Name</th>
+                                <th>Specialty</th>
+                                <th>Phone</th>
+                                <th>Relationship Start Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% doctorRelationships.forEach(rel => { %>
+                                <tr>
+                                    <td><%= rel.DoctorID %></td>
+                                    <td><%= rel.DoctorName %></td>
+                                    <td><%= rel.Specialty %></td>
+                                    <td><%= rel.DoctorPhone %></td>
+                                    <td><%= new Date(rel.RelationshipStartDate).toLocaleDateString('en-GB') %></td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <p class="text-center text-gray-600">No associated doctors found.</p>
+            <% } %>
+        </div>
+
+        <div id="content-prescriptions" class="tab-content hidden">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">My Prescriptions</h2>
+            <% if (prescriptions && prescriptions.length > 0) { %>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Date Issued</th>
+                                <th>Doctor</th>
+                                <th>Status</th>
+                                <th>Validity</th>
+                                <th>Medicines</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% prescriptions.forEach(pres => { %>
+                                <tr>
+                                    <td><%= pres.PRESCRIPTIONID %></td>
+                                    <td><%= new Date(pres.DATEISSUED).toLocaleDateString('en-GB') %></td>
+                                    <td><%= pres.DoctorName %></td>
+                                    <td>
+                                        <span class="px-2 py-1 rounded-full text-xs font-semibold
+                                            <%= pres.STATUS === 'ACTIVE' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' %>">
+                                            <%= pres.STATUS %>
+                                        </span>
+                                    </td>
+                                    <td><%= pres.VALIDITYDAYS %> days</td>
+                                    <td><%= pres.MedicinesSummary || 'N/A' %></td>
+                                    <td>
+                                        <a href="/printPrescription/<%= pres.GLOBALREFERENCEID %>" target="_blank" class="text-blue-600 hover:underline">View/Print</a>
+                                    </td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <p class="text-center text-gray-600">No prescriptions found.</p>
+            <% } %>
+        </div>
+
+        <div id="content-medical-records" class="tab-content hidden">
+            <h2 class="text-xl font-semibold text-gray-700 mb-4">My Medical Records</h2>
+            <% if (medicalRecords && medicalRecords.length > 0) { %>
+                <div class="overflow-x-auto">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Record ID</th>
+                                <th>Date</th>
+                                <th>Diagnosis</th>
+                                <th>Doctor</th>
+                                <th>Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% medicalRecords.forEach(record => { %>
+                                <tr>
+                                    <td><%= record.RecordID %></td>
+                                    <td><%= new Date(record.RecordDate).toLocaleDateString('en-GB') %></td>
+                                    <td><%= record.Diagnosis %></td>
+                                    <td><%= record.DoctorName %></td>
+                                    <td><%= record.Notes || 'N/A' %></td>
+                                </tr>
+                            <% }); %>
+                        </tbody>
+                    </table>
+                </div>
+            <% } else { %>
+                <p class="text-center text-gray-600">No medical records found.</p>
+            <% } %>
+        </div>
+
+    </div>
+
+    <script>
+        // Tab switching logic
+        function showTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
             });
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+
+            document.getElementById('content-' + tabId).classList.remove('hidden');
+            document.getElementById('tab-' + tabId).classList.add('active');
+
+            // Optional: Update URL hash for direct linking to tabs
+            history.replaceState(null, '', `#${tabId}`);
+        }
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // Get initial tab from URL hash or default to 'profile'
+            const initialTab = window.location.hash.substring(1) || 'profile';
+            showTab(initialTab);
+
+            // Profile edit/view mode toggle
+            const viewMode = document.getElementById('viewMode');
+            const editMode = document.getElementById('editMode');
+            const editProfileBtn = document.getElementById('editProfileBtn');
+            const cancelEditBtn = document.getElementById('cancelEditBtn');
+            const editForm = document.getElementById('editMode');
+
+            if (editProfileBtn) {
+                editProfileBtn.addEventListener('click', () => {
+                    viewMode.classList.add('hidden');
+                    editMode.classList.remove('hidden');
+                });
+            }
+
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', () => {
+                    editMode.classList.add('hidden');
+                    viewMode.classList.remove('hidden');
+                    // Optionally reset form if you want to discard unsaved changes
+                    editForm.reset();
+                });
+            }
+
+            // Handle form submission via fetch API for a smoother experience
+            if (editForm) {
+                editForm.addEventListener('submit', async (event) => {
+                    event.preventDefault(); // Prevent default form submission
+
+                    const formData = new FormData(editForm);
+                    const data = Object.fromEntries(formData.entries());
+
+                    const actionUrl = editForm.getAttribute('action');
+
+                    try {
+                        const response = await fetch(actionUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(data)
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            alert(result.message); // Use a custom modal/toast instead of alert in production
+                            // Refresh the page to show updated data and reset to view mode
+                            window.location.reload();
+                        } else {
+                            alert('Error: ' + result.message); // Use a custom modal/toast
+                        }
+                    } catch (error) {
+                        console.error('Error submitting form:', error);
+                        alert('An unexpected error occurred. Please try again.'); // Use a custom modal/toast
+                    }
+                });
+            }
         });
-
-});
-</script>
-
+    </script>
 </body>
 </html>
-

@@ -257,95 +257,23 @@ async function doLogin(req, res) {
                     });
                 }
 
+            
             case 'PATIENT':
-                try {
-                    // Get patient data
-                    const [patientData] = await conPool.query(
-                        'SELECT * FROM patient WHERE UserID = ?',
-                        [req.session.user.UserID]
-                    );
-            
-                    if (!patientData.length) {
-                        return res.render('dashboard/login', {
-                            error: 'Patient profile not found'
-                        });
-                    }
-            
-                    // Add PatientID to session
-                    req.session.user.PatientID = patientData[0].PatientID;
-                    req.session.user.Name = patientData[0].Name;
-            
-                    // Get all required data in parallel
-                    const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
-                        conPool.query(`
-                            SELECT 
-                                dp.*,
-                                d.Name as DoctorName,
-                                d.Specialty,
-                                d.Phone as DoctorPhone
-                            FROM doctor_patient dp
-                            LEFT JOIN doctor d ON dp.DoctorID = d.DoctorID
-                            WHERE dp.PatientID = ?`,
-                            [patientData[0].PatientID]
-                        ),
-                        conPool.query(`
-                            SELECT 
-                                mr.*,
-                                d.Name as DoctorName
-                            FROM medical_record mr
-                            LEFT JOIN doctor d ON mr.DoctorID = d.DoctorID
-                            WHERE mr.PatientID = ?`,
-                            [patientData[0].PatientID]
-                        ),
-                        conPool.query(`
-                            SELECT 
-                                p.*,
-                                d.Name as DoctorName
-                            FROM prescription p
-                            LEFT JOIN doctor d ON p.DoctorID = d.DoctorID
-                            WHERE p.PatientID = ?`,
-                            [patientData[0].PatientID]
-                        )
-                    ]);
-            
-                    // Save session
-                    await new Promise((resolve, reject) => {
-                        req.session.save((err) => {
-                            if (err) reject(err);
-                            resolve();
-                        });
+                // *** CRUCIAL CHANGE: Redirect to the dedicated patient dashboard route ***
+                await new Promise((resolve, reject) => {
+                    req.session.save((err) => {
+                        if (err) reject(err);
+                        resolve();
                     });
-            
-                    return res.render('users/patient', {
-                        user: req.session.user,
-                        currentPatientID: patientData[0].PatientID,
-                        patientData: patientData[0],
-                        doctorRelationships: doctorRelationships[0],
-                        medicalRecords: medicalRecords[0],
-                        prescriptions: prescriptions[0],
-                        success: req.session.success,
-                        error: req.session.error,
-                        Name: req.session.user.Name
-                    });
-            
-                } catch (err) {
-                    console.error('Error in patient login:', err);
-                    return res.render('users/patient', {
-                        user: req.session.user,
-                        currentPatientID: null,
-                        patientData: null,
-                        doctorRelationships: [],
-                        medicalRecords: [],
-                        prescriptions: [],
-                        error: 'Error loading dashboard: ' + err.message
-                    });
-                }
+                });
+                return res.redirect('/patient/records');
                 
             default:
                 return res.render('dashboard/login', {
                     error: 'Invalid role'
                 });
         }
+
     } catch (err) {
         console.error('Login error:', err);
         return res.render('dashboard/login', {

@@ -73,19 +73,18 @@
 
     <div class="flex h-screen relative">
         <main class="flex-1 overflow-y-auto md:p-8">
-            <header class="mb-8">
+            <header class="mb-3">
                 <h1 class="text-3xl font-bold text-gray-800" id="page-title">Admin Dashboard</h1>
-                <p class="text-blue-600 mt-1" id="page-description">Manage Users, Doctors, and Patients</p>
             </header>
 
-            <div class="border-b border-gray-200 mb-6">
-                <nav class="-mb-px flex space-x-4 md:space-x-8" aria-label="Tabs"> <button id="tab-users" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 active" onclick="showTab('users')">
+            <div class="border-b border-gray-500 mb-6">
+                <nav class="-mb-px flex space-x-4 md:space-x-8" aria-label="Tabs"> <button id="tab-users" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700  hover:border-gray-300 active" onclick="showTab('users')">
                         Users
                     </button>
-                    <button id="tab-doctors" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('doctors')">
+                    <button id="tab-doctors" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700 hover:border-gray-300" onclick="showTab('doctors')">
                         Doctors
                     </button>
-                    <button id="tab-patients" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300" onclick="showTab('patients')">
+                    <button id="tab-patients" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700 hover:border-gray-300" onclick="showTab('patients')">
                         Patients
                     </button>
                 </nav>
@@ -109,6 +108,21 @@
                             <i data-feather="search" class="w-5 h-5"></i>
                         </button>
                     </form>
+
+                     <div class="mt-6 flex justify-center items-center space-x-2">
+                    <% if (totalPages > 1) { %>
+                        <a href="/admin/users?page=<%= currentPage - 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                           class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
+
+                        <span class="px-4 py-2 font-bold text-gray-800">
+                            Page <%= currentPage %> of <%= totalPages %>
+                        </span>
+
+                        <a href="/admin/users?page=<%= currentPage + 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                           class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">Next</a>
+                    <% } %>
+                </div>
+
                 </div>
                 <div class="bg-white rounded-lg shadow overflow-hidden w-full">
                     <table class="data-table">
@@ -134,7 +148,7 @@
                                         <td><%= user.Role %></td>
                                         <td>
                                             <button onclick="window.confirmDeleteItem('user', '<%= user.UserID %>', '<%= user.Username %>')" class="btn btn-danger">
-                                                <i data-feather="trash-2" class="w-4 h-4 mr-2"></i> Deactivate
+                                                <i data-feather="trash-2" class="w-4 h-2 mr-2"></i> Deactivate
                                             </button>
                                         </td>
                                     </tr>
@@ -148,19 +162,7 @@
                     </table>
                 </div>
 
-                <div class="mt-6 flex justify-center items-center space-x-2">
-                    <% if (totalPages > 1) { %>
-                        <a href="/admin/users?page=<%= currentPage - 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
-                           class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
-
-                        <span class="px-4 py-2 font-bold text-gray-800">
-                            Page <%= currentPage %> of <%= totalPages %>
-                        </span>
-
-                        <a href="/admin/users?page=<%= currentPage + 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
-                           class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">Next</a>
-                    <% } %>
-                </div>
+               
                 </div>
 
             <div id="content-doctors" class="tab-content hidden">

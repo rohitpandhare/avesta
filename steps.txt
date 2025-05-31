@@ -89,3 +89,11 @@ SET SQL_SAFE_UPDATES = 1; -- Re-enable safe updates (optional, but good practice
 
 ALTER TABLE doctorsync_dbx.doctor_activity
 MODIFY COLUMN TargetType VARCHAR(20); -- Change 20 to a suitable length (e.g., 20 or 25)
+
+CREATE TABLE doctorsync_dbx.patient_activity (
+    ActivityID INT AUTO_INCREMENT PRIMARY KEY,
+    PatientID INT NOT NULL,
+    ActionPerformed VARCHAR(100) NOT NULL,
+    Description TEXT,
+    ActivityTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

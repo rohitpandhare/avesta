@@ -1,29 +1,60 @@
 const { conPool } = require('../config/dbHandler')
 
-// Find All Doctors
+// Find All Doctors & Search for Doctors with Pagination
 async function findDoctor(req, res) {
     try {
-        const [doctors] = await conPool.query(`
-            SELECT 
-                DoctorID,
-                Name,
-                Specialty,
-                Phone,
-                LicenseNumber,
-                Qualifications
-            FROM doctor
-            ORDER BY Name
-        `);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 4; // Set limit to 4 doctors per page
+        const offset = (page - 1) * limit;
 
-        res.render('dashboard/findDr', { doctors });
+        const searchTerm = req.query.search || '';
+
+        // Base query for active doctors
+        let doctorQuery = 'SELECT DoctorID, Name, Specialty, Phone, LicenseNumber, Qualifications FROM doctor WHERE Flag = 0';
+        let countDoctorQuery = 'SELECT COUNT(*) as totalDoctors FROM doctor WHERE Flag = 0';
+        const queryParams = [];
+        const countQueryParams = [];
+
+        if (searchTerm) {
+            // Add search condition with AND
+            doctorQuery += ' AND (Name LIKE ? OR Specialty LIKE ?)';
+            countDoctorQuery += ' AND (Name LIKE ? OR Specialty LIKE ?)';
+            queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
+            countQueryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
+        }
+
+        doctorQuery += ' ORDER BY Name LIMIT ? OFFSET ?'; // Order by name and apply pagination
+        queryParams.push(limit, offset);
+
+        const [doctorsResult] = await conPool.query(doctorQuery, queryParams);
+        const [totalDoctorsCountResult] = await conPool.query(countDoctorQuery, countQueryParams);
+
+        const doctors = doctorsResult;
+        const totalDoctors = totalDoctorsCountResult[0].totalDoctors;
+        const totalPages = Math.ceil(totalDoctors / limit);
+
+        res.render('dashboard/findDr', {
+            doctors,
+            currentPage: page,
+            totalPages,
+            limit,
+            searchTerm,
+            user: req.session.user || null // Pass user session if available for nav.ejs
+        });
+
     } catch (err) {
         console.error('Error fetching doctors:', err);
-        res.render('dashboard/findDr', { 
+        res.render('dashboard/findDr', {
             doctors: [],
-            error: 'Error retrieving doctor list'
+            currentPage: 1,
+            totalPages: 1,
+            limit: 4,
+            searchTerm: '',
+            error: 'Error retrieving doctor list',
+            user: req.session.user || null
         });
     }
-};
+}
 
 // Search for Doctors
 async function findPerticularDoctor(req, res){

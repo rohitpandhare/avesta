@@ -5,22 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DoctorSync - Find Doctors</title>
     <link rel="stylesheet" href="/css/styles.css">
-
+    <style>
+        /* Add a bit of styling for the profile image placeholder */
+        .profile-img-placeholder {
+            width: 80px; /* Adjust size as needed */
+            height: 80px; /* Adjust size as needed */
+            border-radius: 50%;
+            background-color: #e2e8f0; /* Light gray background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden; /* Ensure SVG doesn't overflow */
+        }
+        .profile-img-placeholder svg {
+            width: 60%; /* Adjust SVG size within container */
+            height: 60%;
+            color: #a0aec0; /* Gray color for the icon */
+        }
+    </style>
 </head>
 
-<!-- </body> -->
 <body class="bg-gradient-to-br min-h-screen" style="background-color: #000021;">
-    
-    <%- include('nav') -%>
-    <!-- Search bar  -->
-    <div class="max-w-4xl mx-auto">
-        <form action="/findDr/search" method="GET" class="flex gap-4 mt-300">
+    <%- include('nav', { user: typeof user !== 'undefined' ? user : null }) -%>
+
+    <div class="max-w-4xl mx-auto" style="margin-top: 20px;">
+        <form action="/findDr" method="GET" class="flex gap-4 mt-300">
             <input type="text" 
                    name="search" 
                    placeholder="Search by doctor name or specialty"
+                   value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>"
                    class="flex-1 px-4 py-3 rounded-lg border-2 border-blue-100 
-                          focus:border-blue-500 focus:ring-2 focus:ring-blue-200
-                          placeholder-gray-400 transition-all duration-200">
+                         focus:border-blue-500 focus:ring-2 focus:ring-blue-200
+                         placeholder-gray-400 transition-all duration-200">
+            <input type="hidden" name="page" value="1">
+            <input type="hidden" name="limit" value="<%= typeof limit !== 'undefined' ? limit : 6 %>">
             <button type="submit" 
                     class="px-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold
                            rounded-lg transition-all duration-200">
@@ -29,21 +47,48 @@
         </form>
     </div>
 
-    <div class="max-w-6xl mx-auto px-4 py-12">
-        <div class="text-center mb-12">
-            <h1 class="text-4xl font-bold text-blue-600 mb-4">Our Medical Specialists</h1>
+    <div class="max-w-6xl mx-auto px-4 py-11">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-blue-600 mb-4">Our Medical Specialists</h1>
             <p class="text-green-600 text-lg">Find experienced doctors across various specialties</p>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <p class="text-red-500 mt-2"><%= error %></p>
+            <% } %>
         </div>
 
-        <div class="grid md:grid-cols-2 gap-6">
+        <div class="mt-5 flex justify-center items-center space-x-4" style="margin-bottom: 10px;">
+            <% if (totalPages > 1) { %>
+
+                <a href="/findDr?page=<%= currentPage - 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                          <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                    &lt; Prev
+                </a>
+
+                <span class="text-white text-lg font-semibold">
+                    Page <%= currentPage %> of <%= totalPages %>
+                </span>
+
+                <a href="/findDr?page=<%= currentPage + 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                          <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                    Next &gt;
+                </a>
+            <% } %>
+        </div>
+        
+
+        <div class="grid md:grid-cols-2 gap-4">
             <% if (typeof doctors !== 'undefined' && doctors.length > 0) { %>
-                <!-- part where we see multiple doctors -->
                 <% doctors.forEach(doctor => { %>
                     <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow duration-200">
-                        <div class="flex justify-between items-start">
-                            <div class="space-y-4">
-                                
-                                <div>
+                        <div class="flex items-center space-x-6"> <div class="profile-img-placeholder">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
+                                    <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
+                                </svg>
+                            </div>
+                            <div class="space-y-2 flex-1"> <div>
                                     <h3 class="text-xl font-bold text-gray-800"><%= doctor.Name %></h3>
                                     <p class="text-blue-600 font-medium"><%= doctor.Specialty %></p>
                                 </div>
@@ -72,7 +117,6 @@
                                         </svg>
                                         <span>Contact: <%= doctor.Phone %></span>
                                     </div>
-
                                 </div>
                             </div>
                         </div>
@@ -80,11 +124,12 @@
                 <% }); %>
             <% } else { %>
                 <div class="col-span-2 text-center py-8">
-                    <p class="text-gray-600">No doctors found in the database.</p>
+                    <p class="text-gray-600">No doctors found matching your search or in the database.</p>
                 </div>
             <% } %>
         </div>
 
+        
         <div class="mt-8 text-center">
             <a href="/" class="text-blue-600 hover:text-blue-800 transition-colors duration-200">
                 ← Return to Homepage
@@ -92,7 +137,6 @@
         </div>
     </div>
 
-    <-% include('footer') -%>
-    
+    <%- include('footer') -%>
 </body>
 </html>
