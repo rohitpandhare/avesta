@@ -95,61 +95,58 @@ window.showConfirmModal = function(message, onConfirm) {
 };
 
 
-// common delete func (MODIFIED TO NOT USE NATIVE CONFIRM/ALERT AND USE CORRECT ENDPOINTS)
-window.deleteItem = async function(id, type) {
+// Your existing deleteItem function (called after successful OTP verification)
+window.deleteItem = async function(itemId, itemType) {
     let url;
     let successMessage;
     let errorMessage;
+    let redirectToDashboard = false; // Flag to indicate if we should redirect to dashboard
 
-    // Determine the URL and messages based on the type
-    switch(type) {
-        case 'relation':
-            url = `/doctor/deleteRelation/${id}`; // Corrected endpoint for doctor_patient relation
+    switch(itemType) {
+        case 'relation': // Matches EJS: 'relation'
+            url = `/doctor/deleteRelation/${itemId}`;
             successMessage = 'Patient Relation Deactivated successfully!';
             errorMessage = 'An error occurred while deactivating the patient relation.';
+            redirectToDashboard = true; // Redirect after deactivating a patient relation
             break;
-        case 'record':
-            url = `/doctor/deleteRecord/${id}`; // Corrected endpoint for medical record
+        case 'medical-record': // Matches EJS: 'medical-record'
+            url = `/doctor/deleteRecord/${itemId}`;
             successMessage = 'Medical Record Deactivated successfully!';
             errorMessage = 'An error occurred while deactivating the medical record.';
             break;
-        case 'prescription':
-            url = `/doctor/deletePres/${id}`; // Corrected endpoint for prescription
+        case 'prescription': // Matches EJS: 'prescription'
+            url = `/doctor/deletePres/${itemId}`;
             successMessage = 'Prescription Deactivated successfully!';
             errorMessage = 'An error occurred while deactivating the prescription.';
             break;
         default:
-            console.error('Unknown type:', type);
+            console.error('Unknown type:', itemType);
             window.showCustomMessage('Unknown action type.', 'error');
             return;
     }
 
     try {
-        // Perform the delete operation using DELETE method
         const response = await fetch(url, {
-            method: 'DELETE', // Use DELETE method as per your routes
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest' // Standard header for AJAX requests
-            },
-            credentials: 'include' // Ensure cookies (like session ID) are sent
+            method: 'DELETE' // *** IMPORTANT: Changed method to DELETE ***
         });
+        const data = await response.json();
 
-        const data = await response.json(); // Parse JSON response
-
-        if (response.ok && data.success) { // Check both HTTP status and API success flag
-            window.showCustomMessage(data.message || successMessage, 'success');
-            location.reload(); // Reload the page to reflect changes
+        if (data.success) {
+            window.showCustomMessage(successMessage, 'success');
+            if (redirectToDashboard) {
+                // If patient relation is deactivated, redirect to the dashboard
+                window.location.href = '/doctor'; // Redirect to the main doctor dashboard
+            } else {
+                location.reload(); // For records and prescriptions, just reload the current page
+            }
         } else {
-            // If response is not ok, or data.success is false
             window.showCustomMessage(data.message || errorMessage, 'error');
         }
     } catch (error) {
-        console.error('Error deleting:', error);
-        window.showCustomMessage(`Failed to deactivate: ${error.message}`, 'error');
+        console.error('Error during deactivation:', error);
+        window.showCustomMessage(`An error occurred while deactivating the ${itemType}.`, 'error');
     }
 };
-
 // --- Medicine Search Functionality ---
 function setupMedSearch(inputId, suggestionsId, hiddenId) {
     const input = document.getElementById(inputId);

@@ -1140,7 +1140,7 @@ async function viewPatient(req, res) {
         const patientId = req.params.id;
 
         // 1. Fetch Patient Details
-        const [patientRows] = await conPool.query('SELECT * FROM patient WHERE PatientID = ?', [patientId]);
+        const [patientRows] = await conPool.query('SELECT * FROM patient WHERE flag = 0 AND PatientID = ?', [patientId]);
         const patient = patientRows.length > 0 ? patientRows[0] : null;
 
         if (!patient) {
