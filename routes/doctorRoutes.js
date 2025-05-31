@@ -13,7 +13,9 @@ const {
     deleteRecord,
     deletePres,
     revivePrescription,
-    viewPatient
+    viewPatient,
+    requestOtpForDoctorAction,
+    verifyOtpForDoctorAction
 } = require('../controllers/doctorAuth');
 
 router.get('/',checkRole(['doctor']), getDoctor);
@@ -25,6 +27,15 @@ router.post('/addMedRec', addMedRecords);
 router.delete('/deleteRelation/:id',deleteRelation)
 router.delete('/deleteRecord/:id',deleteRecord)
 router.delete('/deletePres/:id',deletePres) 
+
+// Apply checkRole middleware to the OTP routes
+router.post('/request-otp-for-action', checkRole(['doctor']), requestOtpForDoctorAction);
+router.post('/verify-otp-for-action', checkRole(['doctor']), verifyOtpForDoctorAction);
+
+// Deactivation routes (CORRECTED - changed from router.delete to router.post)
+router.post('/deactivate-medical-record/:id',deleteRecord);
+router.post('/deactivate-prescription/:id', deletePres);
+
 
 router.get('/viewRelation/:id',viewPatient);
 

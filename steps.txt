@@ -86,3 +86,6 @@ SET SQL_SAFE_UPDATES = 0; -- Disable safe updates for this session
 UPDATE doctorsync_dbx.patient
 SET AadharID = '123456789123'; -- Corrected column name spelling
 SET SQL_SAFE_UPDATES = 1; -- Re-enable safe updates (optional, but good practice)
+
+ALTER TABLE doctorsync_dbx.doctor_activity
+MODIFY COLUMN TargetType VARCHAR(20); -- Change 20 to a suitable length (e.g., 20 or 25)

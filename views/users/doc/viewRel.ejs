@@ -3,130 +3,105 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doctor Dashboard</title>
+  <title>Doctor Dashboard - Patients</title>
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/css/users.css">
+  <!-- <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script> -->
+  <!-- <style>
+    /* Custom styles for sidebar toggle */
+    @media (max-width: 768px) {
+      #sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease-in-out;
+      }
+      #sidebar.open {
+        transform: translateX(0);
+      }
+      .hamburger {
+        display: block;
+        position: fixed;
+        top: 20px;
+        left: 20px;
+        z-index: 1000;
+        cursor: pointer;
+      }
+      .close-icon {
+        display: block;
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 1.5rem;
+        color: white;
+        cursor: pointer;
+      }
+      #main-content {
+        margin-left: 0 !important; /* Override inline style for mobile */
+      }
+    }
+    @media (min-width: 769px) {
+      .hamburger, .close-icon {
+        display: none;
+      }
+      #sidebar {
+        transform: translateX(0);
+        position: relative; /* Ensure it takes up space in desktop view */
+      }
+      #main-content {
+        margin-left: 256px; /* Adjust based on sidebar width */
+      }
+    }
+  </style> -->
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
   <%- include('nav') -%>
-<div id="main-content" class="space-y-12">
+ <div style="margin-left: 120px;">
 
-  <h2 class="text-2xl font-semibold text-gray-800">Patients</h2>
-  <!-- table  -->
-    <div class="bg-white rounded-lg shadow overflow-hidden" id="patients-section" style="margin-left: 110px;">
-      <div class="overflow-x-auto">
-        <table class="min-w-full divide-y divide-gray-200">
-          <thead class="bg-gray-50">
-            <tr>
-              <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DoctorID</th> -->
-              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientName</th>
-              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">First Consultation</th>
-              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DOB</th>
-              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Phone</th>
-              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Blood Group</th>
-              <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Consultation Type</th> -->
-              <!-- <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Treatment Notes</th> -->
-              <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Activity</th>
-            </tr>
-          </thead>
-
-          <tbody class="divide-y divide-gray-200">
-            <% if (typeof doctorPatients !== 'undefined' && doctorPatients.length > 0) { %>
-              <% doctorPatients.forEach(relationship => { %>
-                <tr>
-                  <!-- <td class="px-6 py-4"><%= relationship.DoctorID %></td> -->
-                  <td class="px-6 py-4"><%= relationship.PatientName || 'N/A' %></td>
-                  <td class="px-6 py-4"><%= relationship.FirstConsultation.toLocaleDateString() %></td>
-                  <!-- <td class="px-6 py-4"><%= relationship.ConsultationType %></td> -->
-                  <!-- <td class="px-6 py-4"><%= relationship.TreatmentNotes %></td> -->
-                    <td class="px-6 py-4"><%= relationship.DOB.toLocaleDateString() %></td>
-                    <td class="px-6 py-4"><%= relationship.Phone %></td>
-                    <td class="px-6 py-4"><%= relationship.BloodGroup %></td>
-                  <td class="px-6 py-4 whitespace-nowrap">
-                    <!-- <button onclick="deleteItem('<%= relationship.PatientID%>','relation')" 
-                            class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
-                            Deactivate
-                    </button> -->
-                     <button onclick="viewItem('<%= relationship.PatientID%>','relation')" 
-                            class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
-                            View
-                    </button>
-                </td>
-                </tr>
-              <% }) %>
-            <% } else { %>
+      <h2 class="text-2xl font-semibold text-gray-800 mb-4">Patients</h2>
+      <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
               <tr>
-                <td colspan="5" class="px-6 py-4 text-center text-gray-500">No relationships found</td>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">PatientName</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">First Consultation</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">DOB</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Phone</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Blood Group</th>
+                <th class="px-6 py-3 text-left text-sm font-semibold text-gray-700">Activity</th>
               </tr>
-            <% } %>
-          </tbody>
-        </table>
+            </thead>
+            <tbody class="divide-y divide-gray-200">
+              <% if (typeof doctorPatients !== 'undefined' && doctorPatients.length > 0) { %>
+                <% doctorPatients.forEach(relationship => { %>
+                  <tr>
+                    <td class="px-6 py-4"><%= relationship.PatientName || 'N/A' %></td>
+                    <td class="px-6 py-4"><%= relationship.FirstConsultation ? relationship.FirstConsultation.toLocaleDateString() : 'N/A' %></td>
+                    <td class="px-6 py-4"><%= relationship.DOB ? relationship.DOB.toLocaleDateString() : 'N/A' %></td>
+                    <td class="px-6 py-4"><%= relationship.Phone || 'N/A' %></td>
+                    <td class="px-6 py-4"><%= relationship.BloodGroup || 'N/A' %></td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <a href="/doctor/viewRelation/<%= relationship.PatientID %>" 
+                         class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600">
+                          View
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="6" class="px-6 py-4 text-center text-gray-500">No relationships found</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
       </div>
-    </div>
-    
-</div>
+    </main>
+  </div>
 
-</main>
-</div>
-
+  
+ </div>
 <script src="/javascripts/doctorHelp.js"></script>
-<script>
-  //common delete func
-function viewItem(id, type) {
-    let confirmMessage;
-    let url;
-
-    // Determine the URL and confirmation message based on the type
-    switch(type) {
-        case 'relation':
-            confirmMessage = `Are you sure you want to delete this Relation?`;
-            url = `/doctor/viewRelation/${id}`;
-            break;
-        // case 'record':
-        //     confirmMessage = `Are you sure you want to delete this Record?`;
-        //     url = `/doctor/deleteRecord/${id}`;
-        //     break;
-        // case 'prescription':
-        //     confirmMessage = `Are you sure you want to delete this Prescription?`;
-        //     url = `/doctor/deletePres/${id}`;
-        //     break;
-        default:
-            console.error('Unknown type:', type);
-            return; // Exit if type is unknown
-    }
-
-    // Show confirmation dialog
-    if (!confirm(confirmMessage)) {
-        return; // Exit if the user cancels
-    }
-
-    // Perform the delete operation
-    fetch(url, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'include' // Ensure cookies are sent with the request
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(error => {
-                throw new Error(error.message || `An error occurred while deleting the ${type}s.`);
-            });
-        }
-        return response.json(); // Parse JSON response on success
-    })
-    .then(data => {
-        // Redirect instead of reload to prevent form resubmission
-        window.location.href = '/doctor?success=' + encodeURIComponent(data.message);
-    })
-    .catch(error => {
-        console.error('Error deleting:', error);
-        alert(`Failed to delete: ${error.message}`);
-    });
-}
-</script>
 </body>
 </html>
