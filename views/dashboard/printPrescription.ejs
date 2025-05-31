@@ -108,7 +108,22 @@
     <div class="text-right">
       <p class="text-sm"><strong>Patient:</strong> <%= prescription.PatientName || 'Unknown Patient' %></p>
       <p class="text-sm"><strong>Date:</strong> <%= new Date(prescription.DATEISSUED).toLocaleDateString() %></p>
-      <p class="text-sm"><strong>Aadhar ID:</strong> XXXX XXX XXX 1234</p>
+      <p class="text-sm"><strong>Aadhar ID:</strong>
+        <%
+          // Ensure prescription and aadharID exist
+          let aadhar = prescription && prescription.aadharID != null ? String(prescription.aadharID) : '';
+
+          // Remove any non-digit characters that might come from conversion
+          aadhar = aadhar.replace(/\D/g, '');
+
+          if (aadhar.length === 12) {
+            const maskedAadhar = 'XXXX XXXX ' + aadhar.substring(8);
+        %>
+            <%= maskedAadhar %>
+        <% } else { %>
+            Not specified
+        <% } %>
+</p>
     </div>
   </div>
 
