@@ -67,3 +67,22 @@ CREATE TABLE doctorsync_dbx.doctor_activity (
     TargetID INT NOT NULL,
     ActivityTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+CREATE TABLE doctorsync_dbx.otp_table (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    otp VARCHAR(10) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    byUser VARCHAR(255) NOT NULL, -- This stores the UserID
+    secret VARCHAR(255) NOT NULL, -- New: Stores the speakeasy secret for verification
+    expires_at DATETIME NOT NULL, -- New: Stores the expiration timestamp
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE `doctorsync_dbx`.`patient` 
+CHANGE COLUMN `AadharID` `AadharID` BIGINT NULL DEFAULT 123456789123 ;
+
+SET SQL_SAFE_UPDATES = 0; -- Disable safe updates for this session
+UPDATE doctorsync_dbx.patient
+SET AadharID = '123456789123'; -- Corrected column name spelling
+SET SQL_SAFE_UPDATES = 1; -- Re-enable safe updates (optional, but good practice)

@@ -1,4 +1,3 @@
-const e = require("cors");
 const { conPool } = require("../config/dbHandler");
 
 async function updateData(DoctorID) {
@@ -18,7 +17,10 @@ async function updateData(DoctorID) {
     const [doctorPatients] = await conPool.query(
         `SELECT 
             dp.*,
-            pat.Name AS PatientName
+            pat.Name AS PatientName,
+            pat.DOB,
+            pat.Phone,
+            pat.BloodGroup
         FROM doctor_patient dp
         LEFT JOIN patient pat ON dp.PatientID = pat.PatientID
         WHERE dp.flag = 0 AND dp.DoctorID = ?`,
@@ -1071,6 +1073,53 @@ async function revivePrescription(req, res) {
         delete req.session.error;
     }
 }
+
+
+async function viewPatient(req, res) {
+    try {
+        
+    if (!req.session.user || req.session.user.Role !== 'DOCTOR') {
+        return res.redirect('/login');}
+
+    // Get updated data
+    const { doctorPatients } = await updateData(doctorID);
+
+    const patientId = req.params.id;
+    const [patient] = await conPool.query('SELECT * FROM patient WHERE PatientID = ?', [patientId]);
+    
+    if (patient.length === 0) {
+        return res.status(404).send('Patient not found');
+    }
+    
+
+    res.render('users/doc/patientDashboard', {
+          user: req.session.use,
+          PatientID: patientId,
+          doctorPatients,
+          success: req.session.success,
+          error: req.session.error
+     });
+  
+    // Clear flash messages
+    delete req.session.success;
+    delete req.session.error;
+      } catch (err) {
+      console.error('Error loading doctor dashboard:', err);
+      res.render('users/doctor', {
+        user: {
+          ...req.session.user,
+          Username: req.session.user.Name || 'Doctor' // Fallback name
+        },
+        currentDoctorID: null,
+        doctorPatients: [],
+        error: 'Error loading dashboard: ' + err.message,
+        doctorRelationships: []
+      });
+      // Clear flash messages
+      delete req.session.success;
+      delete req.session.error;
+    }
+  }
 module.exports ={
     getDoctor,
     addPatient,
@@ -1086,5 +1135,6 @@ module.exports ={
     addingRel,
     addingRec,
     getOldPres,
-    revivePrescription
+    revivePrescription,
+    viewPatient
 }

@@ -12,7 +12,8 @@ const {
     deleteRelation,
     deleteRecord,
     deletePres,
-    revivePrescription
+    revivePrescription,
+    viewPatient
 } = require('../controllers/doctorAuth');
 
 router.get('/',checkRole(['doctor']), getDoctor);
@@ -25,7 +26,10 @@ router.delete('/deleteRelation/:id',deleteRelation)
 router.delete('/deleteRecord/:id',deleteRecord)
 router.delete('/deletePres/:id',deletePres) 
 
+router.get('/viewRelation/:id',viewPatient);
+
 router.put('/revivePres/:id',revivePrescription )
+
 // Route to view admin logs
 router.get('/logs', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'DOCTOR') {

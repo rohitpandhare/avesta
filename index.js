@@ -37,7 +37,6 @@ app.use(session({
     }
 }));
 
-
 // ADD THIS LOG
 app.use((req, res, next) => {
     console.log(`Incoming Request (Global Middleware): ${req.method} ${req.originalUrl}`);
