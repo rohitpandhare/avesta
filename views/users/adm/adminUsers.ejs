@@ -64,7 +64,7 @@
         .custom-message-box.error {
             background-color: #dc3545; /* Red for error */
         }
-    
+
     </style>
 </head>
 
@@ -72,7 +72,7 @@
     <%- include('nav') -%>
 
     <div class="flex h-screen relative">
-        <main class="flex-1 overflow-y-auto md:p-8"> 
+        <main class="flex-1 overflow-y-auto md:p-8">
             <header class="mb-8">
                 <h1 class="text-3xl font-bold text-gray-800" id="page-title">Admin Dashboard</h1>
                 <p class="text-blue-600 mt-1" id="page-description">Manage Users, Doctors, and Patients</p>
@@ -93,6 +93,23 @@
 
             <div id="content-users" class="tab-content">
                 <h2 class="text-xl font-bold mb-4 text-gray-800">User Management</h2>
+
+                <div class="mb-6">
+                    <form action="/admin/users" method="GET" class="flex items-center space-x-2">
+                        <input
+                            type="text"
+                            name="search"
+                            placeholder="Search by Username"
+                            value="<%= typeof searchTerm !== 'undefined' ? searchTerm : '' %>"
+                            class="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input type="hidden" name="page" value="1" />
+                        <input type="hidden" name="limit" value="<%= typeof limit !== 'undefined' ? limit : 10 %>" />
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+                </div>
                 <div class="bg-white rounded-lg shadow overflow-hidden w-full">
                     <table class="data-table">
                         <thead>
@@ -105,9 +122,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <% 
-                                const activeUsers = userList?.filter(user => user.Flag === 0); 
-                                if (activeUsers?.length > 0) { 
+                            <%
+                                const activeUsers = userList?.filter(user => user.Flag === 0);
+                                if (activeUsers?.length > 0) {
                             %>
                                 <% activeUsers.forEach(user => { %>
                                     <tr>
@@ -130,7 +147,21 @@
                         </tbody>
                     </table>
                 </div>
-            </div>
+
+                <div class="mt-6 flex justify-center items-center space-x-2">
+                    <% if (totalPages > 1) { %>
+                        <a href="/admin/users?page=<%= currentPage - 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                           class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
+
+                        <span class="px-4 py-2 font-bold text-gray-800">
+                            Page <%= currentPage %> of <%= totalPages %>
+                        </span>
+
+                        <a href="/admin/users?page=<%= currentPage + 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                           class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">Next</a>
+                    <% } %>
+                </div>
+                </div>
 
             <div id="content-doctors" class="tab-content hidden">
                 <h2 class="text-xl font-bold mb-4 text-gray-800">Doctor Management</h2>
@@ -147,9 +178,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <% 
-                            const activeDoc = doctorList?.filter(doctor => doctor.Flag === 0); 
-                            if (activeDoc?.length > 0) { 
+                            <%
+                            const activeDoc = doctorList?.filter(doctor => doctor.Flag === 0);
+                            if (activeDoc?.length > 0) {
                             %>
                                 <% activeDoc.forEach(doctor => { %>
                                     <tr>
@@ -191,9 +222,9 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <% 
-                            const activePat = patientList?.filter(patient => patient.Flag === 0); 
-                            if (activePat?.length > 0) { 
+                            <%
+                            const activePat = patientList?.filter(patient => patient.Flag === 0);
+                            if (activePat?.length > 0) {
                             %>
                                 <% activePat.forEach(patient => { %>
                                     <tr>
@@ -238,7 +269,7 @@
         <div class="bg-white p-6 rounded-lg shadow-xl max-w-sm w-full mx-2">
             <h3 id="otpModalTitle" class="text-lg font-semibold text-gray-900 mb-4">Verify Action with OTP</h3>
             <p id="otpModalMessage" class="text-sm text-gray-700 mb-4">A verification code will be sent to the user's associated email.</p>
-            
+
             <input type="hidden" id="otpUserId">
             <input type="hidden" id="otpUsername">
 
@@ -280,21 +311,22 @@
 
             // Activate the clicked tab button
             document.getElementById('tab-' + tabId).classList.add('active');
+
+            // Update URL to reflect current tab without reloading (optional, for better UX)
+            // history.pushState(null, '', `/admin?tab=${tabId}`);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
             // Initial tab display (show 'users' tab by default)
-            showTab('users');
-            
+            const urlParams = new URLSearchParams(window.location.search);
+            const initialTab = urlParams.get('tab') || 'users';
+            showTab(initialTab);
+
             // Sidebar functionality (moved here from previous adminUsers.ejs script block)
-            // It's good practice to keep DOM manipulation related to the current page within its script.
-            // However, if your 'nav' include handles sidebar opening/closing independently,
-            // these might be redundant or could be controlled solely by adminHelp.js.
             const sidebar = document.getElementById('sidebar');
             const hamburger = document.getElementById('hamburger');
             const closeIcon = document.getElementById('close-icon');
 
-            // Only add listeners if elements exist, to prevent errors if nav.ejs isn't perfect
             if (hamburger) {
                 hamburger.addEventListener('click', () => sidebar.classList.toggle('open'));
             }
@@ -303,7 +335,7 @@
             }
         });
 
-              function showCustomMessage(message, type) {
+        function showCustomMessage(message, type) {
             const messageBox = document.getElementById('customMessageBox');
             const messageText = document.getElementById('customMessageText');
 
@@ -320,7 +352,6 @@
                 }, { once: true });
             }, 3000);
         }
-    
     </script>
 </body>
 </html>
