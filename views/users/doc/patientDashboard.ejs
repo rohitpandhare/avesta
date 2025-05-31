@@ -75,18 +75,23 @@
 
         <% if (patient) { %>
             <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-2xl font-bold text-gray-700 mb-4 border-b pb-2">Patient Details</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <p><strong>Name:</strong> <%= patient.Name %></p>
-                    <p><strong>Patient ID:</strong> <%= patient.PatientID %></p>
-                    <p><strong>Date of Birth:</strong> <%= patient.DOB ? patient.DOB.toLocaleDateString() : 'N/A' %></p>
-                    <p><strong>Phone:</strong> <%= patient.Phone || 'N/A' %></p>
-                    <p><strong>Blood Group:</strong> <%= patient.BloodGroup || 'N/A' %></p>
-                    <p><strong>Aadhar ID:</strong> <%= patient.AadharID || 'N/A' %></p>
-                    <p class="md:col-span-2"><strong>Address:</strong> <%= patient.Address || 'N/A' %></p>
-                    <p class="md:col-span-2"><strong>Medical History:</strong> <%= patient.MedicalHistory || 'N/A' %></p>
-                    <p><strong>Emergency Contact:</strong> <%= patient.EmergencyContact || 'N/A' %></p>
-                    <p><strong>Emergency Phone:</strong> <%= patient.EmergencyPhone || 'N/A' %></p>
+    <h3 class="text-2xl font-bold text-gray-700 mb-4 border-b pb-2">Patient Details</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <p><strong>Name:</strong> <%= patient.Name %></p>
+        <p><strong>Patient ID:</strong> <%= patient.PatientID %></p>
+        <p><strong>Date of Birth:</strong> <%= patient.DOB ? patient.DOB.toLocaleDateString() : 'N/A' %></p>
+        <p><strong>Phone:</strong> <%= patient.Phone || 'N/A' %></p>
+        <p><strong>Blood Group:</strong> <%= patient.BloodGroup || 'N/A' %></p>
+        <p><strong>Aadhar ID:</strong> <%= patient.AadharID || 'N/A' %></p>
+        <p class="md:col-span-2"><strong>Address:</strong> <%= patient.Address || 'N/A' %></p>
+        <p class="md:col-span-2"><strong>Medical History:</strong> <%= patient.MedicalHistory || 'N/A' %></p>
+        <p><strong>Emergency Contact:</strong> <%= patient.EmergencyContact || 'N/A' %></p>
+        <p><strong>Emergency Phone:</strong> <%= patient.EmergencyPhone || 'N/A' %></p>
+
+        <button onclick="confirmDeleteItemWithOtp('<%= patient.PatientID %>','relation', '<%= patient.Name %>')"
+                class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 transition-colors">
+            Deactivate Relation
+        </button>
                 </div>
             </div>
 

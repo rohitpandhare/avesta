@@ -2,7 +2,7 @@
 function setupPatientSearch(inputId, suggestionsId, hiddenId) {
     const input = document.getElementById(inputId);
     const suggestions = document.getElementById(suggestionsId);
-    
+
     // Only proceed if the input element exists on the page
     if (!input || !suggestions) {
         // console.warn(`Elements for patient search not found: inputId=${inputId}, suggestionsId=${suggestionsId}`);
@@ -49,15 +49,15 @@ function setupPatientSearch(inputId, suggestionsId, hiddenId) {
 }
 
 // --- Custom Confirmation Modal Functions ---
-let currentAction = null; // To store the ID and type for the action
+// These functions are now used by the OTP flow, so currentAction global is no longer needed.
+// The `showConfirmModal` and `hideConfirmModal` methods are now part of window object.
 
 /**
  * Shows the custom confirmation modal.
- * @param {string} id - The ID of the item to be acted upon.
- * @param {string} type - The type of item (e.g., 'prescription', 'record', 'relation').
  * @param {string} message - The message to display in the modal.
+ * @param {Function} onConfirm - Callback function to execute when 'Confirm' is clicked.
  */
-function showConfirmModal(id, type, message) {
+window.showConfirmModal = function(message, onConfirm) {
     const modal = document.getElementById('confirmationModal');
     const modalMessage = document.getElementById('modalMessage');
     const confirmBtn = document.getElementById('confirmBtn');
@@ -66,56 +66,37 @@ function showConfirmModal(id, type, message) {
     if (!modal || !modalMessage || !confirmBtn || !cancelBtn) {
         console.error("Confirmation modal elements not found. Cannot show modal.");
         // Fallback to direct action or a simple alert if modal is critical and missing
-        // For now, we'll just log and return.
-        // window.location.href = '/doctor?error=' + encodeURIComponent('Modal system error.');
+        alert(message); // Simple alert as a fallback
+        if (confirm('Proceed anyway?')) {
+            onConfirm();
+        }
         return;
     }
 
     modalMessage.innerText = message;
-    modal.classList.add('show'); // Show the modal overlay
+    modal.classList.remove('hidden'); // Ensure modal is visible
 
-    // Store the action details
-    currentAction = { id, type };
+    // Clone and replace buttons to remove all existing event listeners
+    const newConfirmBtn = confirmBtn.cloneNode(true);
+    const newCancelBtn = cancelBtn.cloneNode(true);
+    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
+    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
 
-    // Remove previous listeners to prevent multiple calls
-    confirmBtn.removeEventListener('click', handleConfirm);
-    cancelBtn.removeEventListener('click', handleCancel);
+    newConfirmBtn.addEventListener('click', () => {
+        modal.classList.add('hidden'); // Hide modal
+        if (onConfirm) {
+            onConfirm(); // Execute the callback
+        }
+    });
 
-    // Add new listeners
-    confirmBtn.addEventListener('click', handleConfirm);
-    cancelBtn.addEventListener('click', handleCancel);
-}
+    newCancelBtn.addEventListener('click', () => {
+        modal.classList.add('hidden'); // Hide modal
+    });
+};
 
-/**
- * Hides the custom confirmation modal.
- */
-function hideConfirmModal() {
-    const modal = document.getElementById('confirmationModal');
-    if (modal) {
-        modal.classList.remove('show'); // Hide the modal overlay
-    }
-    currentAction = null; // Clear the stored action
-}
 
-/**
- * Handles the confirm button click in the modal.
- */
-function handleConfirm() {
-    if (currentAction) {
-        deleteItem(currentAction.id, currentAction.type); // Proceed with the action
-    }
-    hideConfirmModal(); // Always hide the modal after action
-}
-
-/**
- * Handles the cancel button click in the modal.
- */
-function handleCancel() {
-    hideConfirmModal(); // Just hide the modal
-}
-
-// common delete func (MODIFIED TO NOT USE NATIVE CONFIRM/ALERT)
-function deleteItem(id, type) {
+// common delete func (MODIFIED TO NOT USE NATIVE CONFIRM/ALERT AND USE CORRECT ENDPOINTS)
+window.deleteItem = async function(id, type) {
     let url;
     let successMessage;
     let errorMessage;
@@ -123,51 +104,51 @@ function deleteItem(id, type) {
     // Determine the URL and messages based on the type
     switch(type) {
         case 'relation':
-            url = `/doctor/deleteRelation/${id}`;
-            successMessage = 'Relation Deactivated successfully!';
-            errorMessage = 'An error occurred while deactivating the relation.';
+            url = `/doctor/deleteRelation/${id}`; // Corrected endpoint for doctor_patient relation
+            successMessage = 'Patient Relation Deactivated successfully!';
+            errorMessage = 'An error occurred while deactivating the patient relation.';
             break;
         case 'record':
-            url = `/doctor/deleteRecord/${id}`;
+            url = `/doctor/deleteRecord/${id}`; // Corrected endpoint for medical record
             successMessage = 'Medical Record Deactivated successfully!';
             errorMessage = 'An error occurred while deactivating the medical record.';
             break;
         case 'prescription':
-            url = `/doctor/deletePres/${id}`;
+            url = `/doctor/deletePres/${id}`; // Corrected endpoint for prescription
             successMessage = 'Prescription Deactivated successfully!';
             errorMessage = 'An error occurred while deactivating the prescription.';
             break;
         default:
             console.error('Unknown type:', type);
-            window.location.href = '/doctor?error=' + encodeURIComponent('Unknown action type.');
-            return; 
+            window.showCustomMessage('Unknown action type.', 'error');
+            return;
     }
 
-    // Perform the delete operation
-    fetch(url, {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Requested-With': 'XMLHttpRequest'
-        },
-        credentials: 'include' // Ensure cookies are sent with the request
-    })
-    .then(response => {
-        if (!response.ok) {
-            return response.json().then(error => {
-                throw new Error(error.message || errorMessage);
-            });
+    try {
+        // Perform the delete operation using DELETE method
+        const response = await fetch(url, {
+            method: 'DELETE', // Use DELETE method as per your routes
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest' // Standard header for AJAX requests
+            },
+            credentials: 'include' // Ensure cookies (like session ID) are sent
+        });
+
+        const data = await response.json(); // Parse JSON response
+
+        if (response.ok && data.success) { // Check both HTTP status and API success flag
+            window.showCustomMessage(data.message || successMessage, 'success');
+            location.reload(); // Reload the page to reflect changes
+        } else {
+            // If response is not ok, or data.success is false
+            window.showCustomMessage(data.message || errorMessage, 'error');
         }
-        return response.json(); // Parse JSON response on success
-    })
-    .then(data => {
-        window.location.href = '/doctor?success=' + encodeURIComponent(data.message || successMessage);
-    })
-    .catch(error => {
+    } catch (error) {
         console.error('Error deleting:', error);
-        window.location.href = '/doctor?error=' + encodeURIComponent(`Failed to deactivate: ${error.message}`);
-    });
-}
+        window.showCustomMessage(`Failed to deactivate: ${error.message}`, 'error');
+    }
+};
 
 // --- Medicine Search Functionality ---
 function setupMedSearch(inputId, suggestionsId, hiddenId) {
@@ -245,30 +226,28 @@ document.getElementById('add-medicine')?.addEventListener('click', function() {
     }
     const index = container.children.length;
     const newMedicine = container.firstElementChild.cloneNode(true);
-    
+
     // Update all attributes and names with new index
     newMedicine.setAttribute('data-medicine-index', index);
     newMedicine.querySelectorAll('[name]').forEach(el => {
         el.name = el.name.replace(/\[\d+\]/, `[${index}]`);
         el.id = el.id.replace(/\d+/, index);
         if (el.type === 'checkbox' && !el.name.includes('BeforeFood')) {
-            el.checked = el.name.includes('Morning') || 
-                            el.name.includes('Evening') || 
-                            el.name.includes('AfterFood');
+            el.checked = el.name.includes('Morning') ||
+                                 el.name.includes('Evening') ||
+                                 el.name.includes('AfterFood');
         }
     });
-    
+
     // Clear input values except checkboxes
     newMedicine.querySelectorAll('input[type="text"], textarea').forEach(el => {
         el.value = '';
     });
-    
+
     container.appendChild(newMedicine);
 });
 
 // --- Toast Notification (from your original doctorHelp.js, slightly refined) ---
-// Note: Sidebar functions are now handled directly in the EJS files
-// where the sidebar HTML is present (e.g., viewPres.ejs, patientDashboard.ejs).
 document.addEventListener('DOMContentLoaded', () => {
     // Function to close toast notification
     function closeToast() {
@@ -319,44 +298,12 @@ window.showCustomMessage = function(message, type) {
 
 // Function to initiate the OTP confirmation flow
 window.confirmDeleteItemWithOtp = function(itemId, itemType, itemName = '') { // itemName is optional
-    const confirmationModal = document.getElementById('confirmationModal');
-    const modalMessage = document.getElementById('modalMessage');
-    const confirmBtn = document.getElementById('confirmBtn');
-    const cancelBtn = document.getElementById('cancelBtn');
-
-    // Ensure modals exist
-    if (!confirmationModal || !modalMessage || !confirmBtn || !cancelBtn) {
-        console.error("Confirmation modal elements not found.");
-        // Fallback to direct deletion if modals aren't set up
-        if (confirm('Are you sure you want to deactivate this ' + itemType + ' (ID: ' + itemId + ')?')) {
-            window.deleteItem(itemId, itemType);
-        }
-        return;
-    }
-
     const itemDisplayName = itemName ? ` '${itemName}'` : '';
-    modalMessage.textContent = `Are you sure you want to deactivate this ${itemType}${itemDisplayName}? This action requires OTP verification.`;
-    confirmationModal.classList.remove('hidden'); // Show the modal
-
-    // Clear previous listeners to prevent multiple bindings
-    const newConfirmBtn = confirmBtn.cloneNode(true);
-    const newCancelBtn = cancelBtn.cloneNode(true);
-    confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
-    cancelBtn.parentNode.replaceChild(newCancelBtn, cancelBtn);
-    const currentConfirmBtn = newConfirmBtn;
-    const currentCancelBtn = newCancelBtn;
-
-    const handleConfirm = () => {
-        confirmationModal.classList.add('hidden'); // Hide confirmation modal
-        window.showAndRequestOtpModal(itemId, itemType); // Proceed to OTP modal
-    };
-
-    const handleCancel = () => {
-        confirmationModal.classList.add('hidden'); // Hide confirmation modal
-    };
-
-    currentConfirmBtn.addEventListener('click', handleConfirm);
-    currentCancelBtn.addEventListener('click', handleCancel);
+    // Show initial confirmation modal
+    window.showConfirmModal(`Are you sure you want to deactivate this ${itemType}${itemDisplayName}? This action requires OTP verification.`, () => {
+        // If confirmed, proceed to show OTP modal and request OTP
+        window.showAndRequestOtpModal(itemId, itemType);
+    });
 };
 
 
@@ -381,7 +328,7 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
     otpModal.classList.remove('hidden'); // Show the OTP modal
     requestNewOtpBtn.style.display = 'block'; // Ensure request new OTP button is visible
 
-    // Clear previous listeners for OTP modal buttons
+    // Clone and replace buttons to remove all existing event listeners
     const newVerifyOtpBtn = verifyOtpBtn.cloneNode(true);
     const newCancelOtpBtn = cancelOtpBtn.cloneNode(true);
     const newRequestNewOtpBtn = requestNewOtpBtn.cloneNode(true);
@@ -393,7 +340,6 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
     const currentVerifyOtpBtn = newVerifyOtpBtn;
     const currentCancelOtpBtn = newCancelOtpBtn;
     const currentRequestNewOtpBtn = newRequestNewOtpBtn;
-
 
     // --- Send initial OTP request ---
     try {
@@ -407,14 +353,14 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
         const data = await response.json();
         if (!data.success) {
             window.showCustomMessage(data.message || 'Failed to send OTP.', 'error');
-            otpModal.classList.add('hidden');
+            otpModal.classList.add('hidden'); // Hide OTP modal if sending fails
             return;
         }
         window.showCustomMessage('OTP sent to your email!', 'success');
     } catch (error) {
         console.error('Error requesting OTP:', error);
         window.showCustomMessage('Error requesting OTP. Please try again.', 'error');
-        otpModal.classList.add('hidden');
+        otpModal.classList.add('hidden'); // Hide OTP modal on error
         return;
     }
 
@@ -425,6 +371,9 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
             window.showCustomMessage('Please enter the OTP.', 'error');
             return;
         }
+
+        currentVerifyOtpBtn.disabled = true; // Disable to prevent multiple clicks
+        currentVerifyOtpBtn.textContent = 'Verifying...';
 
         try {
             const response = await fetch('/doctor/verify-otp-for-action', {
@@ -438,7 +387,7 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
 
             if (data.success) {
                 window.showCustomMessage('OTP verified successfully. Deactivating item...', 'success');
-                otpModal.classList.add('hidden');
+                otpModal.classList.add('hidden'); // Hide OTP modal
                 // Proceed with the actual deletion
                 await window.deleteItem(itemIdForDelete, itemTypeForDelete);
             } else {
@@ -447,15 +396,15 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
         } catch (error) {
             console.error('Error verifying OTP:', error);
             window.showCustomMessage('Error verifying OTP. Please try again.', 'error');
+        } finally {
+            currentVerifyOtpBtn.disabled = false;
+            currentVerifyOtpBtn.textContent = 'Verify OTP';
         }
     };
 
     const handleCancelOtp = () => {
         otpModal.classList.add('hidden');
-        // Clean up listeners
-        currentVerifyOtpBtn.removeEventListener('click', handleVerifyOtp);
-        currentCancelOtpBtn.removeEventListener('click', handleCancelOtp);
-        currentRequestNewOtpBtn.removeEventListener('click', handleRequestNewOtp);
+        // Clean up listeners if necessary, though cloning often handles this
     };
 
     const handleRequestNewOtp = async () => {
@@ -488,21 +437,10 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
     currentRequestNewOtpBtn.addEventListener('click', handleRequestNewOtp);
 };
 
-// Your existing deleteItem function (called after successful OTP verification)
-window.deleteItem = async function(itemId, itemType) {
-    try {
-        const response = await fetch(`/doctor/deactivate-${itemType}/${itemId}`, {
-            method: 'POST'
-        });
-        const data = await response.json();
-        if (data.success) {
-            window.showCustomMessage(`${itemType} deactivated successfully!`, 'success');
-            location.reload(); // Reload the page to reflect changes
-        } else {
-            window.showCustomMessage(data.message || `Failed to deactivate ${itemType}.`, 'error');
-        }
-    } catch (error) {
-        console.error('Error during deactivation:', error);
-        window.showCustomMessage(`An error occurred while deactivating the ${itemType}.`, 'error');
-    }
-};
+
+// --- Initialize modal handlers when the DOM is fully loaded ---
+document.addEventListener('DOMContentLoaded', () => {
+    // No specific setup functions are needed for modals here anymore,
+    // as their event listeners are added/removed dynamically with cloning.
+    // Ensure `setupPatientSearch` and `setupMedSearch` are called on relevant pages.
+});
