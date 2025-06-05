@@ -23,6 +23,13 @@ const {
     getOldPres
 } = require('../controllers/doctorAuth');
 
+const { 
+    generateOTP,
+    verifyOTP,
+    OTP_CONFIG,
+    otpStore,
+    sendCustomOTPEmail} = require('../controllers/helperAuth');
+    
 // --- Doctor/Patient Routes (assuming these are working correctly) ---
 router.get('/login/getRelation', getRel);
 router.get('/login/getRecord', getRec);
@@ -32,74 +39,6 @@ router.get('/login/revivePres', getOldPres);
 router.get('/login/addPrescription', addingPres);
 router.get('/login/addRelation', addingRel);
 router.get('/login/addRecord', addingRec);
-
-// --- OTP Configuration ---
-const OTP_CONFIG = {
-    step: 300, // 5-minute validity (300 seconds)
-    digits: 6,
-    encoding: 'base32'
-};
-
-// --- Generate OTP ---
-function generateOTP() {
-    const secret = speakeasy.generateSecret({ length: 20 });
-    const token = speakeasy.totp({
-        secret: secret.base32,
-        ...OTP_CONFIG
-    });
-    return { otp: token, secret: secret.base32 };
-}
-
-// --- Verify OTP ---
-function verifyOTP(token, secret) {
-    // Add 'window' parameter to account for time drift
-    return speakeasy.totp.verify({
-        secret: secret,
-        token: token,
-        ...OTP_CONFIG,
-        window: 2 // Allow for a 2-step window (e.g., current time + 2 steps, or current time - 2 steps)
-    });
-}
-
-// --- Email Transport ---
-const emailTransport = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'connect.doctorsync@gmail.com',
-        pass: 'dklp rsru tpys agki' // IMPORTANT: Use environment variables for passwords in production!
-    }
-});
-
-// --- Send OTP Email ---
-async function sendOTPEmail(email, otp, subjectPrefix = 'Your Verification Code') {
-    try {
-        await emailTransport.sendMail({
-            from: '"OTP Service" <connect.doctorsync@gmail.com>',
-            to: email,
-            subject: `${subjectPrefix}`,
-            text: `Your verification code is: ${otp}\nThis code expires in 5 minutes.`,
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #1a365d;">DoctorSync Verification</h2>
-                    <p style="font-size: 16px;">
-                        Your secure verification code is:
-                        <strong style="font-size: 24px; letter-spacing: 2px;">${otp}</strong>
-                    </p>
-                    <p style="color: #718096; font-size: 14px;">
-                        This code will expire in 5 minutes. If you didn't request this, 
-                        please contact support immediately.
-                    </p>
-                </div>
-            `
-        });
-        console.log(`OTP email sent to ${email}`);
-    } catch (error) {
-        console.error('Email send error:', error);
-        throw new Error('Failed to send verification email');
-    }
-}
-
-const otpStore = new Map(); // Map: key -> { secret: '...', expires: Date }
 
 // --- Existing Login OTP Request Endpoint (for ADMIN login) ---
 router.post('/request-otp', async (req, res) => {
@@ -141,17 +80,13 @@ router.post('/request-otp', async (req, res) => {
             console.log('Login OTP successfully inserted into otp_table for user:', username);
         } catch (dbError) {
             console.error('DATABASE INSERT ERROR (Login OTP):', dbError);
-            // Decide how to handle this:
-            // 1. Return 500 error to client (if DB persistence is critical)
-            // 2. Log and continue (if in-memory store is primary, DB is secondary)
-            // For now, we'll log and let the email send proceed if DB fails.
-            // If DB failure means OTP is not truly stored, you might want to return an error here.
+            
         }
 
         console.log('Login OTP generated and stored in memory for user:', username);
 
         // Send OTP email
-        await sendOTPEmail(user.Email, otp, 'DoctorSync Login Verification');
+        await sendCustomOTPEmail(user.Email, otp, 'DoctorSync Login Verification');
 
         res.json({ success: true, email: user.Email });
     } catch (error) {
@@ -241,7 +176,6 @@ router.post('/verify-otp', async (req, res) => {
     }
 });
 
-
 // --- Request OTP for User Deactivation Endpoint ---
 router.post('/request-otp-for-delete', async (req, res) => {
     const { username, userId, role } = req.body; // 'username' is the doctor/patient's Name, 'userId' is their UserID
@@ -297,7 +231,7 @@ router.post('/request-otp-for-delete', async (req, res) => {
             throw new Error('Failed to save OTP to database: ' + dbError.message);
         }
         
-        await sendOTPEmail(targetUser.Email, otp, 'DoctorSync Deactivation Verification');
+        await sendCustomOTPEmail(targetUser.Email, otp, 'DoctorSync Deactivation Verification');
         console.log(`[request-otp-for-delete] Deactivation OTP email sent to: ${targetUser.Email}`);
 
         res.status(200).json({ success: true, email: targetUser.Email });
@@ -377,7 +311,8 @@ router.post('/verify-otp-for-delete', async (req, res) => {
     }
 });
 
-// --- Request OTP for User Deactivation Endpoint ---
+//////////
+// --- Request OTP for User activation Endpoint ---
 router.post('/request-otp-for-revive', async (req, res) => {
     const { username, userId, role } = req.body;
 
@@ -431,7 +366,7 @@ router.post('/request-otp-for-revive', async (req, res) => {
             throw new Error('Failed to save OTP to database: ' + dbError.message);
         }
         
-        await sendOTPEmail(targetUser.Email, otp, 'DoctorSync activation Verification');
+        await sendCustomOTPEmail(targetUser.Email, otp, 'DoctorSync activation Verification');
         console.log(`[request-otp-for-revive] activation OTP email sent to: ${targetUser.Email}`);
 
         res.status(200).json({ success: true, email: targetUser.Email });

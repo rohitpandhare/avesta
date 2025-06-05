@@ -5,12 +5,14 @@ async function findDoctor(req, res) {
     try {
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 4; // Set limit to 4 doctors per page
-        const offset = (page - 1) * limit;
+        const offset = (page - 1) * limit; // Calculate offset for pagination
 
         const searchTerm = req.query.search || '';
 
         // Base query for active doctors
         let doctorQuery = 'SELECT DoctorID, Name, Specialty, Phone, LicenseNumber, Qualifications FROM doctor WHERE Flag = 0';
+
+        // Count query for total doctors
         let countDoctorQuery = 'SELECT COUNT(*) as totalDoctors FROM doctor WHERE Flag = 0';
         const queryParams = [];
         const countQueryParams = [];
@@ -56,100 +58,71 @@ async function findDoctor(req, res) {
     }
 }
 
-// Search for Doctors
-async function findPerticularDoctor(req, res){
-    try {
-        const searchTerm = req.query.search || '';
-
-        const [doctors] = await conPool.query(`
-            SELECT 
-                DoctorID,
-                Name,
-                Specialty,
-                Phone,
-                LicenseNumber,
-                Qualifications
-            FROM doctor 
-            WHERE 
-                Name LIKE ? 
-                OR Specialty LIKE ?
-        `, [`%${searchTerm}%`, `%${searchTerm}%`]);
-
-        res.render('dashboard/findDr', { doctors });
-    } catch (err) {
-        console.error('Error searching doctors:', err);
-        res.render('dashboard/findDr', { 
-            doctors: [],
-            error: 'Error searching doctors'
-        });
-    }
-};
-
 // View Prescription Form
 async function viewPrescriptions(req, res){
     res.render('dashboard/viewPres');
 };
 
-module.exports = {
-    findDoctor,
-    findPerticularDoctor,
-    viewPrescriptions,
-    // viewCreatedPres
+async function printPres(req, res){
+    try {
+        const refId = req.params.refId;
+
+        const [prescriptions] = await conPool.query(`
+            SELECT 
+                p.PRESCRIPTIONID, 
+                p.DATEISSUED, 
+                p.DIAGNOSISNOTES,  
+                p.STATUS, 
+                p.GLOBALREFERENCEID, 
+                p.VALIDITYDAYS,
+                d.Name AS DoctorName,
+                d.LicenseNumber,
+                d.Phone,
+                d.Specialty,
+                pt.Name AS PatientName,
+                pt.AadharID AS aadharID
+            FROM prescription p
+            LEFT JOIN doctor d ON p.DOCTORID = d.DoctorID
+            LEFT JOIN patient pt ON p.PATIENTID = pt.PatientID
+            WHERE p.STATUS = 'ACTIVE' AND p.GLOBALREFERENCEID = ?
+        `, [refId]);
+
+        if (prescriptions.length === 0) {
+            return res.render('dashboard/viewPres', { 
+                error: 'No prescription found with this reference ID or it has been deactivated.' 
+            });
+        }
+
+        const [medicines] = await conPool.query(`
+            SELECT 
+                MedicineName, 
+                Dosage, 
+                Instructions, 
+                BeforeFood, 
+                AfterFood,
+                Morning,
+                Afternoon,
+                Evening,
+                Night
+            FROM prescription_medicine
+            WHERE PrescriptionID = ?
+        `, [prescriptions[0].PRESCRIPTIONID]);
+
+            res.render('dashboard/printPrescription', { 
+                prescription: prescriptions[0],
+                medicines: medicines
+            });
+     
+    } catch (err) {
+        console.error('Error fetching prescription:', err);
+        res.render('dashboard/viewPres', { 
+            error: 'Database error, please try again later' 
+        });
+    }
 };
 
-// // Handle Prescription Lookup
-// async function viewCreatedPres(req, res) {
-//     try {
-//         const refId = req.query.refId;
-
-//         if (!refId) {
-//             return res.render('dashboard/viewPres', { error: 'Please enter a prescription reference ID' });
-//         }
-
-//         // Fetch prescription details including patient name
-//         const [prescriptions] = await conPool.query(`
-//             SELECT 
-//                 p.PrescriptionID, 
-//                 p.DateIssued, 
-//                 p.DiagnosisNotes,  
-//                 p.Status, 
-//                 p.GlobalReferenceID, 
-//                 p.ValidityDays,
-//                 d.Name as DoctorName,
-//                 pt.Name as PatientName
-//             FROM PRESCRIPTION p
-//             JOIN DOCTOR d ON p.DoctorID = d.DoctorID
-//             JOIN PATIENT pt ON p.PatientID = pt.PatientID
-//             WHERE p.GlobalReferenceID = ?
-//         `, [refId]);
-
-//         if (prescriptions.length === 0) {
-//             return res.render('dashboard/viewPres', { 
-//                 error: 'No prescription found with this reference ID' 
-//             });
-//         }
-
-//         // Fetch associated medicines
-//         const [medicines] = await conPool.query(`
-//             SELECT 
-//                 MedicineName, 
-//                 Dosage, 
-//                 Instructions, 
-//                 BeforeFood, 
-//                 AfterFood
-//             FROM PRESCRIPTION_MEDICINE
-//             WHERE PrescriptionID = ?
-//         `, [prescriptions[0].PrescriptionID]);
-
-//         res.render('dashboard/viewPres', { 
-//             prescription: prescriptions[0],
-//             medicines: medicines
-//         });
-//     } catch (err) {
-//         console.error('Error fetching prescription:', err);
-//         res.render('dashboard/viewPres', { 
-//             error: 'Database error, please try again later' 
-//         });
-//     }
-// }
-
+module.exports = {
+    findDoctor,
+    viewPrescriptions,
+    printPres
+};

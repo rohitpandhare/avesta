@@ -61,4 +61,12 @@ const checkRole = (roles = []) => {
     };
 };
 
-module.exports = { chkLogin, checkProfileComplete, checkAuth, checkRole };
+
+function checkRequiredFields(fields, data) {
+    const missing = fields.filter(field => !data[field] || data[field].toString().trim() === '');
+    if (missing.length) {
+      throw new Error(`Missing required field(s): ${missing.join(', ')}`);
+    }
+  }
+
+module.exports = { chkLogin, checkProfileComplete, checkAuth, checkRole, checkRequiredFields };

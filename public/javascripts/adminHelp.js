@@ -1,6 +1,3 @@
-// adminHelp.js
-
-// --- Sidebar functions (moved to global scope) ---
 let sidebar; // Declare sidebar in a wider scope
 function toggleSidebar() {
     if (sidebar) { // Check if sidebar is defined before toggling
@@ -24,17 +21,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hamburger) hamburger.addEventListener('click', toggleSidebar);
     if (closeIcon) closeIcon.addEventListener('click', closeSidebar);
-
-    // //hide hamburger when sidebar is open
-    // if (sidebar) {
-    //     sidebar.addEventListener('transitionend', () => {
-    //         if (sidebar.classList.contains('open')) {
-    //             hamburger.style.display = 'none'; // Hide hamburger when sidebar is open
-    //         } else {
-    //             hamburger.style.display = 'block'; // Show hamburger when sidebar is closed
-    //         }
-    //     });
-    // }
 });
 
 // Smooth scroll functionality
@@ -50,10 +36,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// IMPORTANT: The deleteItem function is NOT used for user deactivation after OTP.
-// It is kept here for other potential "delete" operations if they exist and are handled
-// by backend routes like /delete-record/:id, /delete-prescription/:id etc.
-// For user deactivation, we will call /admin/deactivate-user directly.
 function deleteItem(type, id) {
     fetch(`/delete-${type}/${id}`, {
         method: 'DELETE',
@@ -118,7 +100,6 @@ function ReviveItem(type, id) {
         alert(`Failed to Recover ${type}: ${error.message}`);
     });
 }
-
 
 // --- Custom Modal and Message Box Logic ---
 const confirmModal = document.getElementById('customConfirmModal');
@@ -186,9 +167,6 @@ const otpUsernameInput = document.getElementById('otpUsername'); // Hidden input
 const otpInput = document.getElementById('otpInput');
 const verifyAndDeactivateBtn = document.getElementById('verifyAndDeactivateBtn');
 const otpModalCancelBtn = document.getElementById('otpModalCancel');
-
-// Removed currentItemType, currentItemId, currentItemUsername global variables
-// as we will now directly read from otpUserIdInput.value
 
 // Function to show OTP modal and automatically request OTP
 window.showAndRequestOtpModal = async (type, id, username) => {

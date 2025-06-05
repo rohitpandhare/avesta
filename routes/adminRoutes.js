@@ -1,305 +1,34 @@
 const express = require('express');
 const router = express.Router();
-
 const { conPool } = require('../config/dbHandler');
-
-// --- TEMPORARY TEST ROUTE: ADD THIS AFTER 'const router = express.Router();' ---
-// router.post('/admin/*', (req, res, next) => {
-//     console.log("!!! TEMPORARY ADMIN CATCH-ALL POST ROUTE HIT !!!");
-//     console.log(`Path: ${req.originalUrl}, Method: ${req.method}`);
-//     // IMPORTANT: Do NOT send a response here. Call next() to allow other routes to be tried.
-//     next();
-// });
 
 // Admin controller functions
 const {
-    requestAdminOTP, 
-    verifyAdminOTP,
-    deleteUser,
-    deleteDoctor,
-    deletePatient,
-    reviveUser
+    getAdmin,
+    getUnderUser,
+    getUnderDoc,
+    getUnderPat,
+    reviveUser,
+    getLogs
 } = require('../controllers/adminAuth');
+
+const{
+    requestAdminOTP, 
+    verifyAdminOTP
+} = require('../controllers/helperAuth');
 
 // Admin creation & login views
 router.get('/golden', (req, res) => res.render('secret/adminCreate'));
-
-// OTP request endpoint
 router.post('/golden/request-otp', requestAdminOTP);
-
-// OTP verification + final creation
 router.post('/golden/verify-otp', verifyAdminOTP);
 
-router.get('/admin', async (req, res) => {
-    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/adminLogin');
-    }
+router.get('/admin',getAdmin);
+router.get('/admin/users',getUnderUser);
+router.get('/admin/doc', getUnderDoc);
+router.get('/admin/pat', getUnderPat);
 
-    const [userList] = await conPool.query('SELECT * FROM user');
-
-    const [doctorList] = await conPool.query(`
-        SELECT d.*, u.Username
-        FROM doctor d
-        JOIN user u ON d.UserID = u.UserID
-        WHERE u.Role = 'DOCTOR'
-    `);
-
-    const [prescriptionStats] = await conPool.query(`
-        SELECT 
-            d.Specialty, 
-            SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
-            SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-        FROM prescription p
-        JOIN doctor d ON p.DoctorID = d.DoctorID
-        GROUP BY d.Specialty
-    `);
-
-    const [patientList] = await conPool.query(`
-        SELECT p.*, u.Username
-        FROM patient p
-        JOIN user u ON p.UserID = u.UserID
-        WHERE u.Role = 'PATIENT'
-    `);
-
-    const specialtyStats = {};
-    doctorList.forEach(doctor => {
-        const spec = doctor.Specialty || 'Other';
-        if (!specialtyStats[spec]) {
-            specialtyStats[spec] = {
-                doctorCount: 0,
-                activePrescriptions: 0,
-                completedPrescriptions: 0
-            };
-        }
-        specialtyStats[spec].doctorCount++;
-    });
-
-    prescriptionStats.forEach(row => {
-        const spec = row.Specialty || 'Other';
-        if (specialtyStats[spec]) {
-            specialtyStats[spec].activePrescriptions = row.active;
-            specialtyStats[spec].completedPrescriptions = row.completed;
-        }
-    });
-
-    const specialties = Object.entries(specialtyStats)
-        .map(([name, stats]) => ({ name, ...stats }))
-        .sort((a, b) => b.doctorCount - a.doctorCount);
-
-    return res.render('users/admin', {
-        user: req.session.user,
-        specialties,
-        userList,
-        doctorList,
-        prescriptionStats,
-        patientList
-    });
-});
-
-// In your routes/adminRoutes.js file
-
-router.get('/admin/users', async (req, res) => {
-    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/adminLogin');
-    }
-
-    // Initialize pagination parameters
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10; // Default limit of 10 users per page
-    const offset = (page - 1) * limit;
-
-    // Initialize search parameters
-    const searchTerm = req.query.search || ''; // Ensure searchTerm is always defined
-
-    // --- User List with Search and Pagination ---
-    // ...
-let userQuery = 'SELECT * FROM user WHERE Flag = 0'; // <-- IMPORTANT CHANGE HERE
-let countUserQuery = 'SELECT COUNT(*) as totalUsers FROM user WHERE Flag = 0'; // <-- IMPORTANT CHANGE HERE
-const userQueryParams = [];
-const countUserQueryParams = [];
-
-if (searchTerm) {
-    userQuery += ' AND Username LIKE ?'; // Use AND because WHERE Flag = 0 is already there
-    countUserQuery += ' AND Username LIKE ?';
-    userQueryParams.push(`%${searchTerm}%`);
-    countUserQueryParams.push(`%${searchTerm}%`);
-}
-
-userQuery += ' LIMIT ? OFFSET ?';
-userQueryParams.push(limit, offset);
-// ...
-
-    const [paginatedUserListResult] = await conPool.query(userQuery, userQueryParams);
-    const [totalUsersCountResult] = await conPool.query(countUserQuery, countUserQueryParams);
-
-    const userList = paginatedUserListResult; // Direct result if not using [0] for multiple results
-    const totalUsers = totalUsersCountResult[0].totalUsers;
-    const totalPages = Math.ceil(totalUsers / limit);
-    // --- End User List with Search and Pagination ---
-
-
-    // --- Existing Doctor List Query ---
-    const [doctorListResult] = await conPool.query(`
-        SELECT d.*, u.Username, u.UserID
-        FROM doctor d
-        JOIN user u ON d.UserID = u.UserID
-        WHERE u.Role = 'DOCTOR'
-    `);
-    const doctorList = doctorListResult;
-    // --- End Doctor List Query ---
-
-
-    // --- Existing Prescription Stats Query ---
-    const [prescriptionStatsResult] = await conPool.query(`
-        SELECT
-            d.Specialty,
-            SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
-            SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-        FROM prescription p
-        JOIN doctor d ON p.DoctorID = d.DoctorID
-        GROUP BY d.Specialty
-    `);
-    const prescriptionStats = prescriptionStatsResult;
-    // --- End Prescription Stats Query ---
-
-
-    // --- Existing Patient List Query ---
-    const [patientListResult] = await conPool.query(`
-        SELECT p.*, u.Username, u.UserID
-        FROM patient p
-        JOIN user u ON p.UserID = u.UserID
-        WHERE u.Role = 'PATIENT'
-    `);
-    const patientList = patientListResult;
-    // --- End Patient List Query ---
-
-
-    const specialtyStats = {};
-    doctorList.forEach(doctor => {
-        const spec = doctor.Specialty || 'Other';
-        if (!specialtyStats[spec]) {
-            specialtyStats[spec] = {
-                doctorCount: 0,
-                activePrescriptions: 0,
-                completedPrescriptions: 0
-            };
-        }
-        specialtyStats[spec].doctorCount++;
-    });
-
-    prescriptionStats.forEach(row => {
-        const spec = row.Specialty || 'Other';
-        if (specialtyStats[spec]) {
-            specialtyStats[spec].activePrescriptions = row.active;
-            specialtyStats[spec].completedPrescriptions = row.completed;
-        }
-    });
-
-    const specialties = Object.entries(specialtyStats)
-        .map(([name, stats]) => ({ name, ...stats }))
-        .sort((a, b) => b.doctorCount - a.doctorCount);
-
-    return res.render('users/adm/adminUsers', {
-        user: req.session.user,
-        specialties,
-        userList, // This is now the paginated and searched list
-        doctorList,
-        prescriptionStats,
-        patientList,
-        currentPage: page, // Pass pagination variables
-        totalPages: totalPages,
-        limit: limit,
-        searchTerm: searchTerm // Pass the search term
-    });
-});
-
-router.get('/admin/doc', async (req, res) => {
-    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/adminLogin');
-    }
-
-    const [userList] = await conPool.query('SELECT * FROM user');
-
-    const [doctorList] = await conPool.query(`
-        SELECT d.*, u.Username, u.UserID
-        FROM doctor d
-        JOIN user u ON d.UserID = u.UserID
-        WHERE u.Role = 'DOCTOR'
-    `);
-
-    return res.render('users/adm/adminDoc', {
-        user: req.session.user,
-        doctorList,
-        userList
-    });
-});
-
-router.get('/admin/pat', async (req, res) => {
-    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/adminLogin');
-    }
-    const [userList] = await conPool.query('SELECT * FROM user');
-
-    const [patientList] = await conPool.query(`
-        SELECT p.*, u.Username, u.UserID
-        FROM patient p
-        JOIN user u ON p.UserID = u.UserID
-        WHERE u.Role = 'PATIENT'
-    `);
-
-    return res.render('users/adm/adminPat', {
-        user: req.session.user,
-        patientList,
-        userList
-    });
-});
-
-router.get('/admin/reviveUser', async (req, res) => {
-    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/adminLogin');
-    }
-
-    try {
-        const [userList] = await conPool.query('SELECT * FROM user WHERE Flag = 1');
-        return res.render('users/adm/reviveUser', {
-            user: req.session.user,
-            userList
-        });
-    } catch (err) {
-        console.error('Error fetching users:', err);
-        return res.status(500).json({ success: false, message: 'Internal server error' });
-    }
-});
-
-// Route to view admin logs
-router.get('/admin/logs', async (req, res) => {
-    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
-        return res.redirect('/adminLogin');
-    }
-
-    const [logs] = await conPool.query(`
-        SELECT
-            aa.ActivityID,
-            u.Username AS AdminUsername,
-            aa.ActionPerformed,
-            aa.Description,
-            aa.TargetType,
-            aa.TargetID,
-            aa.ActivityTimestamp
-        FROM
-            admin_activity aa
-        JOIN
-            user u ON aa.AdminUserID = u.UserID
-        ORDER BY
-            aa.ActivityTimestamp DESC
-    `);
-
-    return res.render('users/adm/logs', {
-        user: req.session.user,
-        logs
-    });
-});
-
+router.get('/admin/reviveUser',reviveUser);
+router.get('/admin/logs',getLogs);
 
 router.get('/admin/deactivate/:id', async (req, res) => {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
@@ -389,11 +118,10 @@ router.post('/admin/activate-user/:userID', async (req, res) => {
     }
 });
 
-// Admin dashboard
-router.delete('/delete-user/:id', deleteUser);
-router.delete('/delete-doctor/:id', deleteDoctor);
-router.delete('/delete-patient/:id', deletePatient);
-
 router.put('/revive-user/:id', reviveUser);
-
 module.exports = router;
+
+// Admin dashboard
+// router.delete('/delete-user/:id', deleteUser);
+// router.delete('/delete-doctor/:id', deleteDoctor);
+// router.delete('/delete-patient/:id', deletePatient);

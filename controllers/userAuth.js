@@ -1,7 +1,5 @@
 // Importing required modules
 const { conPool } = require('../config/dbHandler'); // importing conpool for DB operations
-const speakeasy = require('speakeasy');
-const nodemailer = require('nodemailer');
 
 // for signup
 const createUser = async (req, res) => {
@@ -21,7 +19,6 @@ const createUser = async (req, res) => {
     const connection = await conPool.getConnection();
     try {
         await connection.beginTransaction();
-        // const createdAt = new Date().toISOString().split('T')[0];
 
         // Insert into USER table
         const [userResult] = await connection.query(
@@ -29,7 +26,7 @@ const createUser = async (req, res) => {
              VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
             [Username, Email, Role]
         );
-        const userId = userResult.insertId;
+        const userId = userResult.insertId; // this id will be generated automatically 
 
         // Insert role-specific data
         if (Role === 'DOCTOR') {
@@ -49,7 +46,7 @@ const createUser = async (req, res) => {
             );
         }
 
-        await connection.commit();
+        await connection.commit(); // commit the transaction
 
         req.session.user = {
             UserID: userId,
@@ -64,7 +61,7 @@ const createUser = async (req, res) => {
         await connection.rollback();
         console.error("Signup error:", err);
         
-        const errorMessage = err.code === 'ER_DUP_ENTRY' 
+        const errorMessage = err.code === 'ER_DUP_ENTRY' // Check for duplicate entry
             ? "Username or email already exists" 
             : "Registration failed";
         
@@ -156,7 +153,7 @@ async function doLogin(req, res) {
                 prescriptionStats[0].forEach(row => {
                     const spec = row.Specialty || 'Other';
                     if (specialtyStats[spec]) {
-                        specialtyStats[spec].activePrescriptions = row.active;
+                        specialtyStats[spec].activePrescriptions = row.actibve;
                         specialtyStats[spec].completedPrescriptions = row.completed;
                     }
                 });
@@ -257,9 +254,7 @@ async function doLogin(req, res) {
                     });
                 }
 
-            
             case 'PATIENT':
-                // *** CRUCIAL CHANGE: Redirect to the dedicated patient dashboard route ***
                 await new Promise((resolve, reject) => {
                     req.session.save((err) => {
                         if (err) reject(err);
@@ -291,75 +286,10 @@ function logout(req, res){
     });
 };
 
-// OTP Configuration
-const OTP_CONFIG = {
-    step: 300, // 5-minute validity
-    digits: 6,
-    encoding: 'base32'
-};
-
-// Generate OTP
-function generateOTP() {
-    const secret = speakeasy.generateSecret({ length: 20 });
-    const token = speakeasy.totp({
-        secret: secret.base32,
-        ...OTP_CONFIG
-    });
-    return { otp: token, secret: secret.base32 };
-}
-
-// Verify OTP
-function verifyOTP(token, secret) {
-    return speakeasy.totp.verify({
-        secret: secret,
-        token: token,
-        ...OTP_CONFIG
-    });
-}
-
-// Email Transport
-const emailTransport = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: 'connect.doctorsync@gmail.com',
-        pass: 'dklp rsru tpys agki'
-    }
-});
-
-// Send OTP Email
-async function sendOTPEmail(email, otp) {
-    try {
-        await emailTransport.sendMail({
-            from: '"OTP Service" <connect.doctorsync@gmail.com>',
-            to: email,
-            subject: 'Your Verification Code',
-            text: `Your verification code is: ${otp}\nThis code expires in 5 minutes.`,
-            html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #1a365d;">DoctorSync Verification</h2>
-                    <p style="font-size: 16px;">
-                        Your secure verification code is:
-                        <strong style="font-size: 24px; letter-spacing: 2px;">${otp}</strong>
-                    </p>
-                    <p style="color: #718096; font-size: 14px;">
-                        This code will expire in 5 minutes. If you didn't request this, 
-                        please contact support immediately.
-                    </p>
-                </div>
-            `
-        });
-    } catch (error) {
-        console.error('Email send error:', error);
-        throw new Error('Failed to send verification email');
-    }
-}
 
 module.exports = {
     createUser,
     doLogin,
-    logout,
-    generateOTP,
-    verifyOTP,
-    sendOTPEmail
+    logout
 };
 //

@@ -49,12 +49,7 @@ const authlinks = require('./routes/auth');
 app.use('/auth', authlinks); // Auth routes are mounted under /auth
 
 const adminLinks = require('./routes/adminRoutes');
-console.log('--- Before mounting adminLinks ---');
 app.use('/', adminLinks); // Admin routes mounted at root /
-
-// ADD THIS LOG AFTER adminLinks MOUNTING
-console.log('--- After mounting adminLinks ---');
-
 
 // Now, mount more general or less specific routes later
 const dashboardLinks = require('./routes/dashboardRoutes');
@@ -62,9 +57,6 @@ app.use('/', dashboardLinks);
 
 const publicLinks = require('./routes/publicRoutes');
 app.use('/', publicLinks);
-
-const testLinks = require('./routes/testRoutes');
-app.use('/', testLinks);
 
 const doctorLinks = require('./routes/doctorRoutes');
 app.use('/doctor', doctorLinks);

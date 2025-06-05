@@ -48,10 +48,6 @@ function setupPatientSearch(inputId, suggestionsId, hiddenId) {
     });
 }
 
-// --- Custom Confirmation Modal Functions ---
-// These functions are now used by the OTP flow, so currentAction global is no longer needed.
-// The `showConfirmModal` and `hideConfirmModal` methods are now part of window object.
-
 /**
  * Shows the custom confirmation modal.
  * @param {string} message - The message to display in the modal.
@@ -213,8 +209,6 @@ function setupMedSearch(inputId, suggestionsId, hiddenId) {
 }
 
 // --- Add Medicine (Prescription Form) Functionality ---
-// This function needs to be called on the specific page where the "Add Medicine" button and container exist.
-// It is not part of the global DOMContentLoaded.
 document.getElementById('add-medicine')?.addEventListener('click', function() {
     const container = document.getElementById('medicine-container');
     if (!container) {
@@ -434,10 +428,3 @@ window.showAndRequestOtpModal = async function(itemIdForDelete, itemTypeForDelet
     currentRequestNewOtpBtn.addEventListener('click', handleRequestNewOtp);
 };
 
-
-// --- Initialize modal handlers when the DOM is fully loaded ---
-document.addEventListener('DOMContentLoaded', () => {
-    // No specific setup functions are needed for modals here anymore,
-    // as their event listeners are added/removed dynamically with cloning.
-    // Ensure `setupPatientSearch` and `setupMedSearch` are called on relevant pages.
-});

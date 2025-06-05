@@ -3,113 +3,8 @@ const nodemailer = require('nodemailer');
 const speakeasy = require('speakeasy');
 const { conPool } = require("../config/dbHandler");
 
-async function updateData(DoctorID) {
-    // Fetch prescriptions
-    const [prescriptions] = await conPool.query(
-      `SELECT
-          p.*,
-          pat.Name AS PatientName
-      FROM prescription p
-      LEFT JOIN patient pat ON p.PatientID = pat.PatientID
-      WHERE p.flag = 0 AND p.DoctorID = ?
-      ORDER BY p.DateIssued DESC`,
-      [DoctorID]
-    );
-
-    // Fetch doctor-patient relationships
-    const [doctorPatients] = await conPool.query(
-        `SELECT 
-            dp.*,
-            pat.Name AS PatientName,
-            pat.DOB,
-            pat.Phone,
-            pat.BloodGroup
-        FROM doctor_patient dp
-        LEFT JOIN patient pat ON dp.PatientID = pat.PatientID
-        WHERE dp.flag = 0 AND dp.DoctorID = ?`,
-        [DoctorID]
-    );
-
-    // Fetch medical records
-    const [medicalRecords] = await conPool.query(
-        `SELECT 
-            mr.*,
-            pat.Name AS PatientName
-        FROM medical_record mr
-        LEFT JOIN patient pat ON mr.PatientID = pat.PatientID
-        WHERE mr.flag = 0 AND mr.DoctorID = ?`,
-        [DoctorID]
-    );
-
-    return { prescriptions, doctorPatients, medicalRecords };
-}
-
-// async function getDocID(UserID) {
-//     try{
-    
-//     // Get doctor details
-//     const [doctorDetails] = await conPool.query(
-//         'SELECT d.*, u.Username as Username, u.Email FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE d.UserID = ?',
-//         [UserID]
-//    );
-
-//     if (!doctorDetails.length) {
-//         throw new Error('Doctor details not found');
-//     }
-
-//     const doctorID = doctorDetails[0].DoctorID; 
-//     const doctorEmail = doctorDetails[0].Email; 
-//     const username = doctorDetails[0].Username;
-
-//     return {
-//         doctorID,
-//         doctorEmail,
-//         username,
-//         doctorDetails: doctorDetails[0],
-//     };
-        
-//     } catch (error) {
-//         console.error('Error fetching doctor ID:', error);
-//         throw new Error('Failed to fetch doctor ID');
-//     }
-// }
-
-// Helper function to build detailed missing-fields message
-
-// Helper function to get DoctorID, Email, and Username from UserID
-async function getDocID(UserID) {
-    try {
-        const [doctorDetails] = await conPool.query(
-            'SELECT d.DoctorID, u.Email, u.Username FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE d.UserID = ?',
-            [UserID]
-        );
-
-        if (!doctorDetails.length) {
-            throw new Error('Doctor details not found for the provided UserID.');
-        }
-
-        const doctorID = doctorDetails[0].DoctorID;
-        const doctorEmail = doctorDetails[0].Email;
-        const username = doctorDetails[0].Username;
-
-        return {
-            doctorID,
-            doctorEmail,
-            username,
-            fullDetails: doctorDetails[0],
-        };
-    } catch (error) {
-        console.error('Error fetching doctor details in getDocID:', error);
-        throw error;
-    }
-}
-
-function checkRequiredFields(fields, data) {
-    const missing = fields.filter(field => !data[field] || data[field].toString().trim() === '');
-    if (missing.length) {
-      throw new Error(`Missing required field(s): ${missing.join(', ')}`);
-    }
-  }
+const{ checkRequiredFields } = require('../middlware/dc_middleware');
+const{updateData,getDocID, emailTransport, generateReferenceId,OTP_CONFIG} = require('../controllers/helperAuth');
 
 // DELETE patient reln
 async function deleteRelation(req, res) {
@@ -179,7 +74,6 @@ async function deleteRecord(req, res) {
         res.status(500).json({ success: false, message: 'Error deactivating medical record' });
     }
 }
-
 
 // DELETE prescriptions (soft delete)
 async function deletePres(req, res) {
@@ -409,15 +303,6 @@ async function addPatient(req, res) {
     }
 }
 
-// Helper function to generate reference ID
-function generateReferenceId() {
-    const prefix = 'RX';
-    const timestamp = Date.now().toString();
-    const randomNum = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    const uniqueId = timestamp.slice(-3) + randomNum;
-    return `${prefix}${uniqueId}`;
-}
-
 async function addPrescription(req, res) {
     let connection;
     try {
@@ -613,7 +498,6 @@ async function addPrescription(req, res) {
         delete req.session.error;
     }
 }
-
 
 async function addMedRecords (req,res) {
     // let doctorData; 
@@ -1196,26 +1080,8 @@ async function viewPatient(req, res) {
     }
 }
 
-//
-
-// Define OTP_CONFIG globally
-const OTP_CONFIG = {
-    step: 300, // 5 minutes validity
-    digits: 6,
-    encoding: 'base32'
-};
-
 // In-memory store for OTPs (for verification purposes)
 const doctorOtpStore = new Map();
-
-// Nodemailer transporter setup
-const transporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-    },
-});
 
 // Placeholder for your OTP-based doctor login function
 async function doctorLogin(req, res) {
@@ -1223,7 +1089,7 @@ async function doctorLogin(req, res) {
     return res.status(200).json({ success: true, message: 'OTP-based login assumed to be handled.' });
 }
 
-// Request OTP for Doctor Action (UPDATED TO USE IN-MEMORY STORE AND DATABASE INSERT FOR REFERENCE)
+// Request OTP for Doctor Action 
 async function requestOtpForDoctorAction(req, res) {
     try {
         const userID = req.session.user.UserID;
@@ -1257,14 +1123,6 @@ async function requestOtpForDoctorAction(req, res) {
         });
         console.log(`OTP generated and stored in memory for UserID ${userID}. OTP: ${otp}, Secret: ${secret.substring(0, 5)}..., Expires: ${expiresAt.toISOString()}`);
 
-        // Also store/update in the database for reference
-        // Using REPLACE INTO to handle cases where an old OTP might exist for the user/email.
-        // This will either insert a new row or replace an existing one based on primary/unique key.
-        // Assuming (byUser, email) or a combination is a unique key or you have an auto-increment primary key
-        // and you want to always insert a new record for reference.
-        // If (byUser, email) is a unique key, REPLACE INTO is appropriate.
-        // If you just want to add a new reference record every time, use INSERT.
-        // For 'reference', let's just insert a new record to keep history.
         await conPool.query(
             'INSERT INTO otp_table (otp, email, byUser, secret, expires_at) VALUES (?, ?, ?, ?, ?)',
             [otp, doctorEmail, userID, secret, expiresAt]
@@ -1273,7 +1131,7 @@ async function requestOtpForDoctorAction(req, res) {
 
 
         // Send OTP via email
-        await transporter.sendMail({
+        await emailTransport.sendMail({
             from: process.env.EMAIL_USER,
             to: doctorEmail,
             subject: 'OTP for Doctor Action Confirmation',
@@ -1294,10 +1152,6 @@ async function verifyOtpForDoctorAction(req, res) {
         const { otp } = req.body;
         const userID = req.session.user.UserID; // Get UserID from session
 
-        console.log('--- VERIFY OTP FLOW START ---');
-        console.log('1. Received OTP from client (req.body.otp):', otp);
-        console.log('2. UserID from session (req.session.user.UserID):', userID);
-
         if (!userID) {
             console.log('Error: 401 - Unauthorized: User not logged in.');
             return res.status(401).json({ success: false, message: 'Unauthorized: User not logged in.' });
@@ -1309,10 +1163,7 @@ async function verifyOtpForDoctorAction(req, res) {
         }
 
         // Retrieve OTP details from in-memory store for verification
-        console.log(`3. Retrieving OTP record from in-memory store for UserID: ${userID}`);
         const storedOtpEntry = doctorOtpStore.get(userID);
-
-        console.log('4. OTP Entry retrieved from in-memory store:', storedOtpEntry);
 
         if (!storedOtpEntry) {
             console.log('Error: 400 - No OTP found in memory for this user.');
@@ -1322,33 +1173,16 @@ async function verifyOtpForDoctorAction(req, res) {
         const storedSecret = storedOtpEntry.secret;
         const expiresAt = storedOtpEntry.expires; // This is a timestamp (ms)
 
-        console.log('5. Stored Secret from memory:', storedSecret ? storedSecret.substring(0, 5) + '...' : 'N/A');
-        console.log('6. Stored Expires At (timestamp):', expiresAt);
-        console.log('7. Current Server Time (timestamp):', Date.now());
-        console.log('7a. Stored Expires At (ISO):', new Date(expiresAt).toISOString());
-        console.log('7b. Current Server Time (ISO):', new Date().toISOString());
-
-
         if (Date.now() > expiresAt) {
             // Delete expired OTP from memory (important for preventing reuse and cleanup)
-            console.log('8. OTP has expired. Deleting from memory and returning 400.');
             doctorOtpStore.delete(userID);
             return res.status(400).json({ success: false, message: 'OTP has expired. Please request a new one.' });
         }
 
-        // Verify OTP using speakeasy
-        console.log('9. Attempting speakeasy.totp.verify...');
-        console.log('9a. Secret being used:', storedSecret ? storedSecret.substring(0, 5) + '...' : 'N/A');
-        console.log('9b. Token being used (from client):', otp);
-
-        // *** CRITICAL DIAGNOSTIC LOG: Generate OTP with stored secret and current time ***
-        // This should tell us what speakeasy expects the OTP to be
         const diagnosticGeneratedOtp = speakeasy.totp({
             secret: storedSecret,
             ...OTP_CONFIG // Must match the step used during generation
         });
-        console.log('9c. Speakeasy generated OTP for current server time (diagnostic):', diagnosticGeneratedOtp);
-        // *** END CRITICAL DIAGNOSTIC LOG ***
 
         const verified = speakeasy.totp.verify({
             secret: storedSecret,
@@ -1357,13 +1191,8 @@ async function verifyOtpForDoctorAction(req, res) {
             window: 2 // Aligning with speakeasy's default and admin's implicit use
         });
 
-        console.log('10. Speakeasy Verification Result (true/false):', verified);
-
         if (verified) {
-            // OTP is valid, delete it from in-memory store to prevent reuse for active verification
-            console.log('11. OTP verified successfully! Deleting OTP from in-memory store.');
             doctorOtpStore.delete(userID);
-            // DO NOT delete from DB here, as per user's request ("just insert it or do what needs")
             // The DB record is for reference only, not part of the active verification lifecycle.
             return res.status(200).json({ success: true, message: 'OTP verified successfully.' });
         } else {
@@ -1372,12 +1201,38 @@ async function verifyOtpForDoctorAction(req, res) {
         }
 
     } catch (error) {
-        console.error('*** UNCAUGHT ERROR IN verifyOtpForDoctorAction ***', error);
         res.status(500).json({ success: false, message: 'An unexpected error occurred during OTP verification.' });
-    } finally {
-        console.log('--- VERIFY OTP FLOW END ---');
-    }
+    } 
 }
+
+
+async function getDocLogs (req, res) {
+    if (!req.session.user || req.session.user.Role !== 'DOCTOR') {
+        return res.redirect('/login');
+    }
+
+    const [logs] = await conPool.query(`
+        SELECT
+            da.ActivityID,
+            d.Name AS Doctorname,
+            da.ActionPerformed,
+            da.Description,
+            da.TargetType,
+            da.TargetID,
+            da.ActivityTimestamp
+        FROM
+            doctor_activity da
+        JOIN
+            doctor d ON da.DoctorID = d.DoctorID
+        ORDER BY
+            da.ActivityTimestamp DESC
+    `);
+
+    return res.render('users/doc/logs', {
+        user: req.session.user,
+        logs
+    });
+};
 
 module.exports ={
     getDoctor,
@@ -1398,6 +1253,7 @@ module.exports ={
     viewPatient,
     requestOtpForDoctorAction,
     verifyOtpForDoctorAction,
-      getDocID,
+    getDocID,
     doctorLogin,
+    getDocLogs
 }

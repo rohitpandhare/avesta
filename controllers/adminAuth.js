@@ -1,238 +1,72 @@
 const { conPool } = require('../config/dbHandler')
-const md5 = require('md5'); // for hashing passwords
-const nodemailer = require('nodemailer');
-const speakeasy = require('speakeasy');
 
-async function getAdmin(req, res) {
-    try {
-        const { Username, Password } = req.body;
-
-        // Basic validation
-        if (!Username || !Password) {
-            return res.render('secret/adminLogin', {
-                error: 'All fields are required'
-            });
-        }
-
-        const hashedPassword = md5(Password);
-
-        // Query to find user
-        const [users] = await conPool.query(
-            'SELECT * FROM user WHERE Username = ?',
-            [Username]
-        );
-        Role = 'admin';
-
-        if (!users.length || users[0].Password !== hashedPassword){
-            return res.render('secret/adminLogin', {
-                error: 'Invalid credentials'
-            });
-        }
-
-        // Set up base session
-        req.session.user = {
-            UserID: users[0].UserID,
-            Username: users[0].Username,
-            Role: Role
-        };
-
-        const [userList, doctorList, patientList, prescriptionStats] = await Promise.all([
-            conPool.query('SELECT * FROM user'),
-            conPool.query(`
-                SELECT d.*, u.Username
-                FROM doctor d
-                JOIN user u ON d.UserID = u.UserID
-                WHERE u.Role = 'DOCTOR'
-            `),
-            conPool.query(`
-                SELECT p.*, u.Username
-                FROM patient p
-                JOIN user u ON p.UserID = u.UserID
-                WHERE u.Role = 'PATIENT'
-            `),
-            conPool.query(`
-                SELECT 
-                    d.Specialty, 
-                    SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
-                    SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-                FROM 
-                    prescription p
-                JOIN 
-                    doctor d ON p.DoctorID = d.DoctorID
-                GROUP BY 
-                    d.Specialty
-            `)
-        ]);
-    
-        // Process specialties data (same as in getAdmin)
-        const specialtyStats = {};
-        doctorList[0].forEach(doctor => {
-            const spec = doctor.Specialty || 'Other';
-            if (!specialtyStats[spec]) {
-                specialtyStats[spec] = {
-                    doctorCount: 0,
-                    activePrescriptions: 0,
-                    completedPrescriptions: 0
-                };
-            }
-            specialtyStats[spec].doctorCount++;
-        });
-    
-        prescriptionStats[0].forEach(row => {
-            const spec = row.Specialty || 'Other';
-            if (specialtyStats[spec]) {
-                specialtyStats[spec].activePrescriptions = row.active;
-                specialtyStats[spec].completedPrescriptions = row.completed;
-            }
-        });
-    
-        const specialties = Object.entries(specialtyStats)
-            .map(([name, stats]) => ({ name, ...stats }))
-            .sort((a, b) => b.doctorCount - a.doctorCount);
-    
-        return res.render('users/admin', {
-            user: req.session.user,
-            userList: userList[0],
-            doctorList: doctorList[0],
-            patientList: patientList[0],
-            specialties: specialties 
-        });
-        
-    } catch (err) {
-        console.error('Login error:', err);
-        return res.render('secret/adminLogin', {
-            error: 'Server error during login: ' + err.message
-        });
+async function getAdmin(req, res){
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
     }
-}
 
-const MASTER_EMAIL = process.env.MASTER_EMAIL;
-const otpStore = new Map(); // Temporary in-memory
+    const [userList] = await conPool.query('SELECT * FROM user');
 
-const OTP_CONFIG = {
-    step: 300,
-    digits: 6,
-    encoding: 'base32'
+    const [doctorList] = await conPool.query(`
+        SELECT d.*, u.Username
+        FROM doctor d
+        JOIN user u ON d.UserID = u.UserID
+        WHERE u.Role = 'DOCTOR'
+    `);
+
+    const [prescriptionStats] = await conPool.query(`
+        SELECT 
+            d.Specialty, 
+            SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
+        FROM prescription p
+        JOIN doctor d ON p.DoctorID = d.DoctorID
+        GROUP BY d.Specialty
+    `);
+
+    const [patientList] = await conPool.query(`
+        SELECT p.*, u.Username
+        FROM patient p
+        JOIN user u ON p.UserID = u.UserID
+        WHERE u.Role = 'PATIENT'
+    `);
+
+    const specialtyStats = {};
+    doctorList.forEach(doctor => {
+        const spec = doctor.Specialty || 'Other';
+        if (!specialtyStats[spec]) {
+            specialtyStats[spec] = {
+                doctorCount: 0,
+                activePrescriptions: 0,
+                completedPrescriptions: 0
+            };
+        }
+        specialtyStats[spec].doctorCount++;
+    });
+
+    prescriptionStats.forEach(row => {
+        const spec = row.Specialty || 'Other';
+        if (specialtyStats[spec]) {
+            specialtyStats[spec].activePrescriptions = row.active;
+            specialtyStats[spec].completedPrescriptions = row.completed;
+        }
+    });
+
+    const specialties = Object.entries(specialtyStats)
+        .map(([name, stats]) => ({ name, ...stats }))
+        .sort((a, b) => b.doctorCount - a.doctorCount);
+
+    return res.render('users/admin', {
+        user: req.session.user,
+        specialties,
+        userList,
+        doctorList,
+        prescriptionStats,
+        patientList
+    });
 };
 
-const emailTransport = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: process.env.userpro,
-        pass: process.env.pass
-    }
-});
-
-function generateOTP() {
-    const secret = speakeasy.generateSecret({ length: 20 });
-    const token = speakeasy.totp({
-        secret: secret.base32,
-        ...OTP_CONFIG
-    });
-    return { otp: token, secret: secret.base32 };
-}
-
-function verifyOTP(token, secret) {
-    return speakeasy.totp.verify({
-        secret: secret,
-        token: token,
-        ...OTP_CONFIG
-    });
-}
-
-async function requestAdminOTP(req, res) {
-    const { Username, Email } = req.body;
-
-    if (!Username || !Email) {
-        return res.status(400).render('secret/adminCreate', {
-            error: 'Username and Email are required'
-        });
-    }
-
-    try {
-        const [existingUsers] = await conPool.query(
-            'SELECT * FROM user WHERE Username = ? OR Email = ?',
-            [Username, Email]
-        );
-
-        if (existingUsers.length > 0) {
-            return res.status(400).render('secret/adminCreate', {
-                error: 'An admin with this username or email already exists.'
-            });
-        }
-    } catch (err) {
-        console.error("DB check error:", err);
-        return res.status(500).render('secret/adminCreate', {
-            error: 'Server error during validation.'
-        });
-    }
-    
-    const { otp, secret } = generateOTP();
-    otpStore.set(Username, { Username, Email, otp, secret, expires: Date.now() + 300000 });
-
-    try {
-        await emailTransport.sendMail({
-            from: '"DoctorSync Master OTP" <connect.doctorsync@gmail.com>',
-            to: MASTER_EMAIL,
-            subject: 'Admin Creation Master OTP',
-            html: `<p>Requested admin: <strong>${Username}</strong><br/>OTP: <strong>${otp}</strong> (expires in 5 min)</p>`
-        });
-
-        return res.render('secret/adminCreateVerify', { Username, Email });
-    } catch (err) {
-        console.error("OTP email error:", err);
-        return res.status(500).render('secret/adminCreate', {
-            error: 'Failed to send OTP'
-        });
-    }
-}
-
-async function verifyAdminOTP(req, res) {
-    const { Username, Email, otp } = req.body;
-    const stored = otpStore.get(Username);
-
-    if (!stored || stored.Email !== Email || Date.now() > stored.expires) {
-        return res.status(400).render('secret/adminCreateVerify', {
-            error: 'OTP expired or invalid',
-            Username,
-            Email
-        });
-    }
-
-    const isValid = verifyOTP(otp, stored.secret);
-    if (!isValid) {
-        return res.status(401).render('secret/adminCreateVerify', {
-            error: 'Incorrect OTP',
-            Username,
-            Email
-        });
-    }
-
-    const connection = await conPool.getConnection();
-    try {
-        await connection.beginTransaction();
-        const [userResult] = await connection.query(
-            `INSERT INTO user (Username, Email, Role, CreatedAt)
-             VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
-            [Username, Email, 'ADMIN']
-        );
-        await connection.commit();
-        otpStore.delete(Username);
-        res.redirect('/adminLogin');
-    } catch (err) {
-        await connection.rollback();
-        console.error("Admin create error:", err);
-        res.status(400).render('secret/adminCreateVerify', {
-            error: 'Could not create admin',
-            Username,
-            Email
-        });
-    } finally {
-        connection.release();
-    }
-}
-
-// DELETE user
+// DELETE user - look to see
 async function deleteUser(req, res) {
     const userId = req.params.id;
 
@@ -257,7 +91,6 @@ async function deleteUser(req, res) {
         return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 }
-
 // DELETE doctor
 async function deleteDoctor (req, res) {
     const doctorId = req.params.id;
@@ -286,7 +119,6 @@ async function deleteDoctor (req, res) {
         return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 };
-
 // DELETE patient
 async function deletePatient (req, res) {
     const patientId = req.params.id;
@@ -316,40 +148,219 @@ async function deletePatient (req, res) {
     }
 };
 
+
 // REACTIVATE user
-async function reviveUser(req, res) {
-    const userId = req.params.id;
+async function reviveUser(req, res){
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
+    }
 
     try {
-        const [result] = await conPool.query(
-            'UPDATE user SET Flag = 0 WHERE UserID = ?',
-            [userId]
-        );
-
-        if (result.affectedRows > 0) {
-             // Insert log into admin_activity table
-             await conPool.query(
-                'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-                [req.session.user.UserID, 'ACTIVATE', 'Admin Activated user', 'USER', userId]
-            );
-            return res.status(200).json({ success: true, message: 'User Revived' });
-        } else {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
+        const [userList] = await conPool.query('SELECT * FROM user WHERE Flag = 1');
+        return res.render('users/adm/reviveUser', {
+            user: req.session.user,
+            userList
+        });
     } catch (err) {
-        console.error('DB delete error:', err);
+        console.error('Error fetching users:', err);
         return res.status(500).json({ success: false, message: 'Internal server error' });
     }
+};
+
+async function getUnderUser(req, res){
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
+    }
+
+    // Initialize pagination parameters
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10; // Default limit of 10 users per page
+    const offset = (page - 1) * limit;
+
+    // Initialize search parameters
+    const searchTerm = req.query.search || ''; // Ensure searchTerm is always defined
+
+    // --- User List with Search and Pagination ---
+    // ...
+let userQuery = 'SELECT * FROM user WHERE Flag = 0'; // <-- IMPORTANT CHANGE HERE
+let countUserQuery = 'SELECT COUNT(*) as totalUsers FROM user WHERE Flag = 0'; // <-- IMPORTANT CHANGE HERE
+const userQueryParams = [];
+const countUserQueryParams = [];
+
+if (searchTerm) {
+    userQuery += ' AND Username LIKE ?'; // Use AND because WHERE Flag = 0 is already there
+    countUserQuery += ' AND Username LIKE ?';
+    userQueryParams.push(`%${searchTerm}%`);
+    countUserQueryParams.push(`%${searchTerm}%`);
 }
 
+userQuery += ' LIMIT ? OFFSET ?';
+userQueryParams.push(limit, offset);
+// ...
+
+    const [paginatedUserListResult] = await conPool.query(userQuery, userQueryParams);
+    const [totalUsersCountResult] = await conPool.query(countUserQuery, countUserQueryParams);
+
+    const userList = paginatedUserListResult; // Direct result if not using [0] for multiple results
+    const totalUsers = totalUsersCountResult[0].totalUsers;
+    const totalPages = Math.ceil(totalUsers / limit);
+    // --- End User List with Search and Pagination ---
+
+
+    // --- Existing Doctor List Query ---
+    const [doctorListResult] = await conPool.query(`
+        SELECT d.*, u.Username, u.UserID
+        FROM doctor d
+        JOIN user u ON d.UserID = u.UserID
+        WHERE u.Role = 'DOCTOR'
+    `);
+    const doctorList = doctorListResult;
+    // --- End Doctor List Query ---
+
+
+    // --- Existing Prescription Stats Query ---
+    const [prescriptionStatsResult] = await conPool.query(`
+        SELECT
+            d.Specialty,
+            SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
+            SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
+        FROM prescription p
+        JOIN doctor d ON p.DoctorID = d.DoctorID
+        GROUP BY d.Specialty
+    `);
+    const prescriptionStats = prescriptionStatsResult;
+    // --- End Prescription Stats Query ---
+
+
+    // --- Existing Patient List Query ---
+    const [patientListResult] = await conPool.query(`
+        SELECT p.*, u.Username, u.UserID
+        FROM patient p
+        JOIN user u ON p.UserID = u.UserID
+        WHERE u.Role = 'PATIENT'
+    `);
+    const patientList = patientListResult;
+    // --- End Patient List Query ---
+
+
+    const specialtyStats = {};
+    doctorList.forEach(doctor => {
+        const spec = doctor.Specialty || 'Other';
+        if (!specialtyStats[spec]) {
+            specialtyStats[spec] = {
+                doctorCount: 0,
+                activePrescriptions: 0,
+                completedPrescriptions: 0
+            };
+        }
+        specialtyStats[spec].doctorCount++;
+    });
+
+    prescriptionStats.forEach(row => {
+        const spec = row.Specialty || 'Other';
+        if (specialtyStats[spec]) {
+            specialtyStats[spec].activePrescriptions = row.active;
+            specialtyStats[spec].completedPrescriptions = row.completed;
+        }
+    });
+
+    const specialties = Object.entries(specialtyStats)
+        .map(([name, stats]) => ({ name, ...stats }))
+        .sort((a, b) => b.doctorCount - a.doctorCount);
+
+    return res.render('users/adm/adminUsers', {
+        user: req.session.user,
+        specialties,
+        userList, // This is now the paginated and searched list
+        doctorList,
+        prescriptionStats,
+        patientList,
+        currentPage: page, // Pass pagination variables
+        totalPages: totalPages,
+        limit: limit,
+        searchTerm: searchTerm // Pass the search term
+    });
+};
+
+async function getUnderDoc (req, res){
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
+    }
+
+    const [userList] = await conPool.query('SELECT * FROM user');
+
+    const [doctorList] = await conPool.query(`
+        SELECT d.*, u.Username, u.UserID
+        FROM doctor d
+        JOIN user u ON d.UserID = u.UserID
+        WHERE u.Role = 'DOCTOR'
+    `);
+
+    return res.render('users/adm/adminDoc', {
+        user: req.session.user,
+        doctorList,
+        userList
+    });
+};
+
+async function getUnderPat (req, res){
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
+    }
+    const [userList] = await conPool.query('SELECT * FROM user');
+
+    const [patientList] = await conPool.query(`
+        SELECT p.*, u.Username, u.UserID
+        FROM patient p
+        JOIN user u ON p.UserID = u.UserID
+        WHERE u.Role = 'PATIENT'
+    `);
+
+    return res.render('users/adm/adminPat', {
+        user: req.session.user,
+        patientList,
+        userList
+    });
+};
+
+async function getLogs (req, res) {
+    if (!req.session.user || req.session.user.Role !== 'ADMIN') {
+        return res.redirect('/adminLogin');
+    }
+
+    const [logs] = await conPool.query(`
+        SELECT
+            aa.ActivityID,
+            u.Username AS AdminUsername,
+            aa.ActionPerformed,
+            aa.Description,
+            aa.TargetType,
+            aa.TargetID,
+            aa.ActivityTimestamp
+        FROM
+            admin_activity aa
+        JOIN
+            user u ON aa.AdminUserID = u.UserID
+        ORDER BY
+            aa.ActivityTimestamp DESC
+    `);
+
+    return res.render('users/adm/logs', {
+        user: req.session.user,
+        logs
+    });
+};
+
 module.exports = {
-    requestAdminOTP,
-    verifyAdminOTP,
     getAdmin,
     deleteUser,
     deleteDoctor,
     deletePatient,
-    reviveUser
+    reviveUser,
+    getUnderUser,
+    getUnderDoc,
+    getUnderPat,
+    getLogs
 };
 
 

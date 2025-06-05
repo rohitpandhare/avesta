@@ -3,72 +3,15 @@ const router = require('express').Router();
 
 const {
     findDoctor,
-    findPerticularDoctor,
-    viewPrescriptions
+    viewPrescriptions,
+    printPres
 } = require('../controllers/publicAuth');
 
 router.get('/findDr', findDoctor);
-router.get('/findDr/search', findPerticularDoctor);
 
 // Amended routes
 router.get('/viewPres', viewPrescriptions);
 
-router.get('/printPrescription/:refId', async (req, res) => {
-    try {
-        const refId = req.params.refId;
-
-        const [prescriptions] = await conPool.query(`
-            SELECT 
-                p.PRESCRIPTIONID, 
-                p.DATEISSUED, 
-                p.DIAGNOSISNOTES,  
-                p.STATUS, 
-                p.GLOBALREFERENCEID, 
-                p.VALIDITYDAYS,
-                d.Name AS DoctorName,
-                d.LicenseNumber,
-                d.Phone,
-                d.Specialty,
-                pt.Name AS PatientName,
-                pt.AadharID AS aadharID
-            FROM prescription p
-            LEFT JOIN doctor d ON p.DOCTORID = d.DoctorID
-            LEFT JOIN patient pt ON p.PATIENTID = pt.PatientID
-            WHERE p.STATUS = 'ACTIVE' AND p.GLOBALREFERENCEID = ?
-        `, [refId]);
-
-        if (prescriptions.length === 0) {
-            return res.render('dashboard/viewPres', { 
-                error: 'No prescription found with this reference ID or it has been deactivated.' 
-            });
-        }
-
-        const [medicines] = await conPool.query(`
-            SELECT 
-                MedicineName, 
-                Dosage, 
-                Instructions, 
-                BeforeFood, 
-                AfterFood,
-                Morning,
-                Afternoon,
-                Evening,
-                Night
-            FROM prescription_medicine
-            WHERE PrescriptionID = ?
-        `, [prescriptions[0].PRESCRIPTIONID]);
-
-            res.render('dashboard/printPrescription', { 
-                prescription: prescriptions[0],
-                medicines: medicines
-            });
-     
-    } catch (err) {
-        console.error('Error fetching prescription:', err);
-        res.render('dashboard/viewPres', { 
-            error: 'Database error, please try again later' 
-        });
-    }
-});
+router.get('/printPrescription/:refId', printPres);
 
 module.exports = router;
