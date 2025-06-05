@@ -1,0 +1,11 @@
+changes --
+2) solve this issue- 
+Page 24 of 12 -- at find doctor page-- same issue in admin dashboard
+3) For view Pres - tell patient to enter the 6 0digit only -- RX by default
+4) Increase the  width of print pres buttons
+5) SOlve OTP error of the admin part -- happens but when there is no other otp present there and --- on deletion its diverting to the dashboard -- but should show success message
+*** add OTP to revive USER
+6) add the delete function to doc and pat deletion for adminlogin
+
+
+* Add new faker js

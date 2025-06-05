@@ -5,6 +5,72 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Login - DoctorSync</title>
   <link rel="stylesheet" href="/css/styles.css" />
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const patientTab = document.getElementById("loginPatientTab");
+    const doctorTab = document.getElementById("loginDoctorTab");
+    const roleInput = document.getElementById("role");
+
+    const otpSection = document.getElementById("otpSection");
+    const requestOtpBtn = document.getElementById("requestOtpBtn");
+    const verifyOtpBtn = document.getElementById("verifyOtpBtn");
+    const statusMessage = document.getElementById("statusMessage");
+    const usernameInput = document.getElementById("username");
+    const otpInput = document.getElementById("otp");
+
+    const activeClasses = ["bg-blue-600", "text-white", "shadow-md"];
+    const inactiveClasses = ["text-gray-300"];
+
+    function hideOtpSection() {
+      otpSection.classList.add("hidden");
+      verifyOtpBtn.classList.add("hidden");
+      statusMessage.innerText = "";
+
+      // Clear OTP input
+      if (otpInput) otpInput.value = "";
+    }
+
+    function showOtpSection() {
+      otpSection.classList.remove("hidden");
+      verifyOtpBtn.classList.remove("hidden");
+    }
+
+    function resetFormState() {
+      if (usernameInput) usernameInput.value = "";
+      if (otpInput) otpInput.value = "";
+
+      hideOtpSection();
+
+      // Always show "Send Verification Code" button
+      requestOtpBtn.classList.remove("hidden");
+    }
+
+    function setTab(activeTab, inactiveTab, roleValue) {
+      roleInput.value = roleValue;
+
+      activeTab.classList.add(...activeClasses);
+      activeTab.classList.remove(...inactiveClasses);
+
+      inactiveTab.classList.remove(...activeClasses);
+      inactiveTab.classList.add(...inactiveClasses);
+
+      resetFormState(); // reset everything on tab switch
+    }
+
+    // Tab switching
+    patientTab.addEventListener("click", () => setTab(patientTab, doctorTab, "PATIENT"));
+    doctorTab.addEventListener("click", () => setTab(doctorTab, patientTab, "DOCTOR"));
+
+    // Send OTP button click
+    requestOtpBtn.addEventListener("click", () => {
+      showOtpSection();
+      statusMessage.innerText = "Verification code sent to your email.";
+      statusMessage.classList.add("text-green-500");
+    });
+  });
+</script>
+
+
 </head>
 
 <body class="min-h-screen flex flex-col" style="background-color: #000021;">
@@ -30,20 +96,25 @@
 
       <!-- Login Form -->
       <form action="/auth/login" method="post" class="space-y-6">
-        <div>
-          <label class="block text-sm font-medium text-white">User Type</label>
-          <div class="relative mt-1">
-            <select name="Role" id="role" required 
-                    class="w-full pl-12 pr-4 py-3 appearance-none border border-gray-200 rounded-xl focus:ring-4 focus:ring-blue-100 focus:border-blue-500 bg-white">
-              <option value="PATIENT" selected>Patient</option>
-              <option value="DOCTOR">Doctor</option>
-              <!-- <option value="ADMIN">Admin</option> -->
-            </select>
-            <svg class="absolute left-4 top-3.5 w-5 h-5 text-gray-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
-        </div>
+        <div class="mb-4">
+  <label class="block text-sm font-medium text-white mb-2">User Type</label>
+  <div class="flex bg-gray-800 rounded-lg p-1.5" role="tablist">
+    <button type="button" id="loginPatientTab"
+            class="flex-1 px-4 py-2 text-center text-sm font-medium rounded-md transition-all duration-200
+                   bg-blue-600 text-white shadow-md"
+            data-role="PATIENT" aria-selected="true">
+      Patient
+    </button>
+    <button type="button" id="loginDoctorTab"
+            class="flex-1 px-4 py-2 text-center text-sm font-medium rounded-md transition-all duration-200
+                   text-gray-300 hover:bg-gray-700 hover:text-white"
+            data-role="DOCTOR" aria-selected="false">
+      Doctor
+    </button>
+  </div>
+  <input type="hidden" name="Role" id="role" value="PATIENT">
+</div>
+
 
         <div>
           <label class="block text-sm font-medium text-white">Username</label>
