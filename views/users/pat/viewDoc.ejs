@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Patient Dashboard</title>
     <link rel="stylesheet" href="/css/styles.css">
-    <link rel="stylesheet" href="/css/users.css">
+    <link rel="stylesheet" href="/css/users2.css">
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
@@ -54,55 +54,7 @@
 </div>
 </main>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const mainContent = document.getElementById('main-content');
-      const pageTitle = document.getElementById('page-title');
-      const pageDescription = document.getElementById('page-description');
-      const main = document.querySelector('main');
-      const sidebar = document.getElementById('sidebar');
-      const hamburger = document.getElementById('hamburger');
-      const closeIcon = document.getElementById('close-icon');
-
-    function toggleSidebar() {
-        sidebar.classList.toggle('open');
-    }
-
-    function closeSidebar() {
-        sidebar.classList.remove('open');
-    }
-
-    hamburger.addEventListener('click', toggleSidebar);
-    closeIcon.addEventListener('click', closeSidebar);
-
-    function closeToast() {
-        const toast = document.getElementById('toast');
-        if (toast) {
-          toast.style.transform = 'translateX(100%)'; // Slide out to the right
-          setTimeout(() => toast.remove(), 500); // Remove after animation
-        }
-      }
-
-    // Automatically hide toast after 5 seconds
-    setTimeout(function() {
-        var toast = document.getElementById('toast');
-        if (toast) {
-            toast.style.display = 'none';
-        }
-    }, 5000);
-
-    document.querySelectorAll(".view-prescription-btn").forEach(button => {
-            button.addEventListener("click", function () {
-                const refId = this.getAttribute("data-refid");
-                if (refId) {
-                    window.location.href = `/printPrescription/${refId}`;
-                }
-            });
-        });
-
-});
-</script>
+  <script src="/javascripts/patientHelp.js"></script>
 
 </body>
 </html>

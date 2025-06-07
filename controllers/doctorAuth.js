@@ -1206,32 +1206,72 @@ async function verifyOtpForDoctorAction(req, res) {
 }
 
 
-async function getDocLogs (req, res) {
+// doctorAuth.js
+async function getDocLogs(req, res) {
     if (!req.session.user || req.session.user.Role !== 'DOCTOR') {
         return res.redirect('/login');
     }
 
-    const [logs] = await conPool.query(`
-        SELECT
-            da.ActivityID,
-            d.Name AS Doctorname,
-            da.ActionPerformed,
-            da.Description,
-            da.TargetType,
-            da.TargetID,
-            da.ActivityTimestamp
-        FROM
-            doctor_activity da
-        JOIN
-            doctor d ON da.DoctorID = d.DoctorID
-        ORDER BY
-            da.ActivityTimestamp DESC
-    `);
+    try {
+        let page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 9; // Set default limit to 9 logs per page
 
-    return res.render('users/doc/logs', {
-        user: req.session.user,
-        logs
-    });
+        // Count query for total doctor activities
+        const [totalLogsCountResult] = await conPool.query(`
+            SELECT COUNT(*) as totalLogs FROM doctor_activity
+        `);
+        const totalLogs = totalLogsCountResult[0].totalLogs;
+        const totalPages = Math.ceil(totalLogs / limit);
+
+        // Crucial: Restrict 'page' to be within valid range
+        if (page < 1) {
+            page = 1;
+        } else if (page > totalPages && totalPages > 0) {
+            page = totalPages;
+        } else if (totalPages === 0) { // If there are no logs, page should be 1
+            page = 1;
+        }
+
+        const offset = (page - 1) * limit; // Calculate offset for pagination
+
+        const [logs] = await conPool.query(`
+            SELECT
+                da.ActivityID,
+                d.Name AS Doctorname,
+                da.ActionPerformed,
+                da.Description,
+                da.TargetType,
+                da.TargetID,
+                da.ActivityTimestamp
+            FROM
+                doctor_activity da
+            JOIN
+                doctor d ON da.DoctorID = d.DoctorID
+            ORDER BY
+                da.ActivityTimestamp DESC
+            LIMIT ? OFFSET ?
+        `, [limit, offset]);
+
+        return res.render('users/doc/logs', {
+            user: req.session.user,
+            logs,
+            currentPage: page,
+            totalPages,
+            limit,
+            searchTerm: '' // Keep searchTerm for consistency with findDr.ejs, even if not used for logs currently
+        });
+    } catch (err) {
+        console.error('Error fetching doctor logs:', err);
+        res.render('users/doc/logs', {
+            user: req.session.user,
+            logs: [],
+            currentPage: 1,
+            totalPages: 1,
+            limit: 10,
+            searchTerm: '',
+            error: 'Error retrieving doctor logs'
+        });
+    }
 };
 
 module.exports ={

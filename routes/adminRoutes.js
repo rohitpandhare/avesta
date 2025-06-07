@@ -9,12 +9,14 @@ const {
     getUnderDoc,
     getUnderPat,
     reviveUser,
-    getLogs
+    getLogs,
+    activateUser
 } = require('../controllers/adminAuth');
 
 const{
     requestAdminOTP, 
     verifyAdminOTP
+
 } = require('../controllers/helperAuth');
 
 // Admin creation & login views
@@ -44,6 +46,9 @@ router.get('/admin/deactivate/:id', async (req, res) => {
         userList // This will contain either one user or an empty array
     });
 });
+
+// New route for activating users with OTP verification
+router.post('/admin/activate-user/:userID', activateUser);
 
 // Correct route for deactivating a user
 router.post('/admin/deactivate-user/:userID', async (req, res) => {
@@ -119,6 +124,10 @@ router.post('/admin/activate-user/:userID', async (req, res) => {
 });
 
 router.put('/revive-user/:id', reviveUser);
+
+
+
+
 module.exports = router;
 
 // Admin dashboard

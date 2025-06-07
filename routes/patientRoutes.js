@@ -23,7 +23,7 @@ router.get('/records', getPatientDashboardData);
 
 // Route for logged-in patient to view/edit their own profile
 router.get('/myProfile', getPatientDetails);
-router.post('/myProfile', updatePatientDetails); // Use POST for form submission, or PUT if using AJAX
+router.post('/updateProfile', updatePatientDetails); // Use POST for form submission, or PUT if using AJAX
 
 module.exports = router;
 

@@ -1,54 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Doctor Dashboard</title>
-  <link rel="stylesheet" href="/css/styles.css">
-  <link rel="stylesheet" href="/css/users.css">
-</head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DoctorSync - Doctor Activity Logs</title>
+      <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/users.css"> </head>
+<body class="bg-gradient-to-br min-h-screen">
+    <%- include('nav', { user: typeof user !== 'undefined' ? user : null }) -%>
 
-<body class="bg-gray-100 min-h-screen font-sans antialiased">
-  <%- include('nav') -%>
-  <div id="main-content" class="space-y-12" style="margin-left: 120px;">
+    <div class="max-w-6xl mx-auto px-4">
+        <div class="text-center mb-5">
+            <h1 class="text-2xl font-bold text-blue-600 mb-4">Doctor Activity Logs</h1>
+            <% if (typeof error !== 'undefined' && error) { %>
+                <p class="text-red-500 mt-2"><%= error %></p>
+            <% } %>
+        </div>
 
-    <h2 class="text-2xl font-semibold text-gray-800">LOGS</h2>
-      <!-- Logs Section -->
-      <section id="logs" class="mb-12 w-full">
-        <h2 class="text-xl font-bold mb-4 text-gray-800">Doctor Activity Logs</h2>
-        <div class="bg-white rounded-lg shadow overflow-hidden w-full">
+        <div class="mt-5 flex justify-center items-center space-x-4" style="margin-bottom: 10px;">
+            <% if (totalPages > 1) { %>
+                <a href="/doctor/logs?page=<%= currentPage - 1 %>&limit=<%= limit %>"
+                   class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200
+                          <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                    &lt; Prev
+                </a>
+
+                <span class="text-lg font-semibold">
+                    Page <%= currentPage %> of <%= totalPages %>
+                </span>
+
+                <a href="/doctor/logs?page=<%= currentPage + 1 %>&limit=<%= limit %>"
+                   class="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200
+                          <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                    Next &gt;
+                </a>
+            <% } %>
+        </div>
+
+        <div class="table-container rounded-lg shadow-lg p-6">
             <table class="data-table">
                 <thead>
                     <tr>
                         <th class="text-left">Timestamp</th>
-                        <!-- <th class="text-left">Doctor User</th> -->
-                        <th class="text-left">Action</th>
+                        <th class="text-left">Action Performed</th>
                         <th class="text-left">Target Type</th>
                         <th class="text-left">Target ID</th>
                         <th class="text-left">Description</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <% logs.forEach(log => { %>
+                    <% if (logs && logs.length > 0) { %>
+                        <% logs.forEach(log => { %>
+                            <tr>
+                                <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
+                                <td><%= log.ActionPerformed %></td>
+                                <td><%= log.TargetType %></td>
+                                <td><%= log.TargetID %></td>
+                                <td><%= log.Description %></td>
+                            </tr>
+                        <% }); %>
+                    <% } else { %>
                         <tr>
-                            <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
-                            <!-- <td><%= log.Doctorname %></td> -->
-                            <td><%= log.ActionPerformed %></td>
-                            <td><%= log.TargetType %></td>
-                            <td><%= log.TargetID %></td>
-                            <td><%= log.Description %></td>
+                            <td colspan="5" class="text-center py-4 text-gray-600">No doctor activity logs found.</td>
                         </tr>
-                    <% }) %>
+                    <% } %>
                 </tbody>
             </table>
         </div>
-    </section>
-    
-  </div>
 
-</main>
-</div>
-
-<script src="/javascripts/doctorHelp.js"></script>
 </body>
 </html>

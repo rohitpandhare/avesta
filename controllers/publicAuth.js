@@ -3,41 +3,52 @@ const { conPool } = require('../config/dbHandler')
 // Find All Doctors & Search for Doctors with Pagination
 async function findDoctor(req, res) {
     try {
-        const page = parseInt(req.query.page) || 1;
+        let page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 4; // Set limit to 4 doctors per page
-        const offset = (page - 1) * limit; // Calculate offset for pagination
-
         const searchTerm = req.query.search || '';
 
-        // Base query for active doctors
-        let doctorQuery = 'SELECT DoctorID, Name, Specialty, Phone, LicenseNumber, Qualifications FROM doctor WHERE Flag = 0';
-
-        // Count query for total doctors
+        // Count query for total active doctors matching the search term
         let countDoctorQuery = 'SELECT COUNT(*) as totalDoctors FROM doctor WHERE Flag = 0';
-        const queryParams = [];
         const countQueryParams = [];
 
         if (searchTerm) {
-            // Add search condition with AND
-            doctorQuery += ' AND (Name LIKE ? OR Specialty LIKE ?)';
             countDoctorQuery += ' AND (Name LIKE ? OR Specialty LIKE ?)';
-            queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
             countQueryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
+        }
+
+        const [totalDoctorsCountResult] = await conPool.query(countDoctorQuery, countQueryParams);
+        const totalDoctors = totalDoctorsCountResult[0].totalDoctors;
+        const totalPages = Math.ceil(totalDoctors / limit);
+
+        // Crucial: Restrict 'page' to be within valid range
+        if (page < 1) {
+            page = 1;
+        } else if (page > totalPages && totalPages > 0) { // Only set to totalPages if totalPages is not 0
+            page = totalPages;
+        } else if (totalPages === 0) { // If there are no doctors, page should be 1
+            page = 1;
+        }
+
+        const offset = (page - 1) * limit; // Calculate offset for pagination based on the potentially adjusted page
+
+        // Base query for active doctors
+        let doctorQuery = 'SELECT DoctorID, Name, Specialty, Phone, LicenseNumber, Qualifications FROM doctor WHERE Flag = 0';
+        const queryParams = [];
+
+        if (searchTerm) {
+            doctorQuery += ' AND (Name LIKE ? OR Specialty LIKE ?)';
+            queryParams.push(`%${searchTerm}%`, `%${searchTerm}%`);
         }
 
         doctorQuery += ' ORDER BY Name LIMIT ? OFFSET ?'; // Order by name and apply pagination
         queryParams.push(limit, offset);
 
         const [doctorsResult] = await conPool.query(doctorQuery, queryParams);
-        const [totalDoctorsCountResult] = await conPool.query(countDoctorQuery, countQueryParams);
-
         const doctors = doctorsResult;
-        const totalDoctors = totalDoctorsCountResult[0].totalDoctors;
-        const totalPages = Math.ceil(totalDoctors / limit);
 
         res.render('dashboard/findDr', {
             doctors,
-            currentPage: page,
+            currentPage: page, // Use the adjusted 'page' value
             totalPages,
             limit,
             searchTerm,
@@ -65,7 +76,7 @@ async function viewPrescriptions(req, res){
 
 async function printPres(req, res){
     try {
-        const refId = req.params.refId;
+        const refId = 'RX' + req.params.refId;
 
         const [prescriptions] = await conPool.query(`
             SELECT 

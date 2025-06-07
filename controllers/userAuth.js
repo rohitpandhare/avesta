@@ -261,7 +261,7 @@ async function doLogin(req, res) {
                         resolve();
                     });
                 });
-                return res.redirect('/patient/records');
+                return res.redirect('/patient');
                 
             default:
                 return res.render('dashboard/login', {
@@ -292,4 +292,3 @@ module.exports = {
     doLogin,
     logout
 };
-//

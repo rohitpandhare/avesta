@@ -62,10 +62,10 @@
                     </label>
                     <input type="text"
                            name="refId"
-                           placeholder="e.g. RX123456"
+                           placeholder="Enter last 6 digits of your prescription ID"
                            required
-                           pattern="RX[0-9]{6}"
-                           title="Please enter valid format: RX followed by 6 digits"
+                           pattern="[0-9]{6}"
+                           title="Please enter valid ID: RX followed by 6 digits"
                            class="w-full px-4 py-3 rounded-lg border-2 border-blue-100 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 placeholder-gray-400 transition-all duration-200">
                 </div>
                 <button type="submit"
@@ -86,8 +86,8 @@
             const input = document.querySelector('input[name="refId"]');
             const refId = input.value.trim();
 
-            if (!/^RX\d{6}$/.test(refId)) {
-                alert("Please enter valid format: RX followed by 6 digits");
+            if (!/\d{6}$/.test(refId)) {
+                alert("Please enter valid ID: RX followed by 6 digits");
                 return;
             }
 

@@ -1,24 +1,47 @@
-const {conPool } = require('../config/dbHandler')
+const { conPool } = require('../config/dbHandler');
 
-async function getPatients (req, res) {
+// Helper function to fetch complete patient details by UserID
+// This avoids duplicating the "SELECT PatientID, Name, Address, Phone, DOB, etc." query
+async function getFullPatientProfileByUserID(userID) {
+    const [patientInfo] = await conPool.query(
+        `SELECT PatientID, UserID, Name, Address, Phone, DOB, BloodGroup, MedicalHistory,
+                EmergencyContact, EmergencyPhone, Flag, AadharID
+         FROM patient
+         WHERE UserID = ? AND Flag = 0`,
+        [userID]
+    );
+    return patientInfo.length > 0 ? patientInfo[0] : null;
+}
+
+// Existing functions (getPatients, viewPatients, viewPrescriptions)
+// These are generally fine as they only need Name and PatientID for the sidebar/header.
+// However, for consistency and to ensure the userForTemplate always has the correct Name,
+// we'll update them to use the new helper function too.
+
+async function getPatients(req, res) {
     try {
         if (req.session.user && req.session.user.Role === 'PATIENT') {
-            // Get patientID
-            const [patientData] = await conPool.query(
-                'SELECT PatientID FROM patient WHERE UserID = ?',
-                [req.session.user.UserID]
-            );
+            const userId = req.session.user.UserID;
 
-            if (!patientData || patientData.length === 0) {
-                throw new Error('Patient ID not found');
+            // Use the helper function to get full patient data
+            const patientProfile = await getFullPatientProfileByUserID(userId);
+
+            if (!patientProfile) {
+                throw new Error('Patient profile not found for the logged-in user.');
             }
 
-            const patientID = patientData[0].PatientID;
+            const patientID = patientProfile.PatientID;
+            const patientName = patientProfile.Name;
 
-            // Get all data in parallel
+            const userForTemplate = {
+                ...req.session.user,
+                Name: patientName,
+                PatientID: patientID
+            };
+
             const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         dp.*,
                         d.Name as DoctorName,
                         d.Specialty,
@@ -29,7 +52,7 @@ async function getPatients (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         mr.*,
                         d.Name as DoctorName
                     FROM medical_record mr
@@ -38,7 +61,7 @@ async function getPatients (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         p.*,
                         d.Name as DoctorName
                     FROM prescription p
@@ -50,6 +73,7 @@ async function getPatients (req, res) {
 
             res.render('users/patient', {
                 user: req.session.user,
+                userX: userForTemplate,
                 currentPatientID: patientID,
                 doctorRelationships: doctorRelationships[0],
                 medicalRecords: medicalRecords[0],
@@ -58,7 +82,6 @@ async function getPatients (req, res) {
                 error: req.session.error
             });
 
-            // Clear flash messages
             delete req.session.success;
             delete req.session.error;
         } else {
@@ -67,7 +90,8 @@ async function getPatients (req, res) {
     } catch (err) {
         console.error('Error loading patient dashboard:', err);
         res.render('users/patient', {
-            user: req.session.user,
+            user: req.session.user || { Name: 'Guest', PatientID: 'PATIENT' },
+            userX: req.session.user ? { ...req.session.user, Name: 'Unknown', PatientID: 'N/A' } : { Name: 'Guest', PatientID: 'N/A' },
             currentPatientID: null,
             doctorRelationships: [],
             medicalRecords: [],
@@ -75,27 +99,30 @@ async function getPatients (req, res) {
             error: 'Error loading dashboard: ' + err.message
         });
     }
-};
+}
 
-async function viewPatients (req, res) {
+async function viewPatients(req, res) {
     try {
         if (req.session.user && req.session.user.Role === 'PATIENT') {
-            // Get patientID
-            const [patientData] = await conPool.query(
-                'SELECT PatientID FROM patient WHERE UserID = ?',
-                [req.session.user.UserID]
-            );
+            const userId = req.session.user.UserID;
+            const patientProfile = await getFullPatientProfileByUserID(userId);
 
-            if (!patientData || patientData.length === 0) {
-                throw new Error('Patient ID not found');
+            if (!patientProfile) {
+                throw new Error('Patient profile not found');
             }
 
-            const patientID = patientData[0].PatientID;
+            const patientID = patientProfile.PatientID;
+            const patientName = patientProfile.Name;
 
-            // Get all data in parallel
+            const userForTemplate = {
+                ...req.session.user,
+                Name: patientName,
+                PatientID: patientID
+            };
+
             const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         dp.*,
                         d.Name as DoctorName,
                         d.Specialty,
@@ -106,7 +133,7 @@ async function viewPatients (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         mr.*,
                         d.Name as DoctorName
                     FROM medical_record mr
@@ -115,7 +142,7 @@ async function viewPatients (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         p.*,
                         d.Name as DoctorName
                     FROM prescription p
@@ -127,6 +154,7 @@ async function viewPatients (req, res) {
 
             res.render('users/pat/viewDoc', {
                 user: req.session.user,
+                userX: userForTemplate,
                 currentPatientID: patientID,
                 doctorRelationships: doctorRelationships[0],
                 medicalRecords: medicalRecords[0],
@@ -135,44 +163,61 @@ async function viewPatients (req, res) {
                 error: req.session.error
             });
 
-            // Clear flash messages
             delete req.session.success;
             delete req.session.error;
         } else {
             res.redirect('/login');
         }
     } catch (err) {
-        console.error('Error loading patient dashboard:', err);
-        res.render('users/patient', {
+        console.error('Error loading doctors view for patient:', err);
+        res.render('users/patient', { // Fallback to general patient dashboard on error
             user: req.session.user,
+            userX: req.session.user ? { ...req.session.user, Name: 'Unknown', PatientID: 'N/A' } : { Name: 'Guest', PatientID: 'N/A' },
             currentPatientID: null,
             doctorRelationships: [],
             medicalRecords: [],
             prescriptions: [],
-            error: 'Error loading dashboard: ' + err.message
+            error: 'Error loading doctors: ' + err.message
         });
     }
-};
+}
 
-async function viewRecords (req, res) {
+// *** MODIFIED FUNCTION ***
+async function viewRecords(req, res) {
     try {
         if (req.session.user && req.session.user.Role === 'PATIENT') {
-            // Get patientID
-            const [patientData] = await conPool.query(
-                'SELECT PatientID FROM patient WHERE UserID = ?',
-                [req.session.user.UserID]
-            );
+            const userId = req.session.user.UserID;
 
-            if (!patientData || patientData.length === 0) {
-                throw new Error('Patient ID not found');
+            // Fetch the full patient profile here
+            const patientProfile = await getFullPatientProfileByUserID(userId);
+
+            if (!patientProfile) {
+                // If patient profile is not found, render with an error and no patient data
+                return res.render('users/pat/viewRec', {
+                    user: req.session.user,
+                    userX: { ...req.session.user, Name: 'Unknown', PatientID: 'N/A' }, // Fallback for userX
+                    patient: null, // Explicitly pass null for patient if not found
+                    doctorRelationships: [],
+                    medicalRecords: [],
+                    prescriptions: [],
+                    error: 'Patient profile not found. Please ensure your profile is complete.',
+                    success: null
+                });
             }
 
-            const patientID = patientData[0].PatientID;
+            const patientID = patientProfile.PatientID;
+            const patientName = patientProfile.Name;
+
+            const userForTemplate = {
+                ...req.session.user,
+                Name: patientName,
+                PatientID: patientID
+            };
 
             // Get all data in parallel
             const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         dp.*,
                         d.Name as DoctorName,
                         d.Specialty,
@@ -183,7 +228,7 @@ async function viewRecords (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         mr.*,
                         d.Name as DoctorName
                     FROM medical_record mr
@@ -192,7 +237,7 @@ async function viewRecords (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         p.*,
                         d.Name as DoctorName
                     FROM prescription p
@@ -202,9 +247,17 @@ async function viewRecords (req, res) {
                 )
             ]);
 
+            // Format DOB for HTML date input if it exists
+            if (patientProfile.DOB) {
+                patientProfile.DOB = new Date(patientProfile.DOB).toISOString().split('T')[0];
+            }
+
+
             res.render('users/pat/viewRec', {
                 user: req.session.user,
+                userX: userForTemplate,
                 currentPatientID: patientID,
+                patient: patientProfile, // *** THIS IS THE KEY CHANGE: Pass the full patientProfile ***
                 doctorRelationships: doctorRelationships[0],
                 medicalRecords: medicalRecords[0],
                 prescriptions: prescriptions[0],
@@ -212,44 +265,48 @@ async function viewRecords (req, res) {
                 error: req.session.error
             });
 
-            // Clear flash messages
             delete req.session.success;
             delete req.session.error;
         } else {
             res.redirect('/login');
         }
     } catch (err) {
-        console.error('Error loading patient dashboard:', err);
-        res.render('users/patient', {
+        console.error('Error loading patient records:', err);
+        res.render('users/pat/viewRec', {
             user: req.session.user,
+            userX: req.session.user ? { ...req.session.user, Name: 'Unknown', PatientID: 'N/A' } : { Name: 'Guest', PatientID: 'N/A' },
+            patient: null, // Pass null patient on error to prevent template crash
             currentPatientID: null,
             doctorRelationships: [],
             medicalRecords: [],
             prescriptions: [],
-            error: 'Error loading dashboard: ' + err.message
+            error: 'Error loading records: ' + err.message
         });
     }
-};
+}
 
-async function viewPrescriptions (req, res) {
+async function viewPrescriptions(req, res) {
     try {
         if (req.session.user && req.session.user.Role === 'PATIENT') {
-            // Get patientID
-            const [patientData] = await conPool.query(
-                'SELECT PatientID FROM patient WHERE UserID = ?',
-                [req.session.user.UserID]
-            );
+            const userId = req.session.user.UserID;
+            const patientProfile = await getFullPatientProfileByUserID(userId);
 
-            if (!patientData || patientData.length === 0) {
-                throw new Error('Patient ID not found');
+            if (!patientProfile) {
+                throw new Error('Patient profile not found');
             }
 
-            const patientID = patientData[0].PatientID;
+            const patientID = patientProfile.PatientID;
+            const patientName = patientProfile.Name;
 
-            // Get all data in parallel
+            const userForTemplate = {
+                ...req.session.user,
+                Name: patientName,
+                PatientID: patientID
+            };
+
             const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         dp.*,
                         d.Name as DoctorName,
                         d.Specialty,
@@ -260,7 +317,7 @@ async function viewPrescriptions (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         mr.*,
                         d.Name as DoctorName
                     FROM medical_record mr
@@ -269,7 +326,7 @@ async function viewPrescriptions (req, res) {
                     [patientID]
                 ),
                 conPool.query(`
-                    SELECT 
+                    SELECT
                         p.*,
                         d.Name as DoctorName
                     FROM prescription p
@@ -281,6 +338,7 @@ async function viewPrescriptions (req, res) {
 
             res.render('users/pat/viewPres', {
                 user: req.session.user,
+                userX: userForTemplate,
                 currentPatientID: patientID,
                 doctorRelationships: doctorRelationships[0],
                 medicalRecords: medicalRecords[0],
@@ -289,24 +347,24 @@ async function viewPrescriptions (req, res) {
                 error: req.session.error
             });
 
-            // Clear flash messages
             delete req.session.success;
             delete req.session.error;
         } else {
             res.redirect('/login');
         }
     } catch (err) {
-        console.error('Error loading patient dashboard:', err);
-        res.render('users/patient', {
+        console.error('Error loading patient prescriptions:', err);
+        res.render('users/patient', { // Fallback to general patient dashboard on error
             user: req.session.user,
+            userX: req.session.user ? { ...req.session.user, Name: 'Unknown', PatientID: 'N/A' } : { Name: 'Guest', PatientID: 'N/A' },
             currentPatientID: null,
             doctorRelationships: [],
             medicalRecords: [],
             prescriptions: [],
-            error: 'Error loading dashboard: ' + err.message
+            error: 'Error loading prescriptions: ' + err.message
         });
     }
-};
+}
 
 // Function to get patient details for display/edit
 async function getPatientDetails(req, res) {
@@ -315,14 +373,10 @@ async function getPatientDetails(req, res) {
     // Determine how to get the PatientID:
     // 1. If patient is logged in, use their UserID to find PatientID
     if (req.session.user && req.session.user.UserID) {
-        // Assuming there's a PatientID linked to UserID in the 'patient' table
         try {
-            const [patientUserLink] = await conPool.query(
-                `SELECT PatientID FROM patient WHERE UserID = ? AND Flag = 0`,
-                [req.session.user.UserID]
-            );
-            if (patientUserLink.length > 0) {
-                patientIdToFetch = patientUserLink[0].PatientID;
+            const patientUserLink = await getFullPatientProfileByUserID(req.session.user.UserID); // Use helper
+            if (patientUserLink) {
+                patientIdToFetch = patientUserLink.PatientID;
             } else {
                 return res.render('dashboard/patient', {
                     patient: null,
@@ -349,22 +403,32 @@ async function getPatientDetails(req, res) {
     }
 
     try {
-        const [patients] = await conPool.query(
-            `SELECT 
-                PatientID, UserID, Name, Address, Phone, DOB, BloodGroup, MedicalHistory, 
-                EmergencyContact, EmergencyPhone, Flag, AadharID
-             FROM patient 
-             WHERE PatientID = ? AND Flag = 0`, // Ensure only active patients are fetched
-            [patientIdToFetch]
-        );
+        // Fetch the patient details directly using the helper to get the full profile
+        const patientData = await getFullPatientProfileByUserID(req.session.user.UserID); // This line needs to be adjusted based on the above logic for patientIdToFetch
 
-        if (patients.length > 0) {
+        // Re-fetch using patientIdToFetch if it's coming from req.params.patientId, otherwise patientData from getFullPatientProfileByUserID will be correct
+        let finalPatientData;
+        if (patientIdToFetch) {
+            const [patients] = await conPool.query(
+                `SELECT
+                    PatientID, UserID, Name, Address, Phone, DOB, BloodGroup, MedicalHistory,
+                    EmergencyContact, EmergencyPhone, Flag, AadharID
+                 FROM patient
+                 WHERE PatientID = ? AND Flag = 0`,
+                [patientIdToFetch]
+            );
+            finalPatientData = patients.length > 0 ? patients[0] : null;
+        } else {
+            finalPatientData = null; // Should not happen with the checks above, but as a fallback
+        }
+
+
+        if (finalPatientData) {
             // Format DOB for HTML date input
-            const patientData = patients[0];
-            if (patientData.DOB) {
-                patientData.DOB = new Date(patientData.DOB).toISOString().split('T')[0];
+            if (finalPatientData.DOB) {
+                finalPatientData.DOB = new Date(finalPatientData.DOB).toISOString().split('T')[0];
             }
-            res.render('dashboard/patient', { patient: patientData, error: null, user: req.session.user });
+            res.render('dashboard/patient', { patient: finalPatientData, error: null, user: req.session.user });
         } else {
             res.render('dashboard/patient', { patient: null, error: 'Patient not found.', user: req.session.user });
         }
@@ -374,31 +438,37 @@ async function getPatientDetails(req, res) {
     }
 }
 
-// Function to get all patient dashboard data (details, prescriptions, medical records, appointments)
+
+// *** MODIFIED FUNCTION ***
 async function getPatientDashboardData(req, res) {
     try {
         if (req.session.user && req.session.user.Role === 'PATIENT') {
             const userID = req.session.user.UserID;
 
-            // Get patient data
-            const [patientData] = await conPool.query(
-                'SELECT * FROM patient WHERE UserID = ?',
-                [userID]
-            );
+            // Fetch the full patient profile here
+            const patientProfile = await getFullPatientProfileByUserID(userID);
 
-            // If patient profile not found, handle gracefully
-            if (!patientData || patientData.length === 0) {
+            if (!patientProfile) {
                 return res.render('users/pat/viewRec', { // Corrected EJS path
                     user: req.session.user,
+                    userX: { ...req.session.user, Name: 'Unknown', PatientID: 'N/A' }, // Fallback for userX
                     patient: null, // Pass null patient to avoid "patient is not defined"
                     doctorRelationships: [],
                     medicalRecords: [],
                     prescriptions: [],
-                    error: 'Patient profile not found. Please ensure your profile is complete.'
+                    error: 'Patient profile not found. Please ensure your profile is complete.',
+                    success: null
                 });
             }
 
-            const patient = patientData[0]; // Assign to 'patient' variable as EJS expects
+            const patientID = patientProfile.PatientID;
+            const patientName = patientProfile.Name;
+
+            const userForTemplate = {
+                ...req.session.user,
+                Name: patientName,
+                PatientID: patientID
+            };
 
             // Get all required data in parallel
             const [doctorRelationships, medicalRecords, prescriptions] = await Promise.all([
@@ -411,7 +481,7 @@ async function getPatientDashboardData(req, res) {
                     FROM doctor_patient dp
                     LEFT JOIN doctor d ON dp.DoctorID = d.DoctorID
                     WHERE dp.PatientID = ?`,
-                    [patient.PatientID]
+                    [patientID]
                 ),
                 conPool.query(`
                     SELECT
@@ -420,7 +490,7 @@ async function getPatientDashboardData(req, res) {
                     FROM medical_record mr
                     LEFT JOIN doctor d ON mr.DoctorID = d.DoctorID
                     WHERE mr.PatientID = ?`,
-                    [patient.PatientID]
+                    [patientID]
                 ),
                 conPool.query(`
                     SELECT
@@ -429,29 +499,34 @@ async function getPatientDashboardData(req, res) {
                     FROM prescription p
                     LEFT JOIN doctor d ON p.DoctorID = d.DoctorID
                     WHERE p.PatientID = ?`,
-                    [patient.PatientID]
+                    [patientID]
                 )
             ]);
 
+            // Format DOB for HTML date input if it exists in the fetched profile
+            if (patientProfile.DOB) {
+                patientProfile.DOB = new Date(patientProfile.DOB).toISOString().split('T')[0];
+            }
+
             return res.render('users/pat/viewRec', { // Corrected EJS path
                 user: req.session.user,
-                patient: patient, // Ensure 'patient' variable is passed correctly
+                userX: userForTemplate,
+                patient: patientProfile, // *** THIS IS THE KEY CHANGE: Pass the full patientProfile ***
                 doctorRelationships: doctorRelationships[0],
                 medicalRecords: medicalRecords[0],
                 prescriptions: prescriptions[0],
-                success: req.session.success, // Pass any session success/error messages
+                success: req.session.success,
                 error: req.session.error
             });
 
         } else {
-            // Not logged in or not a patient, redirect to login page
-            res.redirect('/auth/login'); // Assuming this is your login route
+            res.redirect('/auth/login');
         }
     } catch (err) {
         console.error('Error in getPatientDashboardData:', err);
-        // Render with error information if something goes wrong during data fetching
         res.render('users/pat/viewRec', { // Corrected EJS path
             user: req.session.user,
+            userX: req.session.user ? { ...req.session.user, Name: 'Unknown', PatientID: 'N/A' } : { Name: 'Guest', PatientID: 'N/A' },
             patient: null, // Pass null patient on error to prevent template crash
             doctorRelationships: [],
             medicalRecords: [],
@@ -461,69 +536,144 @@ async function getPatientDashboardData(req, res) {
     }
 }
 
-// Function to update patient details (remains largely the same)
+// Function to update patient details 
 async function updatePatientDetails(req, res) {
     let patientIdToUpdate;
-    let userId = req.session.user?.UserID; // Get UserID from session
+    let userId = req.session.user?.UserID;
 
     if (!userId) {
-        return res.json({ success: false, message: 'User not logged in.' });
+        return res.status(401).json({ success: false, message: 'User not logged in. Please log in again.' });
     }
 
     try {
-        const [patientUserLink] = await conPool.query(
-            `SELECT PatientID FROM patient WHERE UserID = ? AND Flag = 0`,
-            [userId]
-        );
-        if (patientUserLink.length > 0) {
-            patientIdToUpdate = patientUserLink[0].PatientID;
+        const patientUserLink = await getFullPatientProfileByUserID(userId);
+        if (patientUserLink) {
+            patientIdToUpdate = patientUserLink.PatientID;
         } else {
-            return res.json({ success: false, message: 'Patient profile not found for this user.' });
+            return res.status(404).json({ success: false, message: 'Patient profile not found for this user.' });
         }
     } catch (error) {
         console.error("Error linking UserID to PatientID for update:", error);
-        return res.json({ success: false, message: 'Database error finding patient profile.' });
+        return res.status(500).json({ success: false, message: 'Database error finding patient profile. Please try again.' });
     }
 
-    const {
-        Name, Address, Phone, DOB, BloodGroup, MedicalHistory,
-        EmergencyContact, EmergencyPhone
-    } = req.body;
+    let { Name, Address, Phone, DOB, BloodGroup, MedicalHistory, EmergencyContact, EmergencyPhone, AadharID } = req.body;
 
-    // Basic validation
-    if (!Name || !Address || !Phone || !DOB || !BloodGroup || !EmergencyContact || !EmergencyPhone) {
-        return res.json({ success: false, message: 'All required fields must be filled.' });
+    if (!Name || Name.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Name is a required field and cannot be empty.' });
     }
+    if (!Address || Address.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Address is a required field and cannot be empty.' });
+    }
+    if (!Phone || Phone.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Phone is a required field and cannot be empty.' });
+    }
+    if (!DOB || DOB.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Date of Birth is a required field and cannot be empty.' });
+    }
+    if (!BloodGroup || BloodGroup.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Blood Group is a required field and cannot be empty.' });
+    }
+    if (!EmergencyContact || EmergencyContact.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Emergency Contact Name is a required field and cannot be empty.' });
+    }
+    if (!EmergencyPhone || EmergencyPhone.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Emergency Phone is a required field and cannot be empty.' });
+    }
+
+    Name = Name.trim();
+    Address = Address.trim();
+    Phone = Phone.trim();
+    BloodGroup = BloodGroup.trim();
+    EmergencyContact = EmergencyContact.trim();
+    EmergencyPhone = EmergencyPhone.trim();
+
+    MedicalHistory = (MedicalHistory && MedicalHistory.trim() !== '') ? MedicalHistory.trim() : null;
+    AadharID = (AadharID && AadharID.trim() !== '') ? AadharID.trim() : null;
+    DOB = (DOB && DOB.trim() !== '') ? DOB.trim() : null;
 
     try {
+        // Fetch the *current* patient data before the update to compare for logging
+        const [currentPatientDataRows] = await conPool.query(
+            `SELECT Name, Address, Phone, DOB, BloodGroup, MedicalHistory, EmergencyContact, EmergencyPhone, AadharID
+             FROM patient WHERE PatientID = ? AND Flag = 0`,
+            [patientIdToUpdate]
+        );
+
+        const currentPatientData = currentPatientDataRows.length > 0 ? currentPatientDataRows[0] : {};
+
         const [result] = await conPool.query(
             `UPDATE patient SET
                 Name = ?, Address = ?, Phone = ?, DOB = ?, BloodGroup = ?, MedicalHistory = ?,
-                EmergencyContact = ?, EmergencyPhone = ?
+                EmergencyContact = ?, EmergencyPhone = ?, AadharID = ?
              WHERE PatientID = ? AND Flag = 0`,
             [
                 Name, Address, Phone, DOB, BloodGroup, MedicalHistory,
-                EmergencyContact, EmergencyPhone, patientIdToUpdate
+                EmergencyContact, EmergencyPhone, AadharID, patientIdToUpdate
             ]
         );
 
         if (result.affectedRows > 0) {
-            res.json({ success: true, message: 'Patient details updated successfully!' });
+            // After successful update, fetch the latest patient data from the DB
+            const [updatedPatientRows] = await conPool.query(
+                `SELECT PatientID, UserID, Name, Address, Phone, DOB, BloodGroup, MedicalHistory, EmergencyContact, EmergencyPhone, AadharID
+                 FROM patient WHERE PatientID = ? AND Flag = 0`,
+                [patientIdToUpdate]
+            );
+
+            if (updatedPatientRows.length > 0) {
+                req.session.patient = updatedPatientRows[0];
+            }
+
+            // --- NEW PART: Log activity to patient_activity table, adjusted for your schema ---
+            const actionPerformed = 'Profile Update'; // Matches your 'ActionPerformed' column
+            let description = `Patient details updated for PatientID: ${patientIdToUpdate}. `;
+            let changedFields = [];
+
+            // Compare original vs. new values to build a more specific description
+            if (currentPatientData.Name !== Name) changedFields.push(`Name changed from '${currentPatientData.Name}' to '${Name}'`);
+            if (currentPatientData.Address !== Address) changedFields.push(`Address changed`);
+            if (currentPatientData.Phone !== Phone) changedFields.push(`Phone changed`);
+            // Note: DOB comparison might need careful handling if current DOB is a Date object and new DOB is a string
+            if (currentPatientData.DOB && new Date(currentPatientData.DOB).toISOString().split('T')[0] !== DOB) changedFields.push(`DOB changed`);
+            else if (!currentPatientData.DOB && DOB) changedFields.push(`DOB added`);
+            if (currentPatientData.BloodGroup !== BloodGroup) changedFields.push(`Blood Group changed from '${currentPatientData.BloodGroup}' to '${BloodGroup}'`);
+            if (currentPatientData.MedicalHistory !== MedicalHistory) changedFields.push(`Medical History changed`);
+            if (currentPatientData.EmergencyContact !== EmergencyContact) changedFields.push(`Emergency Contact changed`);
+            if (currentPatientData.EmergencyPhone !== EmergencyPhone) changedFields.push(`Emergency Phone changed`);
+            if (currentPatientData.AadharID !== AadharID) changedFields.push(`Aadhar ID changed`);
+
+
+            if (changedFields.length > 0) {
+                description += `Changes: ${changedFields.join('; ')}.`;
+            } else {
+                description += `No specific field changes detected (data might be identical or only non-tracked fields changed).`;
+            }
+
+            const logActivityQuery = `
+                INSERT INTO patient_activity (PatientID, ActionPerformed, Description, ActivityTimestamp)
+                VALUES (?, ?, ?, NOW())
+            `;
+            // Use 'actionPerformed' and 'description' variables for the query
+            await conPool.query(logActivityQuery, [patientIdToUpdate, actionPerformed, description]);
+            // --- END NEW PART ---
+
+            return res.status(200).json({ success: true, message: 'Patient details updated successfully!' });
         } else {
-            res.json({ success: false, message: 'Patient not found or no changes made.' });
+            return res.status(200).json({ success: false, message: 'No changes detected or patient not found.' });
         }
     } catch (err) {
-        console.error('Error updating patient details:', err);
-        res.json({ success: false, message: 'Database error, please try again later.' });
+        console.error('Error updating patient details or logging activity:', err);
+        return res.status(500).json({ success: false, message: 'An internal server error occurred while updating patient details. Please try again later.' });
     }
 }
 
-module.exports ={
+module.exports = {
     getPatients,
     viewPatients,
     viewRecords,
     viewPrescriptions,
     getPatientDetails,
     updatePatientDetails,
-     getPatientDashboardData
-}
+    getPatientDashboardData
+};

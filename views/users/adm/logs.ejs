@@ -7,66 +7,273 @@
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/users.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        /* Basic Tab Styling */
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e2e8f0; /* gray-300 */
+        }
+        .tab-button {
+            padding: 10px 15px;
+            cursor: pointer;
+            border: 1px solid transparent;
+            border-bottom: none;
+            background-color: #f8f8f8; /* light gray */
+            color: #4a5568; /* gray-700 */
+            font-weight: 600;
+            border-radius: 8px 8px 0 0;
+            margin-right: 5px;
+            transition: all 0.2s ease-in-out;
+        }
+        .tab-button:hover {
+            background-color: #edf2f7; /* gray-200 */
+        }
+        .tab-button.active {
+            background-color: #fff;
+            border-color: #e2e8f0;
+            border-bottom-color: #fff;
+            color: #2b6cb0; /* blue-700 */
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .table-container {
+            background-color: #fff;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            overflow: hidden; /* For table rounded corners */
+        }
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .data-table th, .data-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .data-table th {
+            background-color: #f7fafc; /* gray-100 */
+            font-weight: 700;
+            color: #4a5568; /* gray-700 */
+            text-transform: uppercase;
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
-    <!-- Hamburger Menu -->
     <%- include('nav') -%>
 
-    <!-- Logs Section -->
-    <section id="logs" class="mb-12 w-full" style="margin-left: 120px;">
-        <h2 class="text-xl font-bold mb-4 text-gray-800">Admin Activity Logs</h2>
-        <div class="bg-white rounded-lg shadow overflow-hidden w-full">
-            <table class="data-table">
-                <thead>
-                    <tr>
-                        <th class="text-left">Timestamp</th>
-                        <th class="text-left">Admin User</th>
-                        <th class="text-left">Action</th>
-                        <th class="text-left">Target Type</th>
-                        <th class="text-left">Target ID</th>
-                        <th class="text-left">Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <% logs.forEach(log => { %>
+    <section id="logs" class="mb-12 w-full" style="margin-left: 120px; margin-right: 20px;">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800">Activity Logs</h2>
+
+        <% if (typeof error !== 'undefined' && error) { %>
+            <p class="text-red-500 mt-2 text-center"><%= error %></p>
+        <% } %>
+
+        <div class="tabs">
+            <button class="tab-button <%= currentLogType === 'admin' ? 'active' : '' %>" onclick="showTab('admin')">Admin Logs</button>
+            <button class="tab-button <%= currentLogType === 'doctor' ? 'active' : '' %>" onclick="showTab('doctor')">Doctor Logs</button>
+            <button class="tab-button <%= currentLogType === 'patient' ? 'active' : '' %>" onclick="showTab('patient')">Patient Logs</button>
+        </div>
+
+        <% /* Admin Logs Tab Content */ %>
+        <div id="admin-logs" class="tab-content <%= currentLogType === 'admin' ? 'active' : '' %>">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Admin Activity Logs</h3>
+            <div class="mt-5 flex justify-center items-center space-x-4 mb-4">
+                <% if (totalPages > 1) { %>
+                    <a href="/admin/logs?type=admin&page=<%= currentPage - 1 %>&limit=<%= limit %>"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                             <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                        &lt; Prev
+                    </a>
+
+                    <span class="text-gray-800 text-lg font-semibold">
+                        Page <%= currentPage %> of <%= totalPages %>
+                    </span>
+
+                    <a href="/admin/logs?type=admin&page=<%= currentPage + 1 %>&limit=<%= limit %>"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                             <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                        Next &gt;
+                    </a>
+                <% } %>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
                         <tr>
-                            <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
-                            <td><%= log.AdminUsername %></td>
-                            <td><%= log.ActionPerformed %></td>
-                            <td><%= log.TargetType %></td>
-                            <td><%= log.TargetID %></td>
-                            <td><%= log.Description %></td>
+                            <th class="text-left">Timestamp</th>
+                            <th class="text-left">Admin User</th>
+                            <th class="text-left">Action</th>
+                            <th class="text-left">Target Type</th>
+                            <th class="text-left">Target ID</th>
+                            <th class="text-left">Description</th>
                         </tr>
-                    <% }) %>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <% if (logs && logs.length > 0) { %>
+                            <% logs.forEach(log => { %>
+                                <tr>
+                                    <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
+                                    <td><%= log.AdminUsername %></td>
+                                    <td><%= log.ActionPerformed %></td>
+                                    <td><%= log.TargetType %></td>
+                                    <td><%= log.TargetID %></td>
+                                    <td><%= log.Description %></td>
+                                </tr>
+                            <% }) %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-gray-600">No admin activity logs found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <% /* Doctor Logs Tab Content */ %>
+        <div id="doctor-logs" class="tab-content <%= currentLogType === 'doctor' ? 'active' : '' %>">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Doctor Activity Logs</h3>
+            <div class="mt-5 flex justify-center items-center space-x-4 mb-4">
+                <% if (totalPages > 1) { %>
+                    <a href="/admin/logs?type=doctor&page=<%= currentPage - 1 %>&limit=<%= limit %>"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                             <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                        &lt; Prev
+                    </a>
+
+                    <span class="text-gray-800 text-lg font-semibold">
+                        Page <%= currentPage %> of <%= totalPages %>
+                    </span>
+
+                    <a href="/admin/logs?type=doctor&page=<%= currentPage + 1 %>&limit=<%= limit %>"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                             <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                        Next &gt;
+                    </a>
+                <% } %>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Doctor Name</th>
+                            <th class="text-left">Timestamp</th>
+                            <th class="text-left">Action Performed</th>
+                            <th class="text-left">Target Type</th>
+                            <th class="text-left">Target ID</th>
+                            <th class="text-left">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (logs && logs.length > 0) { %> <%-- Note: 'logs' now holds doctor logs when type='doctor' --%>
+                            <% logs.forEach(log => { %>
+                                <tr>
+                                    <td><%= log.Doctorname %></td>
+                                    <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
+                                    <td><%= log.ActionPerformed %></td>
+                                    <td><%= log.TargetType %></td>
+                                    <td><%= log.TargetID %></td>
+                                    <td><%= log.Description %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-gray-600">No doctor activity logs found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <% /* Patient Logs Tab Content */ %>
+        <div id="patient-logs" class="tab-content <%= currentLogType === 'patient' ? 'active' : '' %>">
+            <h3 class="text-xl font-bold mb-4 text-gray-800">Patient Activity Logs</h3>
+            <div class="mt-5 flex justify-center items-center space-x-4 mb-4">
+                <% if (totalPages > 1) { %>
+                    <a href="/admin/logs?type=patient&page=<%= currentPage - 1 %>&limit=<%= limit %>"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                             <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                        &lt; Prev
+                    </a>
+
+                    <span class="text-gray-800 text-lg font-semibold">
+                        Page <%= currentPage %> of <%= totalPages %>
+                    </span>
+
+                    <a href="/admin/logs?type=patient&page=<%= currentPage + 1 %>&limit=<%= limit %>"
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
+                             <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                        Next &gt;
+                    </a>
+                <% } %>
+            </div>
+
+            <div class="table-container">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th class="text-left">Patient Name</th>
+                            <th class="text-left">Timestamp</th>
+                            <th class="text-left">Action Performed</th>
+                            <th class="text-left">Target Type</th>
+                            <th class="text-left">Target ID</th>
+                            <th class="text-left">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (logs && logs.length > 0) { %> <%-- Note: 'logs' now holds patient logs when type='patient' --%>
+                            <% logs.forEach(log => { %>
+                                <tr>
+                                    <td><%= log.Patientname %></td>
+                                    <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
+                                    <td><%= log.ActionPerformed %></td>
+                                    <td><%= log.TargetType %></td>
+                                    <td><%= log.TargetID %></td>
+                                    <td><%= log.Description %></td>
+                                </tr>
+                            <% }); %>
+                        <% } else { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-4 text-gray-600">No patient activity logs found.</td>
+                            </tr>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
         </div>
     </section>
 </main>
 </div>
 
-    <script src="/javascripts/adminHelp.js"></script>
-    <!-- <script>
-        // Initialize Feather Icons
-        feather.replace();
+    <script>
+        function showTab(tabType) {
+            // Redirect to the same URL with the new tab type and reset page to 1
+            window.location.href = `/admin/logs?type=${tabType}&page=1&limit=<%= limit %>`;
+        }
 
-        // Sidebar functionality
+        // Add class to active tab button on load
         document.addEventListener('DOMContentLoaded', () => {
-            const sidebar = document.getElementById('sidebar');
-            const hamburger = document.getElementById('hamburger');
-            const closeIcon = document.getElementById('close-icon');
-
-            function toggleSidebar() {
-                sidebar.classList.toggle('open');
-            }
-
-            function closeSidebar() {
-                sidebar.classList.remove('open');
-            }
-
-            hamburger.addEventListener('click', toggleSidebar);
-            closeIcon.addEventListener('click', closeSidebar);
+            const currentLogType = '<%= currentLogType %>';
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => {
+                if (button.textContent.toLowerCase().includes(currentLogType)) {
+                    button.classList.add('active');
+                } else {
+                    button.classList.remove('active');
+                }
+            });
         });
-    </script> -->
+    </script>
+    <script src="/javascripts/adminHelp.js"></script>
 </body>
 </html>
