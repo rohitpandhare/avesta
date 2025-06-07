@@ -63,73 +63,17 @@
         .custom-message-box.error {
             background-color: #dc3545; /* Red for error */
         }
-
     </style>
 </head>
 
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
-        <div class="hamburger" id="hamburger">
-        <div style="background-color: green;"></div>
-        <div style="background-color: green;"></div>
-        <div style="background-color: green;"></div>
-    </div>
-
-    <div class="flex h-screen">
-        <aside class="sidebar flex flex-col h-full text-white" id="sidebar" style="background-color: #000030;">
-            <span class="close-icon" id="close-icon">×</span>
-            <div class="p-6 border-b border-gray-700">
-                <h2 class="text-2xl font-bold text-white">Admin Panel</h2>
-                <span class="text-white">Welcome Admin:
-                    <span class="text-blue-600">
-                        <%= user?.Username?.split('@')[0] || 'Admin' %>
-                    </span>
-                    <br>
-                    <span class="text-white"> UserID: </span>
-                    <span class="text-blue-600"><%= user?.UserID || '0' %></span>
-                </span>
-            </div>
-
-            <nav class="p-4 flex-1 ">
-                <ul class="space-y-2">
-                    <li><a href="/admin" class="nav-item text-white hover:bg-gray-700"><i data-feather="home" class="w-5 h-5 mr-3"></i>Dashboard</a></li>
-                    <li><a href="/admin/users" class="nav-item text-white hover:bg-gray-700"><i data-feather="users" class="w-5 h-5 mr-3"></i>Users</a></li>
-                    
-                    <li><a href="/admin/logs" class="nav-item text-white hover:bg-gray-700"><i data-feather="file-text" class="w-5 h-5 mr-3"></i>Logs</a></li>
-                    <li><a href="/admin/reviveUser" class="nav-item text-white hover:bg-gray-700"><i data-feather="refresh-ccw" class="w-5 h-5 mr-3"></i>Revive User</a></li>
-                </ul>
-            </nav>
-
-            <div class="p-4 border-t border-gray-700">
-                <a href="/auth/logout" class="flex items-center px-4 py-2 text-red-500 hover:text-red-700 rounded-lg hover:bg-gray-700 transition-colors text-xl">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                    Logout
-                </a>
-            </div>
-        </aside>
-
-            
-        <!-- Main Content -->
-        <main class="main-content">
-            <header class="flex justify-between items-center mb-8">
-                <h1 class="text-2xl font-bold text-gray-800" style="margin-left: 130px;">Dashboard Overview</h1>
-                <div class="flex items-center space-x-4">
-                    <span class="text-gray-700">Welcome Admin,
-                        <span class="text-blue-600">
-                            <%= user?.Username?.split('@')[0] || 'Admin' %>
-                        </span>
-                    </span>
-                </div>
-            </header>
-
+    <%- include('nav') -%>
 
     <div class="flex h-screen relative">
         <main class="flex-1 overflow-y-auto md:p-8">
-            <!-- <header class="mb-3">
-                <h1 class="text-3xl font-bold text-gray-800" id="page-title">Admin Dashboard</h1>
-            </header> -->
-
             <div class="border-b border-gray-500 mb-6">
-                <nav class="-mb-px flex space-x-4 md:space-x-8" aria-label="Tabs"> <button id="tab-users" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700  hover:border-gray-300 active" onclick="showTab('users')">
+                <nav class="-mb-px flex space-x-4 md:space-x-8" aria-label="Tabs">
+                    <button id="tab-users" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700 hover:border-gray-300 active" onclick="showTab('users')">
                         Users
                     </button>
                     <button id="tab-doctors" class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700 hover:border-gray-300" onclick="showTab('doctors')">
@@ -160,20 +104,19 @@
                         </button>
                     </form>
 
-                     <div class="mt-6 flex justify-center items-center space-x-2">
-                    <% if (totalPages > 1) { %>
-                        <a href="/admin/users?page=<%= currentPage - 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
-                           class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
+                    <div class="mt-6 flex justify-center items-center space-x-2">
+                        <% if (totalPages > 1) { %>
+                            <a href="/admin/users?page=<%= currentPage - 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
 
-                        <span class="px-4 py-2 font-bold text-gray-800">
-                            Page <%= currentPage %> of <%= totalPages %>
-                        </span>
+                            <span class="px-4 py-2 font-bold text-gray-800">
+                                Page <%= currentPage %> of <%= totalPages %>
+                            </span>
 
-                        <a href="/admin/users?page=<%= currentPage + 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
-                           class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">Next</a>
-                    <% } %>
-                </div>
-
+                            <a href="/admin/users?page=<%= currentPage + 1 %>&limit=<%= limit %>&search=<%= searchTerm %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">Next</a>
+                        <% } %>
+                    </div>
                 </div>
                 <div class="bg-white rounded-lg shadow overflow-hidden w-full">
                     <table class="data-table">
@@ -212,12 +155,40 @@
                         </tbody>
                     </table>
                 </div>
-
-               
-                </div>
+            </div>
 
             <div id="content-doctors" class="tab-content hidden">
                 <h2 class="text-xl font-bold mb-4 text-gray-800">Doctor Management</h2>
+                <div class="mb-6">
+                    <form action="/admin/doc" method="GET" class="flex items-center space-x-2">
+                        <input
+                            type="text"
+                            name="search_doc"
+                            placeholder="Search by Doctor Name"
+                            value="<%= typeof searchTermDoc !== 'undefined' ? searchTermDoc : '' %>"
+                            class="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input type="hidden" name="page_doc" value="1" />
+                        <input type="hidden" name="limit_doc" value="<%= typeof limitDoc !== 'undefined' ? limitDoc : 10 %>" />
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 flex justify-center items-center space-x-2">
+                        <% if (totalPagesDoc > 1) { %>
+                            <a href="/admin/doc?page_doc=<%= currentPageDoc - 1 %>&limit_doc=<%= limitDoc %>&search_doc=<%= searchTermDoc %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPageDoc === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
+
+                            <span class="px-4 py-2 font-bold text-gray-800">
+                                Page <%= currentPageDoc %> of <%= totalPagesDoc %>
+                            </span>
+
+                            <a href="/admin/doc?page_doc=<%= currentPageDoc + 1 %>&limit_doc=<%= limitDoc %>&search_doc=<%= searchTermDoc %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPageDoc === totalPagesDoc ? 'pointer-events-none opacity-50' : '' %>">Next</a>
+                        <% } %>
+                    </div>
+                </div>
                 <div class="bg-white rounded-lg shadow overflow-hidden w-full">
                     <table class="data-table">
                         <thead>
@@ -261,6 +232,37 @@
 
             <div id="content-patients" class="tab-content hidden">
                 <h2 class="text-xl font-bold mb-4 text-gray-800">Patient Management</h2>
+                <div class="mb-6">
+                    <form action="/admin/pat" method="GET" class="flex items-center space-x-2">
+                        <input
+                            type="text"
+                            name="search_pat"
+                            placeholder="Search by Patient Name"
+                            value="<%= typeof searchTermPatient !== 'undefined' ? searchTermPatient : '' %>"
+                            class="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input type="hidden" name="page_pat" value="1" />
+                        <input type="hidden" name="limit_pat" value="<%= typeof limitPatient !== 'undefined' ? limitPatient : 10 %>" />
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 flex justify-center items-center space-x-2">
+                        <% if (totalPagesPatient  > 1) { %>
+                            <a href="/admin/pat?page_pat=<%= currentPagePatient - 1 %>&limit_pat=<%= limitPatient %>&search_pat=<%= searchTermPatient %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPagePatient === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
+
+                            <span class="px-4 py-2 font-bold text-gray-800">
+                                Page <%= currentPagePatient %> of <%= totalPagesPatient  %>
+                            </span>
+
+                            <a href="/admin/pat?page_pat=<%= currentPagePatient + 1 %>&limit_pat=<%= limitPatient %>&search_pat=<%= searchTermPatient %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPagePatient === totalPagesPatient  ? 'pointer-events-none opacity-50' : '' %>">Next</a>
+                        <% } %>
+                    </div>
+                </div>
+
                 <div class="bg-white rounded-lg shadow overflow-hidden w-full">
                     <table class="data-table">
                         <thead>
@@ -357,20 +359,27 @@
             // Deactivate all tab buttons
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.classList.remove('active');
+                // Remove specific active styling if any
+                button.classList.remove('border-blue-600', 'text-blue-600');
+                button.classList.add('border-transparent', 'text-black', 'hover:text-gray-700', 'hover:border-gray-300');
             });
 
             // Show the selected tab content
             document.getElementById('content-' + tabId).classList.remove('hidden');
 
             // Activate the clicked tab button
-            document.getElementById('tab-' + tabId).classList.add('active');
+            const activeTabButton = document.getElementById('tab-' + tabId);
+            activeTabButton.classList.add('active');
+            // Add specific active styling
+            activeTabButton.classList.remove('border-transparent', 'text-black');
+            activeTabButton.classList.add('border-blue-600', 'text-blue-600');
 
             // Update URL to reflect current tab without reloading (optional, for better UX)
-            // history.pushState(null, '', `/admin?tab=${tabId}`);
+            history.pushState(null, '', `/admin?tab=${tabId}`);
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Initial tab display (show 'users' tab by default)
+            // Initial tab display (show 'users' tab by default or from URL)
             const urlParams = new URLSearchParams(window.location.search);
             const initialTab = urlParams.get('tab') || 'users';
             showTab(initialTab);

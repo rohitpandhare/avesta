@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Logs - DoctorSync</title>
+    <title>Activity Logs - DoctorSync</title>
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="stylesheet" href="/css/users.css">
     <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
@@ -68,27 +68,24 @@
 <body class="bg-gray-100 min-h-screen font-sans antialiased">
     <%- include('nav') -%>
 
-    <section id="logs" class="mb-12 w-full" style="margin-left: 120px; margin-right: 20px;">
-        <h2 class="text-2xl font-bold mb-6 text-gray-800">Activity Logs</h2>
-
+    <section id="logs" class="mb-12 w-full">
         <% if (typeof error !== 'undefined' && error) { %>
             <p class="text-red-500 mt-2 text-center"><%= error %></p>
         <% } %>
 
-        <div class="tabs">
+        <div class="tabs" style="margin-left: 170px;">
             <button class="tab-button <%= currentLogType === 'admin' ? 'active' : '' %>" onclick="showTab('admin')">Admin Logs</button>
             <button class="tab-button <%= currentLogType === 'doctor' ? 'active' : '' %>" onclick="showTab('doctor')">Doctor Logs</button>
             <button class="tab-button <%= currentLogType === 'patient' ? 'active' : '' %>" onclick="showTab('patient')">Patient Logs</button>
         </div>
 
-        <% /* Admin Logs Tab Content */ %>
-        <div id="admin-logs" class="tab-content <%= currentLogType === 'admin' ? 'active' : '' %>">
+        <!-- <% /* Admin Logs Tab Content */ %> -->
+        <div id="admin-logs" class="tab-content <%= currentLogType === 'admin' ? 'active' : '' %>" style="margin-left: 170px;">
             <h3 class="text-xl font-bold mb-4 text-gray-800">Admin Activity Logs</h3>
             <div class="mt-5 flex justify-center items-center space-x-4 mb-4">
                 <% if (totalPages > 1) { %>
                     <a href="/admin/logs?type=admin&page=<%= currentPage - 1 %>&limit=<%= limit %>"
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
-                             <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
                         &lt; Prev
                     </a>
 
@@ -97,8 +94,7 @@
                     </span>
 
                     <a href="/admin/logs?type=admin&page=<%= currentPage + 1 %>&limit=<%= limit %>"
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
-                             <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
                         Next &gt;
                     </a>
                 <% } %>
@@ -138,14 +134,13 @@
             </div>
         </div>
 
-        <% /* Doctor Logs Tab Content */ %>
-        <div id="doctor-logs" class="tab-content <%= currentLogType === 'doctor' ? 'active' : '' %>">
+        <!-- <% /* Doctor Logs Tab Content */ %> -->
+        <div id="doctor-logs" class="tab-content <%= currentLogType === 'doctor' ? 'active' : '' %>" style="margin-left: 170px;">
             <h3 class="text-xl font-bold mb-4 text-gray-800">Doctor Activity Logs</h3>
             <div class="mt-5 flex justify-center items-center space-x-4 mb-4">
                 <% if (totalPages > 1) { %>
                     <a href="/admin/logs?type=doctor&page=<%= currentPage - 1 %>&limit=<%= limit %>"
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
-                             <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
                         &lt; Prev
                     </a>
 
@@ -154,8 +149,7 @@
                     </span>
 
                     <a href="/admin/logs?type=doctor&page=<%= currentPage + 1 %>&limit=<%= limit %>"
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
-                             <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
                         Next &gt;
                     </a>
                 <% } %>
@@ -174,7 +168,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <% if (logs && logs.length > 0) { %> <%-- Note: 'logs' now holds doctor logs when type='doctor' --%>
+                        <% if (logs && logs.length > 0) { %>
                             <% logs.forEach(log => { %>
                                 <tr>
                                     <td><%= log.Doctorname %></td>
@@ -195,14 +189,13 @@
             </div>
         </div>
 
-        <% /* Patient Logs Tab Content */ %>
-        <div id="patient-logs" class="tab-content <%= currentLogType === 'patient' ? 'active' : '' %>">
+        <!-- <% /* Patient Logs Tab Content */ %> -->
+        <div id="patient-logs" class="tab-content <%= currentLogType === 'patient' ? 'active' : '' %>" style="margin-left: 170px;">
             <h3 class="text-xl font-bold mb-4 text-gray-800">Patient Activity Logs</h3>
             <div class="mt-5 flex justify-center items-center space-x-4 mb-4">
                 <% if (totalPages > 1) { %>
                     <a href="/admin/logs?type=patient&page=<%= currentPage - 1 %>&limit=<%= limit %>"
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
-                             <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 <%= currentPage === 1 ? 'pointer-events-none opacity-50' : '' %>">
                         &lt; Prev
                     </a>
 
@@ -211,8 +204,7 @@
                     </span>
 
                     <a href="/admin/logs?type=patient&page=<%= currentPage + 1 %>&limit=<%= limit %>"
-                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200
-                             <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
+                       class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 <%= currentPage === totalPages ? 'pointer-events-none opacity-50' : '' %>">
                         Next &gt;
                     </a>
                 <% } %>
@@ -225,26 +217,22 @@
                             <th class="text-left">Patient Name</th>
                             <th class="text-left">Timestamp</th>
                             <th class="text-left">Action Performed</th>
-                            <th class="text-left">Target Type</th>
-                            <th class="text-left">Target ID</th>
                             <th class="text-left">Description</th>
-                        </tr>
+                            </tr>
                     </thead>
                     <tbody>
-                        <% if (logs && logs.length > 0) { %> <%-- Note: 'logs' now holds patient logs when type='patient' --%>
+                        <% if (logs && logs.length > 0) { %>
                             <% logs.forEach(log => { %>
                                 <tr>
                                     <td><%= log.Patientname %></td>
                                     <td><%= new Date(log.ActivityTimestamp).toLocaleString() %></td>
                                     <td><%= log.ActionPerformed %></td>
-                                    <td><%= log.TargetType %></td>
-                                    <td><%= log.TargetID %></td>
                                     <td><%= log.Description %></td>
-                                </tr>
+                                    </tr>
                             <% }); %>
                         <% } else { %>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-gray-600">No patient activity logs found.</td>
+                                <td colspan="4" class="text-center py-4 text-gray-600">No patient activity logs found.</td>
                             </tr>
                         <% } %>
                     </tbody>
@@ -266,7 +254,13 @@
             const currentLogType = '<%= currentLogType %>';
             const buttons = document.querySelectorAll('.tab-button');
             buttons.forEach(button => {
-                if (button.textContent.toLowerCase().includes(currentLogType)) {
+                // Determine the button text based on the log type to match
+                let buttonText = '';
+                if (currentLogType === 'admin') buttonText = 'Admin Logs';
+                else if (currentLogType === 'doctor') buttonText = 'Doctor Logs';
+                else if (currentLogType === 'patient') buttonText = 'Patient Logs';
+
+                if (button.textContent.trim() === buttonText) {
                     button.classList.add('active');
                 } else {
                     button.classList.remove('active');
