@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Patients - DoctorSync</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/users.css">
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    <style>
+        /* Include your common CSS styles from adminUsers.ejs here */
+        .tab-button.active {
+            border-color: #3b82f6; /* blue-500 */
+            color: #3b82f6; /* blue-500 */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen font-sans antialiased">
+    <%- include('nav') -%>
+
+    <div class="flex h-screen relative">
+        <main class="flex-1 overflow-y-auto md:p-8">
+            <div class="border-b border-gray-500 mb-6">
+                <nav class="-mb-px flex space-x-4 md:space-x-8" aria-label="Tabs">
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700 hover:border-gray-300 <%= activeTab === 'users' ? 'active' : '' %>" onclick="navigateToTab('/admin/users')">
+                        Users
+                    </button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700 hover:border-gray-300 <%= activeTab === 'doctors' ? 'active' : '' %>" onclick="navigateToTab('/admin/doc')">
+                        Doctors
+                    </button>
+                    <button class="tab-button whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm border-transparent text-black hover:text-gray-700 hover:border-gray-300 <%= activeTab === 'patients' ? 'active' : '' %>" onclick="navigateToTab('/admin/pat')">
+                        Patients
+                    </button>
+                </nav>
+            </div>
+
+            <div id="content-patients" class="tab-content">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Patient Management</h2>
+                <div class="mb-6">
+                    <form action="/admin/pat" method="GET" class="flex items-center space-x-2">
+                        <input
+                            type="text"
+                            name="search_pat"
+                            placeholder="Search by Patient Name"
+                            value="<%= typeof searchTermPatient !== 'undefined' ? searchTermPatient : '' %>"
+                            class="flex-1 px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                        <input type="hidden" name="page_pat" value="1" />
+                        <input type="hidden" name="limit_pat" value="<%= typeof limitPatient !== 'undefined' ? limitPatient : 10 %>" />
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <i data-feather="search" class="w-5 h-5"></i>
+                        </button>
+                    </form>
+
+                    <div class="mt-6 flex justify-center items-center space-x-2">
+                        <% if (totalPagesPatient >= 1) { %>
+                            <a href="/admin/pat?page_pat=<%= currentPagePatient - 1 %>&limit_pat=<%= limitPatient %>&search_pat=<%= searchTermPatient %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPagePatient === 1 ? 'pointer-events-none opacity-50' : '' %>">Previous</a>
+
+                            <span class="px-4 py-2 font-bold text-gray-800">
+                                Page <%= currentPagePatient %> of <%= totalPagesPatient %>
+                            </span>
+
+                            <a href="/admin/pat?page_pat=<%= currentPagePatient + 1 %>&limit_pat=<%= limitPatient %>&search_pat=<%= searchTermPatient %>"
+                               class="px-4 py-2 bg-blue-600 text-white rounded-md <%= currentPagePatient === totalPagesPatient ? 'pointer-events-none opacity-50' : '' %>">Next</a>
+                        <% } %>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-lg shadow overflow-hidden w-full">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th class="text-left">PatientID</th>
+                                <th class="text-left">Name</th>
+                                <th class="text-left">Address</th>
+                                <th class="text-left">Phone</th>
+                                <th class="text-left">DOB</th>
+                                <th class="text-left">Blood Group</th>
+                                <th class="text-left">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (patientList?.length > 0) { %>
+                                <% patientList.forEach(patient => { %>
+                                    <tr>
+                                        <td><%= patient.PatientID %></td>
+                                        <td><%= patient.Name %></td>
+                                        <td><%= patient.Address %></td>
+                                        <td><%= patient.Phone %></td>
+                                        <td><%= new Date(patient.DOB).toLocaleDateString('en-GB').split('/').join('-') %></td>
+                                        <td><%= patient.BloodGroup %></td>
+                                        <td>
+                                            <button onclick="window.confirmDeleteItem('patient', '<%= patient.UserID %>', '<%= patient.Name %>')" class="btn btn-danger">
+                                                <i data-feather="trash-2" class="w-4 h-4 mr-2"></i> Deactivate
+                                            </button>
+                                        </td>
+                                    </tr>
+                                <% }) %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="7" class="text-center py-4">No patients available</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/javascripts/adminHelp.js"></script>
+    <script>
+        feather.replace();
+        function navigateToTab(url) { window.location.href = url; }
+        // ... (your custom message box and sidebar functions)
+    </script>
+</body>
+</html>

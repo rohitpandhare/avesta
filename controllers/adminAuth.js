@@ -213,10 +213,9 @@ async function getUnderUser(req, res) {
     try {
         const user = req.session.user; // Get the user object from the session
 
-        // --- General User Pagination and Search Logic ---
-        const currentPage = parseInt(req.query.page) || 1; // General page for users
-        const limit = parseInt(req.query.limit) || 10;     // General limit for users
-        const searchTerm = req.query.search || '';         // General search term for users
+        const currentPage = parseInt(req.query.page) || 1; 
+        const limit = parseInt(req.query.limit) || 10;    
+        const searchTerm = req.query.search || '';
 
         // Query to get total count of users with search filter
         let totalUsersQuery = 'SELECT COUNT(*) as total FROM user';
@@ -240,152 +239,27 @@ async function getUnderUser(req, res) {
             userListQuery += ' WHERE Username LIKE ? OR Email LIKE ? OR Role LIKE ?'; // Adjust columns as needed
             userFetchParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
         }
-        userListQuery += ' LIMIT ? OFFSET ?';
+        userListQuery += ' ORDER BY Username ASC LIMIT ? OFFSET ?';
         userFetchParams.push(limit, offset);
 
         const [userList] = await conPool.query(userListQuery, userFetchParams);
-
-
-        // --- Doctor Pagination and Search Logic ---
-        const currentPageDoc = parseInt(req.query.page_doc) || 1;
-        const limitDoc = parseInt(req.query.limit_doc) || 10; // Default limit for doctors
-        const searchTermDoc = req.query.search_doc || '';
-
-        // Query to get total count of doctors with search filter
-        let totalDocsQuery = 'SELECT COUNT(*) as total FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE u.Role = "DOCTOR"';
-        let docQueryParams = [];
-
-        if (searchTermDoc) {
-            totalDocsQuery += ' AND (d.Name LIKE ? OR u.Username LIKE ? OR d.Specialty LIKE ?)';
-            docQueryParams.push(`%${searchTermDoc}%`, `%${searchTermDoc}%`, `%${searchTermDoc}%`);
-        }
-
-        const [totalDocsResult] = await conPool.query(totalDocsQuery, docQueryParams);
-        const totalDoctorCount = totalDocsResult[0].total;
-        const totalPagesDoc = Math.ceil(totalDoctorCount / limitDoc);
-
-        // Query to get doctors for the current page with search filter
-        const offsetDoc = (currentPageDoc - 1) * limitDoc;
-        let doctorListQuery = `
-            SELECT d.*, u.Username
-            FROM doctor d
-            JOIN user u ON d.UserID = u.UserID
-            WHERE u.Role = 'DOCTOR'
-        `;
-        let doctorFetchParams = [];
-
-        if (searchTermDoc) {
-            doctorListQuery += ' AND (d.Name LIKE ? OR u.Username LIKE ? OR d.Specialty LIKE ?)';
-            doctorFetchParams.push(`%${searchTermDoc}%`, `%${searchTermDoc}%`, `%${searchTermDoc}%`);
-        }
-        doctorListQuery += ' LIMIT ? OFFSET ?';
-        doctorFetchParams.push(limitDoc, offsetDoc);
-
-        const [doctorList] = await conPool.query(doctorListQuery, doctorFetchParams);
-
-        // --- Patient Pagination and Search Logic ---
-        const currentPagePatient = parseInt(req.query.page_patient) || 1;
-        const limitPatient = parseInt(req.query.limit_patient) || 10; // Default limit for patients
-        const searchTermPatient = req.query.search_patient || '';
-
-        // Query to get total count of patients with search filter
-        let totalPatientsQuery = 'SELECT COUNT(*) as total FROM patient p JOIN user u ON p.UserID = u.UserID WHERE u.Role = "PATIENT"';
-        let patientQueryParams = [];
-
-        if (searchTermPatient) {
-            totalPatientsQuery += ' AND (p.Name LIKE ? OR u.Username LIKE ? OR p.Address LIKE ?)'; // Assuming Address for patient search
-            patientQueryParams.push(`%${searchTermPatient}%`, `%${searchTermPatient}%`, `%${searchTermPatient}%`);
-        }
-
-        const [totalPatientsResult] = await conPool.query(totalPatientsQuery, patientQueryParams);
-        const totalPatientCount = totalPatientsResult[0].total;
-        const totalPagesPatient = Math.ceil(totalPatientCount / limitPatient);
-
-        // Query to get patients for the current page with search filter
-        const offsetPatient = (currentPagePatient - 1) * limitPatient;
-        let patientListQuery = `
-            SELECT p.*, u.Username
-            FROM patient p
-            JOIN user u ON p.UserID = u.UserID
-            WHERE u.Role = 'PATIENT'
-        `;
-        let patientFetchParams = [];
-
-        if (searchTermPatient) {
-            patientListQuery += ' AND (p.Name LIKE ? OR u.Username LIKE ? OR p.Address LIKE ?)';
-            patientFetchParams.push(`%${searchTermPatient}%`, `%${searchTermPatient}%`, `%${searchTermPatient}%`);
-        }
-        patientListQuery += ' LIMIT ? OFFSET ?';
-        patientFetchParams.push(limitPatient, offsetPatient);
-
-        const [patientList] = await conPool.query(patientListQuery, patientFetchParams);
-
-        // --- Other Stats (assuming these are not paginated) ---
-        const [prescriptionStats] = await conPool.query(`
-            SELECT
-                d.Specialty,
-                SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-            FROM prescription p
-            JOIN doctor d ON p.DoctorID = d.DoctorID
-            GROUP BY d.Specialty
-        `);
-
-        // Process specialty stats from doctorList
-        const specialtyStats = {};
-        doctorList.forEach(doctor => {
-            const spec = doctor.Specialty || 'Other';
-            if (!specialtyStats[spec]) {
-                specialtyStats[spec] = {
-                    doctorCount: 0,
-                    activePrescriptions: 0,
-                    completedPrescriptions: 0
-                };
-            }
-            specialtyStats[spec].doctorCount++;
-        });
-
-        // Add prescription stats to specialtyStats
-        prescriptionStats.forEach(stat => {
-            const spec = stat.Specialty || 'Other';
-            if (specialtyStats[spec]) {
-                specialtyStats[spec].activePrescriptions += stat.active;
-                specialtyStats[spec].completedPrescriptions += stat.completed;
-            }
-        });
 
         // Render the EJS template with all the necessary data
         res.render('users/adm/adminUsers', {
             user,
             userList,
-            doctorList,
-            prescriptionStats,
-            patientList,
-            specialtyStats,
-            // General user pagination variables
             totalPages,
             currentPage,
             limit,
             searchTerm,
-            // Doctor pagination variables
-            totalPagesDoc,
-            currentPageDoc,
-            limitDoc,
-            searchTermDoc,
-            // Patient pagination variables
-            totalPagesPatient,
-            currentPagePatient,
-            limitPatient,
-            searchTermPatient,
-            // ... any other data your template expects
-        });
+            activeTab: 'users'    
+            });
 
     } catch (err) {
         console.error('Error in getUnderUser:', err);
         res.status(500).send('Internal Server Error');
     }
 }
-
 
 async function getUnderDoc(req, res) {
     if (!req.session.user || req.session.user.Role !== 'ADMIN') {
@@ -395,33 +269,6 @@ async function getUnderDoc(req, res) {
     try {
         const user = req.session.user;
 
-        // --- General User Pagination and Search Logic ---
-        const currentPage = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const searchTerm = req.query.search || '';
-
-        let totalUsersQuery = 'SELECT COUNT(*) as total FROM user';
-        let userCountParams = [];
-        if (searchTerm) {
-            totalUsersQuery += ' WHERE Username LIKE ? OR Email LIKE ? OR Role LIKE ?';
-            userCountParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
-        }
-        const [totalUsersResult] = await conPool.query(totalUsersQuery, userCountParams);
-        const totalUserCount = totalUsersResult[0].total;
-        const totalPages = Math.ceil(totalUserCount / limit);
-
-        const offset = (currentPage - 1) * limit;
-        let userListQuery = 'SELECT * FROM user';
-        let userFetchParams = [];
-        if (searchTerm) {
-            userListQuery += ' WHERE Username LIKE ? OR Email LIKE ? OR Role LIKE ?';
-            userFetchParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
-        }
-        userListQuery += ' LIMIT ? OFFSET ?';
-        userFetchParams.push(limit, offset);
-        const [userList] = await conPool.query(userListQuery, userFetchParams);
-
-        // --- Doctor Pagination and Search Logic (Original from getUnderDoc, with 'Name' corrected to 'Name') ---
         let currentPageDoc = parseInt(req.query.page_doc) || 1;
         const limitDoc = parseInt(req.query.limit_doc) || 8;
         const searchTermDoc = req.query.search_doc || '';
@@ -467,100 +314,21 @@ async function getUnderDoc(req, res) {
             doctorQueryParams.push(`%${searchTermDoc}%`);
         }
 
-        doctorQuery += ' LIMIT ? OFFSET ?';
+        doctorQuery += ' ORDER BY Name ASC LIMIT ? OFFSET ?';
         doctorQueryParams.push(limitDoc, offsetDoc);
 
         const [paginatedDoctorListResult] = await conPool.query(doctorQuery, doctorQueryParams);
         const doctorList = paginatedDoctorListResult;
 
-        // --- Patient Pagination and Search Logic ---
-        const currentPagePatient = parseInt(req.query.page_patient) || 1;
-        const limitPatient = parseInt(req.query.limit_patient) || 10;
-        const searchTermPatient = req.query.search_patient || '';
-
-        let totalPatientsQuery = 'SELECT COUNT(*) as total FROM patient p JOIN user u ON p.UserID = u.UserID WHERE u.Role = "PATIENT"';
-        let patientQueryParams = [];
-        if (searchTermPatient) {
-            totalPatientsQuery += ' AND (p.Name LIKE ? OR u.Username LIKE ? OR p.Address LIKE ?)';
-            patientQueryParams.push(`%${searchTermPatient}%`, `%${searchTermPatient}%`, `%${searchTermPatient}%`);
-        }
-        const [totalPatientsResult] = await conPool.query(totalPatientsQuery, patientQueryParams);
-        const totalPatientCount = totalPatientsResult[0].total;
-        const totalPagesPatient = Math.ceil(totalPatientCount / limitPatient);
-
-        const offsetPatient = (currentPagePatient - 1) * limitPatient;
-        let patientListQuery = `
-            SELECT p.*, u.Username
-            FROM patient p
-            JOIN user u ON p.UserID = u.UserID
-            WHERE u.Role = 'PATIENT'
-        `;
-        let patientFetchParams = [];
-        if (searchTermPatient) {
-            patientListQuery += ' AND (p.Name LIKE ? OR u.Username LIKE ? OR p.Address LIKE ?)';
-            patientFetchParams.push(`%${searchTermPatient}%`, `%${searchTermPatient}%`, `%${searchTermPatient}%`);
-        }
-        patientListQuery += ' LIMIT ? OFFSET ?';
-        patientFetchParams.push(limitPatient, offsetPatient);
-        const [patientList] = await conPool.query(patientListQuery, patientFetchParams);
-
-        // --- Other Stats (assuming these are not paginated) ---
-        const [prescriptionStats] = await conPool.query(`
-            SELECT
-                d.Specialty,
-                SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-            FROM prescription p
-            JOIN doctor d ON p.DoctorID = d.DoctorID
-            GROUP BY d.Specialty
-        `);
-
-        // Process specialty stats from doctorList
-        const specialtyStats = {};
-        doctorList.forEach(doctor => {
-            const spec = doctor.Specialty || 'Other';
-            if (!specialtyStats[spec]) {
-                specialtyStats[spec] = {
-                    doctorCount: 0,
-                    activePrescriptions: 0,
-                    completedPrescriptions: 0
-                };
-            }
-            specialtyStats[spec].doctorCount++;
-        });
-
-        // Add prescription stats to specialtyStats
-        prescriptionStats.forEach(stat => {
-            const spec = stat.Specialty || 'Other';
-            if (specialtyStats[spec]) {
-                specialtyStats[spec].activePrescriptions += stat.active;
-                specialtyStats[spec].completedPrescriptions += stat.completed;
-            }
-        });
-
         // Render the EJS template with all the necessary data
-        res.render('users/adm/adminUsers', {
+        res.render('users/adm/adminDoctor', {
             user,
-            userList,
             doctorList,
-            prescriptionStats,
-            patientList,
-            specialtyStats,
-            // General user pagination variables
-            totalPages,
-            currentPage,
-            limit,
-            searchTerm,
-            // Doctor pagination variables
             totalPagesDoc,
             currentPageDoc,
             limitDoc,
             searchTermDoc,
-            // Patient pagination variables
-            totalPagesPatient,
-            currentPagePatient,
-            limitPatient,
-            searchTermPatient,
+            activeTab: 'doctors' 
         });
 
     } catch (err) {
@@ -577,64 +345,6 @@ async function getUnderPat(req, res) {
     try {
         const user = req.session.user;
 
-        // --- General User Pagination and Search Logic ---
-        const currentPage = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 10;
-        const searchTerm = req.query.search || '';
-
-        let totalUsersQuery = 'SELECT COUNT(*) as total FROM user';
-        let userCountParams = [];
-        if (searchTerm) {
-            totalUsersQuery += ' WHERE Username LIKE ? OR Email LIKE ? OR Role LIKE ?';
-            userCountParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
-        }
-        const [totalUsersResult] = await conPool.query(totalUsersQuery, userCountParams);
-        const totalUserCount = totalUsersResult[0].total;
-        const totalPages = Math.ceil(totalUserCount / limit);
-
-        const offset = (currentPage - 1) * limit;
-        let userListQuery = 'SELECT * FROM user';
-        let userFetchParams = [];
-        if (searchTerm) {
-            userListQuery += ' WHERE Username LIKE ? OR Email LIKE ? OR Role LIKE ?';
-            userFetchParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
-        }
-        userListQuery += ' LIMIT ? OFFSET ?';
-        userFetchParams.push(limit, offset);
-        const [userList] = await conPool.query(userListQuery, userFetchParams);
-
-        // --- Doctor Pagination and Search Logic ---
-        const currentPageDoc = parseInt(req.query.page_doc) || 1;
-        const limitDoc = parseInt(req.query.limit_doc) || 10;
-        const searchTermDoc = req.query.search_doc || '';
-
-        let totalDocsQuery = 'SELECT COUNT(*) as total FROM doctor d JOIN user u ON d.UserID = u.UserID WHERE u.Role = "DOCTOR"';
-        let docQueryParams = [];
-        if (searchTermDoc) {
-            totalDocsQuery += ' AND (d.Name LIKE ? OR u.Username LIKE ? OR d.Specialty LIKE ?)';
-            docQueryParams.push(`%${searchTermDoc}%`, `%${searchTermDoc}%`, `%${searchTermDoc}%`);
-        }
-        const [totalDocsResult] = await conPool.query(totalDocsQuery, docQueryParams);
-        const totalDoctorCount = totalDocsResult[0].total;
-        const totalPagesDoc = Math.ceil(totalDoctorCount / limitDoc);
-
-        const offsetDoc = (currentPageDoc - 1) * limitDoc;
-        let doctorListQuery = `
-            SELECT d.*, u.Username
-            FROM doctor d
-            JOIN user u ON d.UserID = u.UserID
-            WHERE u.Role = 'DOCTOR'
-        `;
-        let doctorFetchParams = [];
-        if (searchTermDoc) {
-            doctorListQuery += ' AND (d.Name LIKE ? OR u.Username LIKE ? OR d.Specialty LIKE ?)';
-            doctorFetchParams.push(`%${searchTermDoc}%`, `%${searchTermDoc}%`, `%${searchTermDoc}%`);
-        }
-        doctorListQuery += ' LIMIT ? OFFSET ?';
-        doctorFetchParams.push(limitDoc, offsetDoc);
-        const [doctorList] = await conPool.query(doctorListQuery, doctorFetchParams);
-
-        // --- Patient Pagination and Search Logic (Original from getUnderPat, with 'Name' corrected to 'Name') ---
         let currentPagePatient = parseInt(req.query.page_pat) || 1;
         const limitPatient = parseInt(req.query.limit_pat) || 8;
         const searchTermPatient = req.query.search_pat || '';
@@ -680,69 +390,22 @@ async function getUnderPat(req, res) {
             patientQueryParams.push(`%${searchTermPatient}%`);
         }
 
-        patientQuery += ' LIMIT ? OFFSET ?';
+        patientQuery += ' ORDER BY Name ASC LIMIT ? OFFSET ?';
         patientQueryParams.push(limitPatient, offsetPat);
 
         const [paginatedPatientListResult] = await conPool.query(patientQuery, patientQueryParams);
         const patientList = paginatedPatientListResult;
 
-        // --- Other Stats (assuming these are not paginated) ---
-        const [prescriptionStats] = await conPool.query(`
-            SELECT
-                d.Specialty,
-                SUM(CASE WHEN p.Status = 'ACTIVE' THEN 1 ELSE 0 END) as active,
-                SUM(CASE WHEN p.Status = 'COMPLETED' THEN 1 ELSE 0 END) as completed
-            FROM prescription p
-            JOIN doctor d ON p.DoctorID = d.DoctorID
-            GROUP BY d.Specialty
-        `);
-
-        // Process specialty stats from doctorList
-        const specialtyStats = {};
-        doctorList.forEach(doctor => {
-            const spec = doctor.Specialty || 'Other';
-            if (!specialtyStats[spec]) {
-                specialtyStats[spec] = {
-                    doctorCount: 0,
-                    activePrescriptions: 0,
-                    completedPrescriptions: 0
-                };
-            }
-            specialtyStats[spec].doctorCount++;
-        });
-
-        // Add prescription stats to specialtyStats
-        prescriptionStats.forEach(stat => {
-            const spec = stat.Specialty || 'Other';
-            if (specialtyStats[spec]) {
-                specialtyStats[spec].activePrescriptions += stat.active;
-                specialtyStats[spec].completedPrescriptions += stat.completed;
-            }
-        });
 
         // Render the EJS template with all the necessary data
-        res.render('users/adm/adminUsers', {
+        res.render('users/adm/adminPatient', {
             user,
-            userList,
-            doctorList,
-            prescriptionStats,
             patientList,
-            specialtyStats,
-            // General user pagination variables
-            totalPages,
-            currentPage,
-            limit,
-            searchTerm,
-            // Doctor pagination variables
-            totalPagesDoc,
-            currentPageDoc,
-            limitDoc,
-            searchTermDoc,
-            // Patient pagination variables
             totalPagesPatient,
             currentPagePatient,
             limitPatient,
             searchTermPatient,
+            activeTab: 'patients' // Set the active tab to 'patients'
         });
 
     } catch (err) {

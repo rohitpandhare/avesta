@@ -65,14 +65,12 @@ const getFullName = () => {
 // User generator
 const createUser = (role) => ({
   Username: faker.internet.username().substring(0, 50),
-  Password: '$2b$10$abcdefghijklmnopqrstuvwx', // bcrypt dummy
   Email: faker.internet.email().substring(0, 100),
   Role: role,
   CreatedAt: new Date(),
   LastLogin: null,
   IsActive: 1,
   FailedLoginAttempts: 0,
-  LastPasswordChange: null,
   Flag: 0
 });
 
