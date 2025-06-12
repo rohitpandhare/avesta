@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - DoctorSync</title>
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/styles.css"> 
 
 </head>
 <body class="flex flex-col min-h-screen" style="background-color: #000021;">
     <%- include('nav') -%>
 
     <div class="flex-grow flex items-center justify-center px-4 sm:px-6 lg:px-8 py-8">
-        <div class="rounded-xl shadow-2xl max-w-lg w-full p-8 sm:p-10">
+        <div class="rounded-xl shadow-2xl max-w-lg w-full p-8 sm:p-10 bg-gray-900 text-white">
             <div class="text-center mb-8">
                 <h2 class="text-3xl font-extrabold text-blue-600">Create Your DoctorSync Account</h2>
             </div>
@@ -28,139 +28,155 @@
                     <div class="flex bg-gray-800 rounded-lg p-1.5" role="tablist">
                         <button type="button" id="patientTab"
                                 class="flex-1 px-4 py-2 text-center text-sm font-medium rounded-md focus:outline-none transition-all duration-200
-                                       bg-blue-600 text-white shadow-md"
-                                data-role="PATIENT" aria-selected="true">
+                                       <%= (locals.role === 'PATIENT' || !locals.role) ? 'bg-blue-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white' %>"
+                                data-role="PATIENT" aria-selected="<%= (locals.role === 'PATIENT' || !locals.role) ? 'true' : 'false' %>">
                             Patient
                         </button>
                         <button type="button" id="doctorTab"
                                 class="flex-1 px-4 py-2 text-center text-sm font-medium rounded-md focus:outline-none transition-all duration-200
-                                       text-gray-300 hover:bg-gray-700 hover:text-white"
-                                data-role="DOCTOR" aria-selected="false">
+                                       <%= locals.role === 'DOCTOR' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-300 hover:bg-gray-700 hover:text-white' %>"
+                                data-role="DOCTOR" aria-selected="<%= locals.role === 'DOCTOR' ? 'true' : 'false' %>">
                             Doctor
                         </button>
                     </div>
-                    <input type="hidden" name="Role" id="selectedRole" value="PATIENT">
+                    <!-- Hidden input to store the selected role -->
+                    <input type="hidden" name="Role" id="selectedRole" value="<%= locals.role || 'PATIENT' %>">
                 </div>
 
                 <div id="baseFields" class="space-y-4">
                     <div>
                         <label for="username" class="block text-sm font-medium text-white mb-2">Username</label>
                         <input type="text" name="Username" id="username" required placeholder="Enter your username"
-                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value="<%= locals.formData ? locals.formData.Username : '' %>">
                     </div>
 
                     <div>
                         <label for="email" class="block text-sm font-medium text-white mb-2">Email</label>
                         <input type="email" name="Email" id="email" required placeholder="Enter your email"
-                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                        <label for="password" class="block text-sm font-medium text-white mb-2">Password</label>
-                        <input type="password" name="Password" id="password" required placeholder="Enter your password"
-                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    </div>
-
-                    <div>
-                        <label for="confirmPassword" class="block text-sm font-medium text-white mb-2">Confirm Password</label>
-                        <input type="password" name="confirmPassword" id="confirmPassword" required placeholder="Re-enter your password"
-                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            value="<%= locals.formData ? locals.formData.Email : '' %>">
                     </div>
                 </div>
 
-                <div id="doctorFields" class="hidden space-y-4">
+                <!-- Doctor Specific Fields -->
+                <div id="doctorFields" class="<%= locals.role === 'DOCTOR' ? 'block' : 'hidden' %> space-y-4">
                     <div>
                         <label for="doctorName" class="block text-sm font-medium text-white mb-2">Full Name</label>
                         <input type="text" name="Name" id="doctorName" placeholder="Enter your full name"
-                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field">
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field"
+                            <%= locals.role === 'DOCTOR' ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && locals.role === 'DOCTOR' ? locals.formData.Name : '' %>">
                     </div>
 
                     <div>
                         <label for="doctorPhone" class="block text-sm font-medium text-white mb-2">Phone Number</label>
-                        <input type="text" name="Phone" id="doctorPhone" placeholder="Enter your phone number"
+                        <input type="tel" name="Phone" id="doctorPhone" placeholder="Enter your phone number"
                             class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field"
-                            maxlength="15">
+                            maxlength="15"
+                            <%= locals.role === 'DOCTOR' ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && locals.role === 'DOCTOR' ? locals.formData.Phone : '' %>">
                     </div>
 
                     <div>
                         <label for="licenseNumber" class="block text-sm font-medium text-white mb-2">License Number</label>
                         <input type="text" name="LicenseNumber" id="licenseNumber" placeholder="Enter your license number"
                             class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field"
-                            maxlength="50">
+                            maxlength="50"
+                            <%= locals.role === 'DOCTOR' ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && locals.role === 'DOCTOR' ? locals.formData.LicenseNumber : '' %>">
                     </div>
 
                     <div>
                         <label for="qualifications" class="block text-sm font-medium text-white mb-2">Qualifications</label>
                         <select name="Qualifications" id="qualifications"
-                                class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field appearance-none">
+                                class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field appearance-none"
+                                <%= locals.role === 'DOCTOR' ? 'required' : 'disabled' %>>
                             <option value="">Select Qualification</option>
-                            <option value="MBBS">MBBS</option>
-                            <option value="MD">MD</option>
-                            <option value="MS">MS</option>
+                            <option value="MBBS" <%= locals.formData && locals.formData.Qualifications === 'MBBS' ? 'selected' : '' %>>MBBS</option>
+                            <option value="MD" <%= locals.formData && locals.formData.Qualifications === 'MD' ? 'selected' : '' %>>MD</option>
+                            <option value="MS" <%= locals.formData && locals.formData.Qualifications === 'MS' ? 'selected' : '' %>>MS</option>
                         </select>
                     </div>
 
                     <div>
                         <label for="specialty" class="block text-sm font-medium text-white mb-2">Specialty</label>
                         <select name="Specialty" id="specialty"
-                                class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field appearance-none">
+                                class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field appearance-none"
+                                <%= locals.role === 'DOCTOR' ? 'required' : 'disabled' %>>
                             <option value="">Select Specialty</option>
-                            <option value="Family Medicine">Family Medicine</option>
-                            <option value="Internal Medicine">Internal Medicine</option>
-                            <option value="Pediatrics">Pediatrics</option>
-                            <option value="Cardiology">Cardiology</option>
-                            <option value="Dermatology">Dermatology</option>
-                            <option value="Neurology">Neurology</option>
-                            <option value="Orthopedics">Orthopedics</option>
-                            <option value="Psychiatry">Psychiatry</option>
-                            <option value="Obstetrics">Obstetrics</option>
-                            <option value="ENT">ENT</option>
-                            <option value="Ophthalmology">Ophthalmology</option>
-                            <option value="Urology">Urology</option>
-                            <option value="Oncology">Oncology</option>
-                            <option value="Endocrinology">Endocrinology</option>
-                            <option value="Pulmonology">Pulmonology</option>
-                            <option value="Gastroenterology">Gastroenterology</option>
-                            <option value="Nephrology">Nephrology</option>
-                            <option value="Rheumatology">Rheumatology</option>
-                            <option value="Other">Other</option>
+                            <option value="Family Medicine" <%= locals.formData && locals.formData.Specialty === 'Family Medicine' ? 'selected' : '' %>>Family Medicine</option>
+                            <option value="Internal Medicine" <%= locals.formData && locals.formData.Specialty === 'Internal Medicine' ? 'selected' : '' %>>Internal Medicine</option>
+                            <option value="Pediatrics" <%= locals.formData && locals.formData.Specialty === 'Pediatrics' ? 'selected' : '' %>>Pediatrics</option>
+                            <option value="Cardiology" <%= locals.formData && locals.formData.Specialty === 'Cardiology' ? 'selected' : '' %>>Cardiology</option>
+                            <option value="Dermatology" <%= locals.formData && locals.formData.Specialty === 'Dermatology' ? 'selected' : '' %>>Dermatology</option>
+                            <option value="Neurology" <%= locals.formData && locals.formData.Specialty === 'Neurology' ? 'selected' : '' %>>Neurology</option>
+                            <option value="Orthopedics" <%= locals.formData && locals.formData.Specialty === 'Orthopedics' ? 'selected' : '' %>>Orthopedics</option>
+                            <option value="Psychiatry" <%= locals.formData && locals.formData.Specialty === 'Psychiatry' ? 'selected' : '' %>>Psychiatry</option>
+                            <option value="Obstetrics" <%= locals.formData && locals.formData.Specialty === 'Obstetrics' ? 'selected' : '' %>>Obstetrics</option>
+                            <option value="ENT" <%= locals.formData && locals.formData.Specialty === 'ENT' ? 'selected' : '' %>>ENT</option>
+                            <option value="Ophthalmology" <%= locals.formData && locals.formData.Specialty === 'Ophthalmology' ? 'selected' : '' %>>Ophthalmology</option>
+                            <option value="Urology" <%= locals.formData && locals.formData.Specialty === 'Urology' ? 'selected' : '' %>>Urology</option>
+                            <option value="Oncology" <%= locals.formData && locals.formData.Specialty === 'Oncology' ? 'selected' : '' %>>Oncology</option>
+                            <option value="Endocrinology" <%= locals.formData && locals.formData.Specialty === 'Endocrinology' ? 'selected' : '' %>>Endocrinology</option>
+                            <option value="Pulmonology" <%= locals.formData && locals.formData.Specialty === 'Pulmonology' ? 'selected' : '' %>>Pulmonology</option>
+                            <option value="Gastroenterology" <%= locals.formData && locals.formData.Specialty === 'Gastroenterology' ? 'selected' : '' %>>Gastroenterology</option>
+                            <option value="Nephrology" <%= locals.formData && locals.formData.Specialty === 'Nephrology' ? 'selected' : '' %>>Nephrology</option>
+                            <option value="Rheumatology" <%= locals.formData && locals.formData.Specialty === 'Rheumatology' ? 'selected' : '' %>>Rheumatology</option>
+                            <option value="Other" <%= locals.formData && locals.formData.Specialty === 'Other' ? 'selected' : '' %>>Other</option>
                         </select>
+                    </div>
+                    <!-- 'Other Specialty' text input, conditionally visible -->
+                    <div id="otherSpecialtyField" class="<%= locals.formData && locals.formData.Specialty === 'Other' && locals.role === 'DOCTOR' ? 'block' : 'hidden' %>">
+                        <label for="other_specialty" class="block text-sm font-medium text-white mb-2">Specify Other Specialty</label>
+                        <input type="text" name="other_specialty" id="other_specialty" placeholder="e.g., Sports Medicine"
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field doctor-field"
+                            <%= locals.formData && locals.formData.Specialty === 'Other' && locals.role === 'DOCTOR' ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && locals.formData.other_specialty ? locals.formData.other_specialty : '' %>">
                     </div>
                 </div>
 
-                <div id="patientFields" class="space-y-4">
+                <!-- Patient Specific Fields -->
+                <div id="patientFields" class="<%= (locals.role === 'PATIENT' || !locals.role) ? 'block' : 'hidden' %> space-y-4">
                     <div>
                         <label for="patientName" class="block text-sm font-medium text-white mb-2">Full Name</label>
-                        <input type="text" name="Name" id="patientName" required placeholder="Enter your full name"
-                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field">
+                        <input type="text" name="Name" id="patientName" placeholder="Enter your full name"
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
+                            <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.Name : '' %>">
                     </div>
 
                     <div>
                         <label for="patientPhone" class="block text-sm font-medium text-white mb-2">Phone Number</label>
-                        <input type="text" name="Phone" id="patientPhone" required placeholder="Enter your phone number"
+                        <input type="tel" name="Phone" id="patientPhone" placeholder="Enter your 10 digit phone number"
                             class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
-                            maxlength="15">
+                            maxlength="15"
+                            <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.Phone : '' %>">
                     </div>
 
                     <div>
                         <label for="dob" class="block text-sm font-medium text-white mb-2">Date of Birth</label>
                         <input type="date" name="DOB" id="dob"
-                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field">
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
+                            <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.DOB : '' %>">
                     </div>
 
                     <div>
                         <label for="bloodGroup" class="block text-sm font-medium text-white mb-2">Blood Group</label>
                         <select name="BloodGroup" id="bloodGroup"
-                                class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field appearance-none">
+                                class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field appearance-none"
+                                <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>>
                             <option value="">Select Blood Group</option>
-                            <option value="A+">A+</option>
-                            <option value="A-">A-</option>
-                            <option value="B+">B+</option>
-                            <option value="B-">B-</option>
-                            <option value="O+">O+</option>
-                            <option value="O-">O-</option>
-                            <option value="AB+">AB+</option>
-                            <option value="AB-">AB-</option>
+                            <option value="A+" <%= locals.formData && locals.formData.BloodGroup === 'A+' ? 'selected' : '' %>>A+</option>
+                            <option value="A-" <%= locals.formData && locals.formData.BloodGroup === 'A-' ? 'selected' : '' %>>A-</option>
+                            <option value="B+" <%= locals.formData && locals.formData.BloodGroup === 'B+' ? 'selected' : '' %>>B+</option>
+                            <option value="B-" <%= locals.formData && locals.formData.BloodGroup === 'B-' ? 'selected' : '' %>>B-</option>
+                            <option value="O+" <%= locals.formData && locals.formData.BloodGroup === 'O+' ? 'selected' : '' %>>O+</option>
+                            <option value="O-" <%= locals.formData && locals.formData.BloodGroup === 'O-' ? 'selected' : '' %>>O-</option>
+                            <option value="AB+" <%= locals.formData && locals.formData.BloodGroup === 'AB+' ? 'selected' : '' %>>AB+</option>
+                            <option value="AB-" <%= locals.formData && locals.formData.BloodGroup === 'AB-' ? 'selected' : '' %>>AB-</option>
                         </select>
                     </div>
 
@@ -169,7 +185,8 @@
                         <textarea name="Address" id="address"
                                 class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
                                 rows="3"
-                                placeholder="Enter your full address"></textarea>
+                                placeholder="Enter your full address"
+                                <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>><%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.Address : '' %></textarea>
                     </div>
 
                     <div>
@@ -177,7 +194,34 @@
                         <textarea name="MedicalHistory" id="medicalHistory"
                                 class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
                                 rows="4"
-                                placeholder="Enter any previous medical conditions, surgeries, or ongoing treatments"></textarea>
+                                placeholder="Enter any previous medical conditions, surgeries, or ongoing treatments"
+                                <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>><%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.MedicalHistory : '' %></textarea>
+                    </div>
+
+                    <div>
+                        <label for="EmergencyContact" class="block text-sm font-medium text-white mb-2">Emergency Contact</label>
+                        <input type="text" name="EmergencyContact" id="EmergencyContact" required placeholder="Enter your Emergency Contact's Name"
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
+                            <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.EmergencyContact : '' %>">
+                    </div>
+
+                    <div>
+                        <label for="EmergencyPhone" class="block text-sm font-medium text-white mb-2">Emergency Contact Phone Number</label>
+                        <input type="tel" name="EmergencyPhone" id="EmergencyPhone" required placeholder="Enter your Emergency Contact's Phone Number"
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
+                            maxlength="15"
+                            <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.EmergencyPhone : '' %>">
+                    </div>
+
+                    <div>
+                        <label for="AadharID" class="block text-sm font-medium text-white mb-2">AadharID</label>
+                        <input type="text" name="AadharID" id="AadharID" required placeholder="Enter your AadharID"
+                            class="w-full p-3 bg-gray-800 text-white border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 role-specific-field patient-field"
+                            maxlength="15"
+                            <%= (locals.role === 'PATIENT' || !locals.role) ? 'required' : 'disabled' %>
+                            value="<%= locals.formData && (locals.role === 'PATIENT' || !locals.role) ? locals.formData.AadharID : '' %>">
                     </div>
                 </div>
 

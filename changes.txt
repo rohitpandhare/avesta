@@ -1,7 +1,0 @@
-changes --
-5) SOlve OTP error of the admin part -- happens but when there is no other otp present there and --- on deletion its diverting to the dashboard -- but should show success message
-*** add OTP to revive USER
-6) add the delete function to doc and pat deletion for adminlogin
-
-
-* Add new faker js

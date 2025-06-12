@@ -213,16 +213,19 @@ async function getUnderUser(req, res) {
     try {
         const user = req.session.user; // Get the user object from the session
 
-        const currentPage = parseInt(req.query.page) || 1; 
-        const limit = parseInt(req.query.limit) || 10;    
+        const currentPage = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
         const searchTerm = req.query.search || '';
 
+        // Base WHERE clause for active users
+        let whereClause = ' WHERE Flag = 0';
+
         // Query to get total count of users with search filter
-        let totalUsersQuery = 'SELECT COUNT(*) as total FROM user';
+        let totalUsersQuery = `SELECT COUNT(*) as total FROM user${whereClause}`;
         let userCountParams = [];
 
         if (searchTerm) {
-            totalUsersQuery += ' WHERE Username LIKE ? OR Email LIKE ? OR Role LIKE ?'; // Adjust columns as needed
+            totalUsersQuery += ' AND (Username LIKE ? OR Email LIKE ? OR Role LIKE ?)';
             userCountParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
         }
 
@@ -232,11 +235,12 @@ async function getUnderUser(req, res) {
 
         // Query to get users for the current page with search filter
         const offset = (currentPage - 1) * limit;
-        let userListQuery = 'SELECT * FROM user';
+        let userListQuery = `SELECT * FROM user${whereClause}`; // Base query for active users
         let userFetchParams = [];
 
         if (searchTerm) {
-            userListQuery += ' WHERE Username LIKE ? OR Email LIKE ? OR Role LIKE ?'; // Adjust columns as needed
+            // Corrected: Use 'AND' instead of 'WHERE' if a WHERE clause already exists
+            userListQuery += ' AND (Username LIKE ? OR Email LIKE ? OR Role LIKE ?)'; // <--- CHANGE HERE
             userFetchParams.push(`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`);
         }
         userListQuery += ' ORDER BY Username ASC LIMIT ? OFFSET ?';
@@ -252,7 +256,7 @@ async function getUnderUser(req, res) {
             currentPage,
             limit,
             searchTerm,
-            activeTab: 'users'    
+            activeTab: 'users'
             });
 
     } catch (err) {

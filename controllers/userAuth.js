@@ -2,17 +2,93 @@
 const { conPool } = require('../config/dbHandler'); // importing conpool for DB operations
 
 // for signup
+// userAuth.js
+// for signup
 const createUser = async (req, res) => {
-    const { 
-        Username, Email, Role,
-        Name, Phone, DOB, BloodGroup,
-        LicenseNumber, Specialty, other_specialty, Qualifications
-    } = req.body;
+    // Only destructure common fields initially
+    const { Username, Email, Role } = req.body;
 
-    // Base validation
+    // Base validation for common fields
     if (!Username || !Email || !Role) {
         return res.status(400).render('dashboard/signup', {
-            error: "All fields are required"
+            error: "Username, Email, and Account Type are required.",
+            role: Role || 'PATIENT', // Default to patient if role is missing for error re-render
+            formData: req.body // Pass back submitted data to pre-fill form
+        });
+    }
+
+    let queryColumns;
+    let queryValues;
+
+    // Role-specific validation and data collection
+    if (Role === 'DOCTOR') {
+        const { Name, Phone, LicenseNumber, Specialty, other_specialty, Qualifications } = req.body;
+
+        // Server-side validation for required doctor fields
+        if (!Name || !Phone || !LicenseNumber || !Qualifications || !Specialty) {
+            return res.status(400).render('dashboard/signup', {
+                error: "All doctor fields are required.",
+                role: Role,
+                formData: req.body
+            });
+        }
+        
+        // Handle 'Other' specialty logic for database insertion
+        const actualSpecialty = (Specialty === 'Other') ? null : Specialty; // DB 'Specialty' column
+        const actualOtherSpecialty = (Specialty === 'Other') ? other_specialty : null; // DB 'other_specialty' column
+        
+        // Additional validation if 'Other' specialty is selected but not specified
+        if (Specialty === 'Other' && !other_specialty) {
+            return res.status(400).render('dashboard/signup', {
+                error: "Please specify the 'Other' specialty for doctors.",
+                role: Role,
+                formData: req.body
+            });
+        }
+
+        queryColumns = ['UserID', 'Name', 'Phone', 'LicenseNumber', 'Specialty', 'other_specialty', 'Qualifications'];
+        queryValues = [
+            null, // Placeholder for UserID, which will be added after user insertion
+            Name,
+            Phone,
+            LicenseNumber,
+            actualSpecialty,
+            actualOtherSpecialty,
+            Qualifications
+        ];
+
+    } else if (Role === 'PATIENT') {
+        const { Name, Phone, DOB, BloodGroup, Address, MedicalHistory, EmergencyContact, EmergencyPhone, AadharID } = req.body;
+
+        // Server-side validation for required patient fields
+        if (!Name || !Phone || !DOB || !BloodGroup || !Address || !MedicalHistory || !EmergencyContact || !EmergencyPhone || !AadharID) {
+            return res.status(400).render('dashboard/signup', {
+                error: "All patient fields are required.",
+                role: Role,
+                formData: req.body
+            });
+        }
+
+        queryColumns = ['UserID', 'Name', 'Phone', 'DOB', 'BloodGroup', 'Address', 'MedicalHistory', 'EmergencyContact', 'EmergencyPhone', 'AadharID'];
+        queryValues = [
+            null, // Placeholder for UserID
+            Name,
+            Phone,
+            DOB,
+            BloodGroup,
+            Address,
+            MedicalHistory,
+            EmergencyContact,
+            EmergencyPhone,
+            AadharID
+        ];
+
+    } else {
+        // Handle case where an invalid role is somehow sent
+        return res.status(400).render('dashboard/signup', {
+            error: "Invalid account role specified.",
+            role: Role || 'PATIENT',
+            formData: req.body
         });
     }
 
@@ -20,57 +96,56 @@ const createUser = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        // Insert into USER table
+        // 1. Insert into USER table (common for both roles)
         const [userResult] = await connection.query(
             `INSERT INTO user (Username, Email, Role, CreatedAt)
              VALUES (?, ?, ?, CURRENT_TIMESTAMP)`,
             [Username, Email, Role]
         );
-        const userId = userResult.insertId; // this id will be generated automatically 
+        const userId = userResult.insertId; // Get the auto-generated UserID
 
-        // Insert role-specific data
-        if (Role === 'DOCTOR') {
-            await connection.query(
-                `INSERT INTO doctor (UserID, Name, Phone, LicenseNumber, Specialty, other_specialty, Qualifications)
-                 VALUES (?, ?, ?, ?, ?, ?, ?)`,
-                [userId, Name, Phone, LicenseNumber, 
-                 Specialty === 'Other' ? null : Specialty,
-                 Specialty === 'Other' ? other_specialty : null,
-                 Qualifications]
-            );
-        } else if (Role === 'PATIENT') {
-            await connection.query(
-                `INSERT INTO patient (UserID, Name, Phone, DOB, BloodGroup)
-                 VALUES (?, ?, ?, ?, ?)`,
-                [userId, Name, Phone, DOB, BloodGroup]
-            );
-        }
+        // Update the UserID placeholder in the role-specific queryValues array
+        queryValues[0] = userId;
 
-        await connection.commit(); // commit the transaction
+        // 2. Insert role-specific data using dynamically built query
+        await connection.query(
+            `INSERT INTO ${Role.toLowerCase()} (${queryColumns.join(', ')}) VALUES (${queryColumns.map(() => '?').join(', ')})`,
+            queryValues
+        );
 
+        await connection.commit(); // Commit the transaction if all inserts are successful
+
+        // Set session data for the newly registered user
         req.session.user = {
             UserID: userId,
             Username,
             Role,
-            profileComplete: true
+            profileComplete: true // Assuming profile is complete after signup
         };
 
-        res.redirect(`/login`);
+        res.redirect(`/login`); // Redirect to login page after successful registration
 
     } catch (err) {
-        await connection.rollback();
-        console.error("Signup error:", err);
+        await connection.rollback(); // Rollback transaction on error
+        console.error("Signup error:", err); // Log the detailed error
+
+        let errorMessage = "Registration failed. Please try again.";
+        if (err.code === 'ER_DUP_ENTRY') {
+            errorMessage = "Username or email already exists. Please choose a different one.";
+        } else if (err.code === 'ER_DATA_TOO_LONG' || err.sqlState === '22001') {
+            errorMessage = "One or more fields contain too much data. Please check your input length.";
+        } else if (err.code === 'ER_TRUNCATED_WRONG_VALUE' || err.sqlState === '22007') {
+            errorMessage = "Invalid data format for one or more fields (e.g., date, number). Please check your input.";
+        }
         
-        const errorMessage = err.code === 'ER_DUP_ENTRY' // Check for duplicate entry
-            ? "Username or email already exists" 
-            : "Registration failed";
-        
+        // Re-render the signup page with an error message and original form data
         res.status(400).render('dashboard/signup', { 
             error: errorMessage,
-            role: Role 
+            role: Role, // Keep the selected role active
+            formData: req.body // Pass back the submitted data to re-populate fields
         });
     } finally {
-        connection.release();
+        connection.release(); // Always release the connection back to the pool
     }
 };
 

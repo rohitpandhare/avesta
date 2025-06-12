@@ -222,20 +222,23 @@ router.post('/request-otp-for-delete', async (req, res) => {
 
         try {
             // Delete any existing OTP for this ADMIN from DB (since 'purpose' is not used)
-            await conPool.query(`DELETE FROM otp_table WHERE byUser = ?`, [adminUserID]);
+            // Clear from DB for this specific admin, purpose, and target
+            await conPool.query(`DELETE FROM otp_table WHERE byUser = ? AND purpose = ? AND target_user_id = ?`, [adminUserID, 'DEACTIVATION', userId]);
+
             console.log(`[request-otp-for-delete] Cleared old OTPs from DB for AdminUserID: ${adminUserID}.`);
 
-            // --- MODIFIED: Removed 'purpose' and 'target_user_id' from query and values ---
             await conPool.query(
-                `INSERT INTO otp_table (otp, email, byUser, secret, expires_at) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?))`,
-                [
-                    otp,
-                    adminEmail,
-                    adminUserID,
-                    secret,
-                    (Date.now() + OTP_CONFIG.step * 1000) / 1000 // Unix timestamp for expires_at
-                ]
-            );
+            `INSERT INTO otp_table (otp, email, byUser, secret, expires_at, purpose, target_user_id) VALUES (?, ?, ?, ?, FROM_UNIXTIME(?), ?, ?)`,
+            [
+                otp,
+                adminEmail,
+                adminUserID,
+                secret,
+                (Date.now() + OTP_CONFIG.step * 1000) / 1000,
+                'DEACTIVATION', // New: purpose
+                userId            // New: target_user_id
+            ]
+        );
             console.log(`[request-otp-for-delete] OTP successfully inserted into otp_table for AdminUserID: ${adminUserID}`);
         } catch (dbError) {
             console.error('[request-otp-for-delete] DATABASE INSERT ERROR (Deactivation OTP):', dbError);
@@ -252,6 +255,7 @@ router.post('/request-otp-for-delete', async (req, res) => {
         res.status(500).json({ error: 'Failed to process deactivation OTP request due to a server error.' });
     }
 });
+
 router.post('/verify-otp-for-delete', async (req, res) => {
     const { userId, otp } = req.body; // userId here is the target user's ID
     console.log(`[verify-otp-for-delete] Request received for target userId: ${userId}, OTP: ${otp}`);
@@ -263,6 +267,7 @@ router.post('/verify-otp-for-delete', async (req, res) => {
         }
 
         const adminUserID = req.session.user.UserID; // Get the ID of the logged-in admin
+        const otpPurpose = 'DEACTIVATION'; // Define the purpose for clarity
 
         // Construct the unique key used to store the OTP in memory for this admin and target user
         const otpKey = `admin_delete_otp_${adminUserID}_${userId}`;
@@ -270,18 +275,44 @@ router.post('/verify-otp-for-delete', async (req, res) => {
         let storedData = otpStore.get(otpKey);
         console.log(`[verify-otp-for-delete] Checking in-memory store for key ${otpKey}:`, storedData ? 'Found' : 'Not Found');
 
+        // If not found in memory, try fetching from the database
         if (!storedData) {
-            console.error(`[verify-otp-for-delete] No OTP found in memory for admin ${adminUserID} targeting UserID: ${userId}.`);
-            // --- IMPORTANT: Without 'target_user_id' in DB, we cannot reliably fetch from DB here for a specific target.
-            // The OTP from DB (if any) would just be for the admin, not tied to a specific target user.
-            // Therefore, if it's not in memory, we assume it's expired or never requested for this combination.
-            return res.status(400).json({ error: 'No active OTP found for this deactivation request. Please request a new one.' });
+            console.warn(`[verify-otp-for-delete] OTP not in memory. Attempting to fetch from DB for admin ${adminUserID} targeting UserID: ${userId}.`);
+            const [dbOtp] = await conPool.query(
+                `SELECT otp, secret, expires_at FROM otp_table WHERE byUser = ? AND purpose = ? AND target_user_id = ? ORDER BY expires_at DESC LIMIT 1`,
+                [adminUserID, otpPurpose, userId]
+            );
+
+            if (!dbOtp.length) {
+                console.error(`[verify-otp-for-delete] No active OTP found in DB or memory for admin ${adminUserID} targeting UserID: ${userId}.`);
+                return res.status(400).json({ error: 'No active OTP found for this deactivation request. Please request a new one.' });
+            }
+
+            // Check if the OTP from DB has expired
+            const dbExpiresTime = new Date(dbOtp[0].expires_at).getTime();
+            if (Date.now() > dbExpiresTime) {
+                // Delete from DB if expired
+                await conPool.query(`DELETE FROM otp_table WHERE byUser = ? AND purpose = ? AND target_user_id = ?`, [adminUserID, otpPurpose, userId]);
+                console.warn(`[verify-otp-for-delete] OTP from DB expired for admin ${adminUserID} targeting UserID: ${userId}. Cleared from DB.`);
+                return res.status(401).json({ error: 'Verification code expired. Please request a new one.' });
+            }
+
+            // Populate storedData from DB for verification
+            storedData = {
+                secret: dbOtp[0].secret,
+                targetUserID: userId, // Re-confirm targetUserID
+                expires: dbExpiresTime
+            };
+            // Optionally, add to otpStore for subsequent checks within this session
+            otpStore.set(otpKey, storedData);
+            console.log(`[verify-otp-for-delete] OTP successfully retrieved from DB and added to in-memory store.`);
         }
 
+        // If found in memory, check its expiration (already handled if coming from DB, but good for direct memory hit)
         if (Date.now() > storedData.expires) {
             otpStore.delete(otpKey); // Delete from memory
-            // Also delete from DB for this admin, as it's expired
-            await conPool.query(`DELETE FROM otp_table WHERE byUser = ?`, [adminUserID]);
+            // Also delete from DB for this specific admin, purpose, and target, as it's expired
+            await conPool.query(`DELETE FROM otp_table WHERE byUser = ? AND purpose = ? AND target_user_id = ?`, [adminUserID, otpPurpose, userId]);
             console.warn(`[verify-otp-for-delete] OTP expired for admin ${adminUserID} targeting UserID: ${userId}. Cleared from memory and DB.`);
             return res.status(401).json({ error: 'Verification code expired. Please request a new one.' });
         }
@@ -308,6 +339,9 @@ router.post('/verify-otp-for-delete', async (req, res) => {
         // Ensure the userId in req.body matches the targetUserID stored with the OTP
         if (userId !== storedData.targetUserID) {
             console.error(`[verify-otp-for-delete] Mismatch! OTP was for target user ${storedData.targetUserID}, but request is for ${userId}.`);
+            // Clear the OTP if there's a security mismatch
+            otpStore.delete(otpKey);
+            await conPool.query(`DELETE FROM otp_table WHERE byUser = ? AND purpose = ? AND target_user_id = ?`, [adminUserID, otpPurpose, userId]);
             return res.status(400).json({ error: 'Security mismatch: The OTP provided is not for the specified user.' });
         }
 
@@ -330,7 +364,8 @@ router.post('/verify-otp-for-delete', async (req, res) => {
         // --- End deactivation logic ---
 
         otpStore.delete(otpKey); // Clear from memory
-        await conPool.query(`DELETE FROM otp_table WHERE byUser = ?`, [adminUserID]); // Clear from DB
+        // Clear from DB using the specific criteria
+        await conPool.query(`DELETE FROM otp_table WHERE byUser = ? AND purpose = ? AND target_user_id = ?`, [adminUserID, otpPurpose, userId]);
         console.log(`[verify-otp-for-delete] OTP successfully verified and cleared for admin ${adminUserID} from memory and DB.`);
 
         res.status(200).json({ success: true, message: `OTP verified successfully. User ${userId} has been deactivated.` });

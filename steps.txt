@@ -97,3 +97,8 @@ CREATE TABLE doctorsync_dbx.patient_activity (
     Description TEXT,
     ActivityTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+ALTER TABLE doctorsync_dbx.otp_table
+ADD COLUMN purpose VARCHAR(50) DEFAULT 'GENERIC_OTP', -- e.g., 'DEACTIVATION', 'PASSWORD_RESET', 'ADMIN_CREATE'
+ADD COLUMN target_user_id INT NULL; -- Nullable, as not all OTPs have a target user

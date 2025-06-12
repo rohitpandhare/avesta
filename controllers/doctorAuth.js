@@ -1211,15 +1211,20 @@ async function getDocLogs(req, res) {
     if (!req.session.user || req.session.user.Role !== 'DOCTOR') {
         return res.redirect('/login');
     }
+    const { doctorID } = await getDocID(req.session.user.UserID);
 
     try {
+
         let page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 9; // Set default limit to 9 logs per page
 
         // Count query for total doctor activities
         const [totalLogsCountResult] = await conPool.query(`
-            SELECT COUNT(*) as totalLogs FROM doctor_activity
-        `);
+        SELECT COUNT(*) as totalLogs FROM doctor_activity
+        WHERE DoctorID = ?
+    `, [doctorID]); // Pass doctorID here
+    
+
         const totalLogs = totalLogsCountResult[0].totalLogs;
         const totalPages = Math.ceil(totalLogs / limit);
 
@@ -1247,10 +1252,12 @@ async function getDocLogs(req, res) {
                 doctor_activity da
             JOIN
                 doctor d ON da.DoctorID = d.DoctorID
+           WHERE
+                da.DoctorID = ?
             ORDER BY
                 da.ActivityTimestamp DESC
             LIMIT ? OFFSET ?
-        `, [limit, offset]);
+        `, [doctorID, limit, offset]); 
 
         return res.render('users/doc/logs', {
             user: req.session.user,
@@ -1261,7 +1268,7 @@ async function getDocLogs(req, res) {
             searchTerm: '' // Keep searchTerm for consistency with findDr.ejs, even if not used for logs currently
         });
     } catch (err) {
-        console.error('Error fetching doctor logs:', err);
+        // console.error('Error fetching doctor logs:', err);
         res.render('users/doc/logs', {
             user: req.session.user,
             logs: [],
@@ -1269,7 +1276,7 @@ async function getDocLogs(req, res) {
             totalPages: 1,
             limit: 10,
             searchTerm: '',
-            error: 'Error retrieving doctor logs'
+            error: 'No Doctor logs'
         });
     }
 };
