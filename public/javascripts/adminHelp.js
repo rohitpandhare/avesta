@@ -144,12 +144,29 @@ const messageBox = document.getElementById('customMessageBox');
 const messageText = document.getElementById('customMessageText');
 let messageTimeout;
 
-function showMessage(message, type = 'success', duration = 3000) {
+function showMessage(message, type = 'success', duration = 3000) {  const box = document.getElementById('customMessageBox');
+    const text = document.getElementById('customMessageText');
+    if (!box || !text) return;
+
+    text.textContent = message;
+    box.className = 'custom-message-box';
+    box.classList.add('show', type);
+    box.style.display = 'block';
+
+    setTimeout(() => {
+        box.classList.remove('show');
+        box.addEventListener('transitionend', () => {
+            box.style.display = 'none';
+        }, { once: true });
+    }, 3000);
+
+    // Clear any existing timeout to prevent multiple messages stacking
     if (!messageBox || !messageText) return;
     messageText.textContent = message;
     messageBox.className = 'custom-message-box';
     messageBox.classList.add(type === 'error' ? 'error' : 'success');
     messageBox.classList.add('show');
+
     clearTimeout(messageTimeout);
     messageTimeout = setTimeout(() => {
         messageBox.classList.remove('show');

@@ -356,10 +356,10 @@ router.post('/verify-otp-for-delete', async (req, res) => {
             return res.status(404).json({ success: false, error: 'User not found or already deactivated.' });
         }
 
-        await conPool.query(
-            'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
-            [adminUserID, 'DEACTIVATE', `Admin deactivated user ID ${userId}`, 'USER', userId]
-        );
+        // await conPool.query(
+        //     'INSERT INTO admin_activity (AdminUserID, ActionPerformed, Description, TargetType, TargetID) VALUES (?, ?, ?, ?, ?)',
+        //     [adminUserID, 'DEACTIVATE', `Admin deactivated user ID ${userId}`, 'USER', userId]
+        // );
         console.log(`[verify-otp-for-delete] User ${userId} deactivated (Flag = 1) successfully by Admin ${adminUserID}.`);
         // --- End deactivation logic ---
 
@@ -417,8 +417,8 @@ router.post('/request-otp-for-activate', async (req, res) => {
 
         try {
             // Revive any existing OTP for this user in the DB to ensure only one is active
-            await conPool.query(`DELETE FROM otp_table WHERE byUser = ?`, [targetUser.UserID]);
-            console.log(`[request-otp-for-revice] Cleared old OTPs from DB for UserID: ${targetUser.UserID}`);
+            // await conPool.query(`DELETE FROM otp_table WHERE byUser = ?`, [targetUser.UserID]);
+            // console.log(`[request-otp-for-revice] Cleared old OTPs from DB for UserID: ${targetUser.UserID}`);
 
             // Insert new OTP into database
             await conPool.query(
